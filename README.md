@@ -1,3 +1,3 @@
-# stix
+# styx
 
 A functional programming experiment
