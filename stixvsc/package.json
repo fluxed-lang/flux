@@ -1,0 +1,35 @@
+{
+    "name": "stixvsc",
+    "displayName": "stixvsc",
+    "description": "Provides language support for the Stix language",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.52.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "stix",
+                "aliases": [
+                    "Stix",
+                    "stixlang"
+                ],
+                "extensions": [
+                    ".stx",
+                    ".stix"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "stix",
+                "scopeName": "source.stix",
+                "path": "./syntaxes/stix.tmLanguage.json"
+            }
+        ]
+    }
+}

@@ -1,2 +1,3 @@
 # stix
-Functional language experiment
+
+A functional programming experiment
