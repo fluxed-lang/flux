@@ -1,7 +1,7 @@
 {
-    "name": "stixvsc",
-    "displayName": "stixvsc",
-    "description": "Provides language support for the Stix language",
+    "name": "styxvsc",
+    "displayName": "styxvsc",
+    "description": "Provides language support for the styx language",
     "version": "0.0.1",
     "engines": {
         "vscode": "^1.52.0"
@@ -12,23 +12,23 @@
     "contributes": {
         "languages": [
             {
-                "id": "stix",
+                "id": "styx",
                 "aliases": [
-                    "Stix",
-                    "stixlang"
+                    "Styx",
+                    "styxlang"
                 ],
                 "extensions": [
                     ".stx",
-                    ".stix"
+                    ".styx"
                 ],
                 "configuration": "./language-configuration.json"
             }
         ],
         "grammars": [
             {
-                "language": "stix",
-                "scopeName": "source.stix",
-                "path": "./syntaxes/stix.tmLanguage.json"
+                "language": "styx",
+                "scopeName": "source.styx",
+                "path": "./syntaxes/styx.tmLanguage.json"
             }
         ]
     }

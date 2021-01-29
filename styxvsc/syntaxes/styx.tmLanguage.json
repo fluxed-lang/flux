@@ -1,6 +1,6 @@
 {
     "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-    "name": "stix",
+    "name": "styx",
     "patterns": [
         {
             "include": "#keywords"
@@ -22,18 +22,18 @@
         "keywords": {
             "patterns": [
                 {
-                    "name": "keyword.control.stix",
+                    "name": "keyword.control.styx",
                     "match": "\\b(if|while|for|return)\\b"
                 }
             ]
         },
         "strings": {
-            "name": "string.quoted.double.stix",
+            "name": "string.quoted.double.styx",
             "begin": "\"",
             "end": "\"",
             "patterns": [
                 {
-                    "name": "constant.character.escape.stix",
+                    "name": "constant.character.escape.styx",
                     "match": "\\\\."
                 }
             ]
@@ -41,7 +41,7 @@
         "comments": {
             "patterns": [
                 {
-                    "name": "comment.line.number-sign.stix",
+                    "name": "comment.line.number-sign.styx",
                     "comment": "line comments",
                     "match": "\\s*#.*"
                 }
@@ -51,7 +51,7 @@
             "patterns": [
                 {
                     "comment": "variables",
-                    "name": "variable.other.stix",
+                    "name": "variable.other.styx",
                     "match": "\\b(?<!(?<!\\.)\\.)(?:r#(?!(crate|[Ss]elf|super)))?[a-z0-9_]+\\b"
                 }
             ]
@@ -63,7 +63,7 @@
                     "match": "(?<![A-Za-z])(float32|float64|int16|int32|int64|int8)\\b",
                     "captures": {
                         "1": {
-                            "name": "entity.name.type.numeric.stix"
+                            "name": "entity.name.type.numeric.styx"
                         }
                     }
                 },
@@ -72,16 +72,16 @@
                     "begin": "\\b([A-Z][A-Za-z0-9]*)(<)",
                     "beginCaptures": {
                         "1": {
-                            "name": "entity.name.type.stix"
+                            "name": "entity.name.type.styx"
                         },
                         "2": {
-                            "name": "punctuation.brackets.angle.stix"
+                            "name": "punctuation.brackets.angle.styx"
                         }
                     },
                     "end": ">",
                     "endCaptures": {
                         "0": {
-                            "name": "punctuation.brackets.angle.stix"
+                            "name": "punctuation.brackets.angle.styx"
                         }
                     },
                     "patterns": [
@@ -118,17 +118,17 @@
                             "name": "storage.type.rust"
                         },
                         "2": {
-                            "name": "entity.name.type.declaration.stix"
+                            "name": "entity.name.type.declaration.styx"
                         }
                     }
                 },
                 {
                     "comment": "types",
-                    "name": "entity.name.type.stix",
+                    "name": "entity.name.type.styx",
                     "match": "\\b[A-Z][A-Za-z0-9]*\\b(?!!)"
                 }
             ]
         }
     },
-    "scopeName": "source.stix"
+    "scopeName": "source.styx"
 }
