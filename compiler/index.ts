@@ -1,11 +1,7 @@
 import { readFileSync } from "fs";
 
 import { Matcher } from "./Matcher";
-import { LineContext } from "./structures/LineContext";
-import { Assignment } from "./tree/Assignment";
 import { Scope } from "./tree/Scope";
-
-const source = "let x = 0; x += 1";
 
 const input = readFileSync("./test.stx").toString("utf-8");
 

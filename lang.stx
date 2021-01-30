@@ -72,6 +72,29 @@ x >>= 3;
 x << 3;
 x <<= 3;
 
+# Lists
+
+let x = [1,2,3,4]
+
+# indexing
+let y = x[1]
+
+# slices
+let a = x[0..1] # [1,2]
+let b = x[1..] # [2,3,4]
+let c = [..1] # [1, 2]
+let d = [2..3] # [2, 3]
+
+# negative indexes
+let d = [..-2] # [3, 4]
+
+# concats b onto a
+concat a: T[] b: T[] -> {
+    for el in b {
+        append a el
+    }
+} 
+
 # Strings
 type char = u8
 type str = char[] = u8[]
@@ -130,6 +153,11 @@ sort x: int[] -> int[] {
     }
 }
 
+# infix functions
+infix nth<T -> any> x: T[] -> T
+
+let x = [1,2,3,4]
+x nth 1 # 2
 
 # tuple arguments
 swap x, y -> (y, x)
