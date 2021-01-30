@@ -1,0 +1,12 @@
+import { 
+    listen
+    send
+    Request
+    Response 
+} from http
+
+handler req: Request, res: Response -> { 
+    send response, "Hello, world!" 
+}
+
+listen 8080, handler

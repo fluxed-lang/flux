@@ -1,13 +1,24 @@
 # Variables
 
 let x = 0
-mut y = 0
 
-# explicit data type
+# assign both x and y to 0
+let x, y = 0
+
+# assign x to 1 and y to 2
+let x, y = 1, 2
+
+# for clarity's sake
+let x = 1, y = 1
+
+# with explicit data type
 let z: int64 = 0
 
 # Constants
 const x = 0
+
+# error!
+x += 1
 
 # Data types
 
@@ -15,17 +26,19 @@ const x = 0
 let x = 0
 let y: int;
 
-# int64
-let x: int64 = 0
+# i64
+let x: i64 = 0
 
-# int32
-let x: int32 = 0
+# i32
+let x: i32 = 0
 
-# int16
-let x: int16 = 0
+# i16
+let x: i16 = 0
 
-# int8
-let x: int8 = 0
+# i8
+let x: i8 = 0
+
+# unsigned variants
 
 # bool
 let x = false
@@ -33,9 +46,7 @@ x = !x
 let y = false
 x &= y
 
-
-
-# binary operators
+# binary operators - work on bool and int types
 let x, y = 15, 3;
 
 # logical and
@@ -53,13 +64,17 @@ x ^= y
 # logical not
 !x
 
-# rotate right 3 bits
+# rotate right 3 bits - works on int types
 x >> 3;
 x >>= 3;
 
 # rotate left 3 bits
 x << 3;
 x <<= 3;
+
+# Strings
+type char = u8
+type str = char[] = u8[]
 
 # Structs
 struct Point {
@@ -81,6 +96,11 @@ let x = a union b;
 let x = a intersection b;
 let x = a difference b;
 
+# order of operations
+let x = a intersection b union a
+# equivalent to
+let x = (a intersection b) union a
+
 # Maps
 let x = map {
     "hello" -> 69
@@ -92,6 +112,7 @@ let x = map<str, int> {
 
 }
 
+# or maybe?
 let x = str -> int {
     "hello" -> 621
 }
@@ -109,6 +130,7 @@ sort x: int[] -> int[] {
     }
 }
 
+
 # tuple arguments
 swap x, y -> (y, x)
 # i.e.
@@ -118,6 +140,9 @@ swap (x, y) -> (y, x)
 # all imports and exports are named
 import stdlib
 import io from stdlib
+
+# stdlib.stx
+export io from "./io"
 
 # module.stx
 export someFunc x: int -> x + 1
@@ -129,3 +154,28 @@ import {
     someFunc
     someOtherFunc
 } from "./module"
+
+# Conditionals
+
+if condition1 {
+
+} else if condition2 {
+
+} else {
+
+}
+
+# switch expression - similar to rust's
+switch x {
+    0..10 -> expression1
+    _ -> elseExpression
+}
+
+# e.g.
+doAThing x: int -> switch x {
+    0..5 -> x + 1
+    5..10 -> x - 1  
+    _ -> x
+}
+
+doAThing 7
