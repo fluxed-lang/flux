@@ -1,7 +1,7 @@
 {
     "name": "styxvsc",
     "displayName": "styxvsc",
-    "description": "Provides language support for the styx language",
+    "description": "Provides language support for the Styx language.",
     "version": "0.0.1",
     "engines": {
         "vscode": "^1.52.0"
@@ -15,11 +15,12 @@
                 "id": "styx",
                 "aliases": [
                     "Styx",
-                    "styxlang"
+                    "styx"
                 ],
                 "extensions": [
                     ".stx",
-                    ".styx"
+                    ".styx",
+                    ".gay"
                 ],
                 "configuration": "./language-configuration.json"
             }
@@ -27,7 +28,7 @@
         "grammars": [
             {
                 "language": "styx",
-                "scopeName": "source.styx",
+                "scopeName": "source.stix",
                 "path": "./syntaxes/styx.tmLanguage.json"
             }
         ]

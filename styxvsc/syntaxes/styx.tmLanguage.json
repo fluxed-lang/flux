@@ -1,134 +1,32 @@
 {
-    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-    "name": "styx",
-    "patterns": [
-        {
-            "include": "#keywords"
-        },
-        {
-            "include": "#strings"
-        },
-        {
-            "include": "#variables"
-        },
-        {
-            "include": "#comments"
-        },
-        {
-            "include": "#types"
-        }
-    ],
-    "repository": {
-        "keywords": {
-            "patterns": [
-                {
-                    "name": "keyword.control.styx",
-                    "match": "\\b(if|while|for|return)\\b"
-                }
-            ]
-        },
-        "strings": {
-            "name": "string.quoted.double.styx",
-            "begin": "\"",
-            "end": "\"",
-            "patterns": [
-                {
-                    "name": "constant.character.escape.styx",
-                    "match": "\\\\."
-                }
-            ]
-        },
-        "comments": {
-            "patterns": [
-                {
-                    "name": "comment.line.number-sign.styx",
-                    "comment": "line comments",
-                    "match": "\\s*#.*"
-                }
-            ]
-        },
-        "variables": {
-            "patterns": [
-                {
-                    "comment": "variables",
-                    "name": "variable.other.styx",
-                    "match": "\\b(?<!(?<!\\.)\\.)(?:r#(?!(crate|[Ss]elf|super)))?[a-z0-9_]+\\b"
-                }
-            ]
-        },
-        "types": {
-            "patterns": [
-                {
-                    "comment": "numeric types",
-                    "match": "(?<![A-Za-z])(float32|float64|int16|int32|int64|int8)\\b",
-                    "captures": {
-                        "1": {
-                            "name": "entity.name.type.numeric.styx"
-                        }
-                    }
-                },
-                {
-                    "comment": "parameterized types",
-                    "begin": "\\b([A-Z][A-Za-z0-9]*)(<)",
-                    "beginCaptures": {
-                        "1": {
-                            "name": "entity.name.type.styx"
-                        },
-                        "2": {
-                            "name": "punctuation.brackets.angle.styx"
-                        }
-                    },
-                    "end": ">",
-                    "endCaptures": {
-                        "0": {
-                            "name": "punctuation.brackets.angle.styx"
-                        }
-                    },
-                    "patterns": [
-                        {
-                            "include": "#block-comments"
-                        },
-                        {
-                            "include": "#comments"
-                        },
-                        {
-                            "include": "#keywords"
-                        },
-                        {
-                            "include": "#punctuation"
-                        },
-                        {
-                            "include": "#types"
-                        },
-                        {
-                            "include": "#variables"
-                        }
-                    ]
-                },
-                {
-                    "comment": "primitive types",
-                    "name": "entity.name.type.primitive.rust",
-                    "match": "\\b(bool|char|str)\\b"
-                },
-                {
-                    "comment": "type declarations",
-                    "match": "\\b(type)\\s+([A-Z][A-Za-z0-9_]*)\\b",
-                    "captures": {
-                        "1": {
-                            "name": "storage.type.rust"
-                        },
-                        "2": {
-                            "name": "entity.name.type.declaration.styx"
-                        }
-                    }
-                },
-                {
-                    "comment": "types",
-                    "name": "entity.name.type.styx",
-                    "match": "\\b[A-Z][A-Za-z0-9]*\\b(?!!)"
-                }
-            ]
-        }
-    },
-    "scopeName": "source.styx"
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Styx",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#strings"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.styx",
+				"match": "\\b(if|while|for|return)\\b"
+			}]
+		},
+		"strings": {
+			"name": "string.quoted.double.styx",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.styx",
+					"match": "\\\\."
+				}
+			]
+		}
+	},
+	"scopeName": "source.stix"
 }

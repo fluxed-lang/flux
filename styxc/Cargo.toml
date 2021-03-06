@@ -1,0 +1,11 @@
+[package]
+name = "styxc"
+version = "0.1.0"
+authors = ["SkyezerFox <actuallyori@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+cranelift = "0.69.0"
+cranelift-module = "0.69.0"
+cranelift-jit = "0.69.0"
+peg = "0.6"

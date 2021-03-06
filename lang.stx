@@ -154,7 +154,7 @@ sort x: int[] -> int[] {
 }
 
 # infix functions
-infix nth<T -> any> x: T[] -> T
+infix nth<T -> any> x: T[] i: int -> T
 
 let x = [1,2,3,4]
 x nth 1 # 2
@@ -167,7 +167,7 @@ swap (x, y) -> (y, x)
 # Modules
 # all imports and exports are named
 import stdlib
-import io from stdlib
+import io from stdlib   
 
 # stdlib.stx
 export io from "./io"

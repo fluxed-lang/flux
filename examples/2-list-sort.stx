@@ -9,7 +9,7 @@ sort x: int[] -> {
     sort last
 
     while length last > 0 && length first > 0 {
-        if first[0] <= last[0] {
+        if first nth 0 <= last nth 0 {
             append x, shift first
         } else {
             append x, shift last
