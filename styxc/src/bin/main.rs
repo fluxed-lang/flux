@@ -13,7 +13,7 @@ fn main() -> Result<(), ()> {
     // Create the JIT instance, which manages all generated functions and data.
     let mut jit = jit::JIT::default();
 
-    run_file(&mut jit, contents).expect("success");
+    run_file(&mut jit, contents).expect("failed to run code");
 
     Ok(())
 }

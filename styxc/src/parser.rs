@@ -1,27 +1,8 @@
-/// The AST node for expressions.
-pub enum Expr {
-    Literal(String),
-    Identifier(String),
-    Assign(String, Box<Expr>),
-    Eq(Box<Expr>, Box<Expr>),
-    Ne(Box<Expr>, Box<Expr>),
-    Lt(Box<Expr>, Box<Expr>),
-    Le(Box<Expr>, Box<Expr>),
-    Gt(Box<Expr>, Box<Expr>),
-    Ge(Box<Expr>, Box<Expr>),
-    Add(Box<Expr>, Box<Expr>),
-    Sub(Box<Expr>, Box<Expr>),
-    Mul(Box<Expr>, Box<Expr>),
-    Div(Box<Expr>, Box<Expr>),
-    IfElse(Box<Expr>, Vec<Expr>, Vec<Expr>),
-    Loop(Box<Option<Expr>>, Vec<Expr>),
-    Call(String, Vec<Expr>),
-    GlobalDataAddr(String),
-}
+use crate::expression::Expr;
 
 peg::parser!(pub grammar parser() for str {
     pub rule function() -> (String, Vec<String>, String, Vec<Expr>)
-        = [ ' ' | '\t' | '\n']* name:identifier() _
+        = [ ' ' | '\t' | '\n' ]* name:identifier() _
         params:((_ i:identifier() _ {i}) ** ",") _
         "->" returns:(_ i:identifier() _ {i}) _
         "{" _ "\n"
@@ -41,9 +22,13 @@ peg::parser!(pub grammar parser() for str {
         / assignment()
         / binary_op()
 
+    rule if() -> Expr
+        = "if" _ e:expression() _ "{" then_body:statements() _ "}"
+        { Expr::If(Box::new(e), then_body) }
+
     rule if_else() -> Expr
-        = "if" _ e:expression() _ "{" _ "\n"
-        then_body:statements() _ "}" _ "else" _ "{" _ "\n"
+        = "if" _ e:expression() _ "{" _
+        then_body:statements() _ "}" _ "else" _ "{" _
         else_body:statements() _ "}"
         { Expr::IfElse(Box::new(e), then_body, else_body) }
 
@@ -82,6 +67,7 @@ peg::parser!(pub grammar parser() for str {
         = n:$(['0'..='9']+) { Expr::Literal(n.to_owned()) }
         / "&" i:identifier() { Expr::GlobalDataAddr(i) }
 
-    rule _() =  quiet!{[' ' | '\t']*}
+    rule _() =  quiet!{[' ' | '\t' | '\n']*}
     
 });
+

@@ -1,4 +1,5 @@
-use crate::frontend::*;
+use crate::expression::Expr;
+use crate::parser;
 use cranelift::prelude::*;
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataContext, Linkage, Module};
@@ -228,6 +229,9 @@ impl<'a> FunctionTranslator<'a> {
                 self.builder.use_var(*variable)
             }
             Expr::Assign(name, expr) => self.translate_assign(name, *expr),
+            Expr::If(condition, then_body) => {
+                self.translate_if(*condition, then_body)
+            }
             Expr::IfElse(condition, then_body, else_body) => {
                 self.translate_if_else(*condition, then_body, else_body)
             }
@@ -252,6 +256,36 @@ impl<'a> FunctionTranslator<'a> {
         let rhs = self.translate_expr(rhs);
         let c = self.builder.ins().icmp(cmp, lhs, rhs);
         self.builder.ins().bint(self.int, c)
+    }
+
+    fn translate_if(
+        &mut self,
+        condition: Expr,
+        then_body: Vec<Expr>
+    ) -> Value {
+        let condition_value = self.translate_expr(condition);
+
+        let then_block = self.builder.create_block();
+        let merge_block = self.builder.create_block();
+        
+        self.builder.append_block_param(merge_block, self.int);
+
+        // jump to then block if not zero
+        self.builder.ins().brnz(condition_value, then_block, &[]);
+        self.builder.ins().jump(then_block, &[]);
+
+        self.builder.switch_to_block(then_block);
+        self.builder.seal_block(then_block);
+
+        let mut then_return = self.builder.ins().iconst(self.int, 0);
+        for expr in then_body {
+            then_return = self.translate_expr(expr);
+        }
+
+        self.builder.ins().jump(merge_block, &[then_return]);
+        self.builder.seal_block(merge_block);
+        let phi = self.builder.block_params(merge_block)[0];
+        phi
     }
 
     fn translate_if_else(
