@@ -11,7 +11,7 @@ let x, y = 1, 2
 # for clarity's sake
 let x = 1, y = 1
 
-# with explicit data type
+ with explicit data type
 let z: int64 = 0
 
 # Constants
@@ -114,15 +114,19 @@ add (a: Point, b: Point) -> Point(a.0 + b.0, a.1 + b.1)
 let a = { 1, 2, 3 },
     b = { 4, 5, 6 }
 
+# functional sets
+let c = { x: int -> x > 1 }
+3 in c # true
+
 # operators
 let x = a union b;
-let x = a intersection b;
+let x = a intersect b;
 let x = a difference b;
 
 # order of operations
-let x = a intersection b union a
+let x = a intersect b union a
 # equivalent to
-let x = (a intersection b) union a
+let x = (a intersect b) union a
 
 # Maps
 let x = map {
@@ -136,8 +140,8 @@ let x = map<str, int> {
 }
 
 # or maybe?
-let x = str -> int {
-    "hello" -> 621
+let x = map str -> int {
+    "hello" to 621
 }
 
 print x.hello 
@@ -193,17 +197,22 @@ if condition1 {
 
 }
 
-# switch expression - similar to rust's
-switch x {
+# match expression - similar to rust's
+match x {
     0..10 -> expression1
     _ -> elseExpression
 }
 
 # e.g.
-doAThing x: int -> switch x {
+doAThing x: int -> match x {
     0..5 -> x + 1
     5..10 -> x - 1  
     _ -> x
 }
 
 doAThing 7
+
+# classes - similar to kotlin
+class Shape {}
+
+class Rectangle() : Shape
