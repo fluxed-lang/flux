@@ -1,4 +1,5 @@
-use crate::ast::{Expr, Type, get_type};
+use crate::ast::{Expr, get_type};
+use crate::types::Type;
 
 peg::parser!(pub grammar parser() for str {
     /// General statement matcher - attempts to match all statements in a file.

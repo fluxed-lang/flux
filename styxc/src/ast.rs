@@ -1,42 +1,7 @@
 use std::{collections::HashMap, error::Error};
 use crate::lexer::parser;
 use crate::errors::print_error;
-
-#[derive(Debug, Clone)]
-pub enum Type {
-    /// Represents a 64-bit integer type.
-    Int64,
-
-    /// Represents a 32-bit integer type.
-    Int32,
-
-    /// Represents a 16-bit integer type.
-    Int16,
-
-    /// Represents an 8-bit integer type.
-    Int8,
-
-    /// Represents an unsigned 64-bit integer type.
-    UInt64,
-
-    /// Represents an unsigned 32-bit integer type.
-    UInt32,
-
-    /// Represents an unsigned 16-bit integer type.
-    UInt16,
-
-    /// Represents an unsigned 8-bit integer type.
-    UInt8,
-
-    /// Represents a 128-bit floating point type.
-    Float128,
-
-    /// Represents a 64-bit floating point type.
-    Float64,
-
-    /// Represents a boolean type.
-    Bool
-}
+use crate::types::Type;
 
 pub enum Expr {
     /// Represents a literal type. The second argument is the type of the literal.
