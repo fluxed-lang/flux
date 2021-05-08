@@ -1,35 +1,43 @@
-use crate::ast::Type;
-/// Represents a syntax parsing error. These are thrown when the PEG parser
-/// encounters an illegal expression pattern while building the AST.
-pub struct SyntaxError {
-    msg: String,
-    line: i64,
+use annotate_snippets::{display_list::{DisplayList, FormatOptions}, snippet::{Annotation, AnnotationType, Slice, Snippet, SourceAnnotation}};
+use peg::{error::ParseError, str::LineCol};
+
+/// Convert a LineCol to a tuple containing the row and column position.
+fn linecol_to_tuple(line_col: &LineCol) -> (usize, usize) {
+    (
+        line_col.line,
+        line_col.column
+    )
 }
 
-impl SyntaxError {
-    /// Create a new syntax error message.
-    pub fn new(msg: String, line: i64) -> Self {
-        Self {
-            msg,
-            line,
-        }
-    }
-}
-
-/// Represents a type error. These are thrown when the AST is parsed and an
-/// illegal type expression is encountered (e.g. comparing a bool to an int).
-pub struct TypeError {
-    msg: String,
-    expected: Type,
-    actual: Type,
-    line: i64
-}
-
-impl TypeError {
-    /// Create a new type error message.
-    pub fn new(msg: String, expected: Type, actual: Type, line: i64) -> Self {
-        Self {
-            msg, expected, actual, line
-        }
-    }
+/// Turn a parse error into a snippet.
+pub(crate) fn print_error(source: String, parse_error: &ParseError<LineCol>) {
+    // format as error
+    let str_error = &parse_error.to_string();
+    // create snippet
+    let snippet = Snippet {
+        title: Some(Annotation {
+            label: Some(str_error),
+            id: None,
+            annotation_type: AnnotationType::Error
+        }),
+        footer: vec![],
+        slices: vec![Slice {
+           annotations: vec![SourceAnnotation {
+               range: linecol_to_tuple(&parse_error.location),
+               label: "",
+               annotation_type: AnnotationType::Error
+           }],
+           fold: true,
+           origin: None,
+           line_start: parse_error.location.line,
+           source: &source
+        }],
+        opt: FormatOptions {
+            color: true,
+            ..Default::default()
+        },
+    };
+    // print snippet
+    let dl = DisplayList::from(snippet);
+    println!("{}", dl);
 }

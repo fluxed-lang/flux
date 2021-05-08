@@ -1,193 +1,193 @@
-# Variables
+// Variables
 
 let x = 0
 
-# assign both x and y to 0
+// assign both x and y to 0
 let x, y = 0
 
-# assign x to 1 and y to 2
+// assign x to 1 and y to 2
 let x, y = 1, 2
 
-# for clarity's sake
+// for clarity's sake
 let x = 1, y = 1
 
- with explicit data type
+// with explicit data type
 let z: int64 = 0
 
-# Constants
+// Constants
 const x = 0
 
-# error!
+// error!
 x += 1
 
-# Data types
+// Data types
 
-# int type
+// int type
 let x = 0
 let y: int;
 
-# i64
+// i64
 let x: i64 = 0
 
-# i32
+// i32
 let x: i32 = 0
 
-# i16
+// i16
 let x: i16 = 0
 
-# i8
+// i8
 let x: i8 = 0
 
-# unsigned variants
+// unsigned variants
 
-# bool
+// bool
 let x = false
 x = !x
 let y = false
 x &= y
 
-# binary operators - work on bool and int types
+// binary operators - work on bool and int types
 let x, y = 15, 3;
 
-# logical and
+// logical and
 x & y
 x &= y
 
-# logical or
+// logical or
 x | y
 x |= y
 
-# logical exclusive or
+// logical exclusive or
 x ^ y
 x ^= y
 
-# logical not
+// logical not
 !x
 
-# rotate right 3 bits - works on int types
+// rotate right 3 bits - works on int types
 x >> 3;
 x >>= 3;
 
-# rotate left 3 bits
+// rotate left 3 bits
 x << 3;
 x <<= 3;
 
-# Lists
+// Lists
 
 let x = [1,2,3,4]
 
-# indexing
+// indexing
 let y = x[1]
 
-# slices
-let a = x[0..1] # [1,2]
-let b = x[1..] # [2,3,4]
-let c = [..1] # [1, 2]
-let d = [2..3] # [2, 3]
+// slices
+let a = x[0..1] // [1,2]
+let b = x[1..] // [2,3,4]
+let c = [..1] // [1, 2]
+let d = [2..3] // [2, 3]
 
-# negative indexes
-let d = [..-2] # [3, 4]
+// negative indexes
+let d = [..-2] // [3, 4]
 
-# concats b onto a
+// concats b onto a
 concat a: T[] b: T[] -> {
     for el in b {
         append a el
     }
 } 
 
-# Strings
+// Strings
 type char = u8
 type str = char[] = u8[]
 
-# Structs
+// Structs
 struct Point {
     x: int, y: int
 }
 
 add (a: Point, b: Point) -> Point { x: a.x + b.x, y: a.y + b.y } 
 
-# tuple structs
+// tuple structs
 struct Point(int, int)
 add (a: Point, b: Point) -> Point(a.0 + b.0, a.1 + b.1)
 
-# Sets
+// Sets
 let a = { 1, 2, 3 },
     b = { 4, 5, 6 }
 
-# functional sets
+// functional sets
 let c = { x: int -> x > 1 }
-3 in c # true
+3 in c // true
 
-# operators
+// operators
 let x = a union b;
 let x = a intersect b;
 let x = a difference b;
 
-# order of operations
+// order of operations
 let x = a intersect b union a
-# equivalent to
+// equivalent to
 let x = (a intersect b) union a
 
-# Maps
+// Maps
 let x = map {
     "hello" -> 69
     "world" -> 621
 }
 
-# explicitly typed
+// explicitly typed
 let x = map<str, int> {
 
 }
 
-# or maybe?
+// or maybe?
 let x = map str -> int {
     "hello" to 621
 }
 
 print x.hello 
 
-# Functions
+// Functions
 x param1: A -> B
 x(param1: A, param2: B) -> (B, C)
 
 sort x: T[] -> T[]
 sort x: int[] -> int[] {
     for el of x {
-        # sort
+        // sort
     }
 }
 
-# infix functions
+// infix functions
 infix nth<T -> any> x: T[] i: int -> T
 
 let x = [1,2,3,4]
-x nth 1 # 2
+x nth 1 // 2
 
-# tuple arguments
+// tuple arguments
 swap x, y -> (y, x)
-# i.e.
+// i.e.
 swap (x, y) -> (y, x)
 
-# Modules
-# all imports and exports are named
+// Modules
+// all imports and exports are named
 import stdlib
 import io from stdlib   
 
-# stdlib.stx
+// stdlib.stx
 export io from "./io"
 
-# module.stx
+// module.stx
 export someFunc x: int -> x + 1
 export someOtherFunc x: int -> x - 1
 
-# main.stx
+// main.stx
 import someFunc from "./module"
 import {
     someFunc
     someOtherFunc
 } from "./module"
 
-# Conditionals
+// Conditionals
 
 if condition1 {
 
@@ -197,13 +197,13 @@ if condition1 {
 
 }
 
-# match expression - similar to rust's
+// match expression - similar to rust's
 match x {
     0..10 -> expression1
     _ -> elseExpression
 }
 
-# e.g.
+// e.g.
 doAThing x: int -> match x {
     0..5 -> x + 1
     5..10 -> x - 1  
@@ -212,7 +212,7 @@ doAThing x: int -> match x {
 
 doAThing 7
 
-# classes - similar to kotlin
+// classes - similar to kotlin
 class Shape {}
 
 class Rectangle() : Shape

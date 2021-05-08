@@ -1,5 +1,6 @@
-use peg::parser;
 use std::{collections::HashMap, error::Error};
+use crate::lexer::parser;
+use crate::errors::print_error;
 
 #[derive(Debug, Clone)]
 pub enum Type {
@@ -46,6 +47,9 @@ pub enum Expr {
 
     /// Represents a declaration.
     Declare(String, Box<Type>, Box<Expr>),
+
+    /// Represents a constant declaration.
+    DeclareConst(String, Box<Type>, Box<Expr>),
 
     /// Represents an assignment.
     Assign(String, Box<Expr>),
@@ -103,75 +107,49 @@ pub enum Expr {
     Function(String, Vec<String>, String, Vec<Expr>),
 
     /// Represents a function call.
-    Call(String, Vec<Expr>)
+    Call(String, Vec<Expr>),
+
+    /// Represents a top-level import.
+    Import(String, String)
 }
 
-peg::parser!(grammar parser() for str {
-    /// General statement matcher - attempts to match all statements in a file.
-    pub rule statements() -> Vec<Expr>
-        = s:(statement()*) { s }
+/// Represents a variable in the AST.
+#[derive(Clone)]
+pub struct Var {
+    /// The type of this variable.
+    field_type: Type,
+    /// Whether this variable is a constant.
+    constant: bool
+}
 
-    /// General statement matcher - attempts to match an expression, consuming whitespace around it.
-    /// Expressions end with a new-line, or when EOF is reached.
-    rule statement() -> Expr // hello i'm Ben and i like crisps and watching peppa pig :)
-        = _ e:expression() _ ("\n" / ![_]) { e }
-
-    /// Represents a language expression.
-    rule expression() -> Expr
-        = literal()
-        / declaration()
-        / assignment()
-
-    rule assignable() -> Expr
-        = literal()
-
-    /// Represents a primitive type name
-    rule primitive_type() -> Expr
-        = "int" { Expr::Type(Type::Int64.into()) }
-        / "float" { Expr::Type(Type::Float64.into()) }
-        / "bool" { Expr::Type(Type::Bool.into()) }
-        / expected!("type")
-
-    /// Represents a declaration of a new variable.
-    rule declaration() -> Expr
-        = "let" _ i:identifier()":" _ t:primitive_type() _ "=" _ e:assignable() { 
-            Expr::Declare(i, match t { Expr::Type(t) => t.into(), _ => panic!("parser returned an illegal expression type")}, e.into())
-        }
-        / "let" _ i:identifier() _ "=" _ e:assignable() { Expr::Declare(i, get_type(&e).into(), e.into()) }
-
-    /// Represents an assignment of an existing variable.
-    rule assignment() -> Expr
-        = !"let" i:identifier() _ "=" _ e:expression() { Expr::Assign(i, Box::new(e)) }
-
-    /// Represents a literal value.
-    rule literal() -> Expr
-        // match chars 0-9 in repeated order - integer type
-        = int:$(['0'..='9']+) { Expr::Literal(int.to_owned(), Type::Int64.into()) }
-        // match chars 0-9 in repeated order with a decimal point - float type
-        / float:$(['0'..='9']+ "." ['0'..='9']+) { Expr::Literal(float.to_owned(), Type::Float64.into())}
-        // matches true or false - todo: merge these
-        / bool:$("true" / "false") { Expr::Literal(bool.to_owned(), Type::Bool.into())}
-
-    rule identifier() -> String
-        = quiet!{ n:$(['a'..='z' | 'A'..='Z' | '_']['a'..='z' | 'A'..='Z' | '0'..='9' | '_']*) { n.to_owned() } }
-        / expected!("identifier")
-
-    /// Whitespace and comment consumer rule
-    rule _() 
-        = quiet!{[' ' | '\t']*}
-});
-
+/// Represents a function declaration in the AST.
+#[derive(Clone)]
+pub struct Func {
+    return_type: Type,
+}
 
 /// Represents the current scope for a given block.
 #[derive(Clone)]
 pub struct Scope {
     /// A hashmap of variables in this scope.
-    vars: HashMap<String, Type>
+    vars: HashMap<String, Var>,
+    /// A hashmap of functions in this scope.
+    funcs: HashMap<String, Func>
 }
 
 impl Default for Scope {
     fn default() -> Self {
-        Self { vars: HashMap::new() }
+        Self { vars: HashMap::new(), funcs: HashMap::new() }
+    }
+}
+
+impl Scope {
+    pub fn get_expr_type(&self, expr: &Expr) -> Result<Type, Box<dyn Error>> {
+        match expr {
+            Expr::Literal(_, literal_type) => Ok(*literal_type.clone()),
+            // Expr::Function(name, params, v, d) => Ok()
+            _ => Err("cannot infer type".into())
+        }
     }
 }
 
@@ -179,7 +157,7 @@ impl Default for Scope {
 pub fn build_ast(input: String) -> Result<Vec<Expr>, Box<dyn Error>> {
     return match parser::statements(input.as_str()) {
         Ok(statements) => Ok(statements),
-        Err(e) => Err(e.into())
+        Err(e) => { print_error(input, &e); Err(e.into())}
     }
 }
 
@@ -218,7 +196,7 @@ fn validate_ast_declare(scope: &mut Scope, name: String, lhs: Box<Type>, value: 
         }
     }
     // declare variables in this scope
-    scope.vars.insert(name, *lhs);
+    scope.vars.insert(name, Var { field_type: *lhs.clone(), constant: false });
     Ok(())
 } 
 
@@ -230,7 +208,7 @@ fn validate_ast_assign(scope: &mut Scope, name: String, value: Box<Expr>) -> Res
     }
     // if expression is literal, check if they are the same type
     if let Expr::Literal(_, rhs) = *value {
-        if !test_types_equal(scope.vars.get(&name).unwrap().clone(),*rhs) {
+        if !test_var_type_equal(scope.vars.get(&name).unwrap().clone(),*rhs) {
             return Err("types are not equal".into())
         }
     }
@@ -238,8 +216,13 @@ fn validate_ast_assign(scope: &mut Scope, name: String, value: Box<Expr>) -> Res
     Ok(())
 }
 
+/// Test if a variable type is equal to the target type.
+pub(crate) fn test_var_type_equal(lhs: Var, rhs: Type) -> bool {
+    return test_types_equal(lhs.field_type, rhs)
+}
+
 /// Test if the two types are equal.
-fn test_types_equal(lhs: Type, rhs: Type) -> bool {
+pub(crate) fn test_types_equal(lhs: Type, rhs: Type) -> bool {
     match (lhs, rhs) {
         (Type::Int64, Type::Int64) => true,
         (Type::Float64, Type::Float64) => true,
@@ -248,7 +231,7 @@ fn test_types_equal(lhs: Type, rhs: Type) -> bool {
 }
 
 /// Attempt to fetch the type of the given expression.
-fn get_type(expr: &Expr) -> Type {
+pub(crate) fn get_type(expr: &Expr) -> Type {
     match expr {
         Expr::Literal(_, t) => *t.clone(),
         _ => panic!("cannot get type of non-literal expression")
