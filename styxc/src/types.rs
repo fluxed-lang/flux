@@ -56,7 +56,7 @@ pub enum Type {
 
 impl PartialEq for Type {
     fn eq(&self, other: &Type) -> bool {
-        return equate_types(self, other);
+        equate_types(self, other)
     }
 }
 
@@ -164,5 +164,37 @@ pub(crate) fn validate_array_insertion(v: &Type, array: &Type) -> bool {
     match array {
         Array( value) => is_subtype(value, v),
         _ => false
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::types::{Type, equate_types, is_subtype, validate_intersection};
+
+    #[test]
+    fn type_equality() {
+        assert!(equate_types(&Type::Int64, &Type::Int64));
+    }
+
+    #[test]
+    fn union_inclusion() {
+        assert!(is_subtype(&Type::Int64, &Type::Union(vec![Type::Int64, Type::Int32])));
+    }
+
+
+    #[test]
+    fn test_intersection() {
+        let a = Type::Union(vec![Type::Int64, Type::Int32]);
+        let b = Type::Union(vec![Type::Int32, Type::Int16]);
+        assert!(equate_types(&Type::Int32, &Type::Intersection(vec![a, b])))
+    }
+
+    #[test]
+    fn test_validate_intersection() {
+        let a = Type::Union(vec![Type::Int64, Type::Int32]);
+        let b = Type::Union(vec![Type::Int32, Type::Int16]);
+        assert!(validate_intersection(
+            &Type::Intersection(vec![a, b])
+        ).is_ok())
     }
 }
