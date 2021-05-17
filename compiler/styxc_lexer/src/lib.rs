@@ -31,20 +31,60 @@ fn float_e_notation(lex: &mut Lexer<TokenType>) -> Option<f64> {
 #[derive(Logos, Debug, PartialEq, Clone)]
 pub enum TokenType {
     /// An identifier token.
-    #[regex(r"[a-zA-Z_]+")]
-    Ident,
+    #[regex(r"[a-zA-Z_]+", |lex| lex.slice().parse())]
+    Ident(String),
 
     /// Represents the 'let' token.
     #[token("let")]
-    DeclarationInitiator,
+    Declaration,
 
     /// Represents a constant initiator.
     #[token("const")]
-    ConstantInitiator,
+    ConstantDeclaration,
 
     /// Represents a function initiator.
     #[token("fn")]
     FuncInitiator,
+
+    /// Represents an assignment operator.
+    #[token("=")]
+    Assign,
+
+    /// Represents an addition operator.
+    #[token("+")]
+    Plus,   
+
+    /// Represents an increment operator.
+    #[token("+=")]
+    PlusEq,
+
+    /// Represents an equality operator.
+    #[token("==")]
+    Eq,
+
+    /// Represents a less than operator.
+    #[token("<")]
+    Lt,
+
+    /// Represents a greater than operator.
+    #[token(">")]
+    Gt,
+
+    /// Represents a less than or equal operator.
+    #[token("<=")]
+    Le,
+
+    /// Represents a greater than or equal to operator.
+    #[token(">=")]  
+    Ge,
+
+    /// Represents a logical or operator.
+    #[token("||")]
+    Or,
+
+    /// Represents a logical and operator.
+    #[token("&&")]
+    And,
 
     /// Represents an integer literal.
     #[regex("-?[0-9]+", |lex| lex.slice().parse())]
@@ -68,7 +108,7 @@ pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
     from_fn(move || {
         let token = Token {
             token_type: lex.next().unwrap(),
-            length: lex.slice().len()
+            length: lex.slice().len(),
         };
         Some(token)
     })
@@ -81,7 +121,7 @@ mod tests {
     #[test]
     fn test_ident() {
         let mut lex = TokenType::lexer("hello_world");
-        assert_eq!(lex.next(), Some(TokenType::Ident));
+        assert_eq!(lex.next(), Some(TokenType::Ident("hello_world".into())));
     }
 
     #[test]
@@ -105,8 +145,21 @@ mod tests {
         let first = iter.next().unwrap();
         let second = iter.next().unwrap();
         assert_eq!(first.length, "input".len());
-        assert_eq!(first.token_type, TokenType::Ident);
+        assert_eq!(first.token_type, TokenType::Ident("input".into()));
         assert_eq!(second.length, "123".len());
         assert_eq!(second.token_type, TokenType::Integer(123));
+    }
+
+    #[test]
+    fn test_binary_expr() {
+        let mut lex = TokenType::lexer("x <= 3");
+        assert_eq!(lex.next().unwrap(), TokenType::Ident("x".into()));
+        assert_eq!(lex.next().unwrap(), TokenType::Le);
+        assert_eq!(lex.next().unwrap(), TokenType::Integer(3));
+
+        let mut lex = TokenType::lexer("x += 2");
+        assert_eq!(lex.next().unwrap(), TokenType::Ident("x".into()));
+        assert_eq!(lex.next().unwrap(), TokenType::PlusEq);
+        assert_eq!(lex.next().unwrap(), TokenType::Integer(2));
     }
 }
