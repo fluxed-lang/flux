@@ -1,12 +1,12 @@
 extern crate clap;
 extern crate log;
 
-use styxc::ast::{Scope, build_ast, validate_ast};
 use clap::{AppSettings, Clap};
-use log::{error, debug, LevelFilter};
+use log::{debug, error, LevelFilter};
+use std::fs;
 use std::path::Path;
 use std::process::exit;
-use std::fs;
+use styxc::ast::{build_ast, validate_ast, Scope};
 
 /// Execute styx files using the Styx JIT compiler.
 #[derive(Clap)]
@@ -27,8 +27,9 @@ fn main() {
         // set filter level depending on verbosity
         .filter_level(match opts.verbose {
             true => LevelFilter::Debug,
-            false => LevelFilter::Info
-        }).init();
+            false => LevelFilter::Info,
+        })
+        .init();
 
     let filepath = Path::new(&opts.input);
     // check if the target file exists.
@@ -49,9 +50,15 @@ fn main() {
         }
     };
     // print code for debugging purposes
-    debug!("Code to compile:\n{}", file);
-    // build the AST
     debug!("Building the AST...");
+    debug!("Code to compile:");
+    if opts.verbose {
+        println!("[PEG_INPUT_START]");
+        println!("{}", file);
+        println!("[PEG_TRACE_START]");
+    }
+
+    // build the AST
     let ast = match build_ast(file) {
         Ok(ast) => ast,
         Err(e) => {

@@ -1,5 +1,5 @@
-extern crate peg;
 extern crate annotate_snippets;
+extern crate peg;
 
 pub mod ast;
 pub mod errors;

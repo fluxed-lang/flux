@@ -68,13 +68,13 @@ pub(crate) fn validate_intersection(t: &Type) -> Result<(), Box<dyn Error>> {
             for t in types {
                 // test if type is a primitive
                 if !is_primitive(t) {
-                    continue
+                    continue;
                 }
                 return Err("Cannot compute intesection type of primitives".into());
             }
-            return Ok(())
+            return Ok(());
         }
-        _ => Err("Cannot validate intersection type if it isn't an intersection type!".into())
+        _ => Err("Cannot validate intersection type if it isn't an intersection type!".into()),
     }
 }
 
@@ -82,12 +82,12 @@ pub(crate) fn validate_intersection(t: &Type) -> Result<(), Box<dyn Error>> {
 pub(crate) fn is_subtype(a: &Type, b: &Type) -> bool {
     // set a can never be a member of set a
     if equate_types(a, b) {
-        return false
+        return false;
     };
-    
+
     match (a, b) {
         (a, Type::Union(types)) => return types.contains(&a),
-        _ => false
+        _ => false,
     }
 }
 
@@ -95,10 +95,10 @@ pub(crate) fn is_subtype(a: &Type, b: &Type) -> bool {
 pub(crate) fn equate_types(a: &Type, b: &Type) -> bool {
     // test if can use primitive equality
     if is_primitive(a) && is_primitive(b) {
-        return equate_primitives(a, b)
+        return equate_primitives(a, b);
     };
     match (a, b) {
-        _ => false
+        _ => false,
     }
 }
 
@@ -116,8 +116,8 @@ pub(crate) fn is_primitive(t: &Type) -> bool {
         UInt8 => true,
         Float128 => true,
         Float64 => true,
-        Bool=> true,
-        _ => false
+        Bool => true,
+        _ => false,
     }
 }
 
@@ -136,7 +136,7 @@ pub(crate) fn equate_primitives(a: &Type, b: &Type) -> bool {
         (Float128, Float128) => true,
         (Float64, Float64) => true,
         (Bool, Bool) => true,
-        _ => false
+        _ => false,
     }
 }
 
@@ -145,7 +145,7 @@ pub(crate) fn validate_map_insertion(k: &Type, v: &Type, map: &Type) -> bool {
     use Type::*;
     match map {
         Map(key, value) => is_subtype(key, k) && is_subtype(value, v),
-        _ => false
+        _ => false,
     }
 }
 
@@ -153,8 +153,8 @@ pub(crate) fn validate_map_insertion(k: &Type, v: &Type, map: &Type) -> bool {
 pub(crate) fn validate_set_insertion(v: &Type, set: &Type) -> bool {
     use Type::*;
     match set {
-        Set( value) => is_subtype(value, v),
-        _ => false
+        Set(value) => is_subtype(value, v),
+        _ => false,
     }
 }
 
@@ -162,14 +162,14 @@ pub(crate) fn validate_set_insertion(v: &Type, set: &Type) -> bool {
 pub(crate) fn validate_array_insertion(v: &Type, array: &Type) -> bool {
     use Type::*;
     match array {
-        Array( value) => is_subtype(value, v),
-        _ => false
+        Array(value) => is_subtype(value, v),
+        _ => false,
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::types::{Type, equate_types, is_subtype, validate_intersection};
+    use crate::types::{equate_types, is_subtype, validate_intersection, Type};
 
     #[test]
     fn type_equality() {
@@ -178,9 +178,11 @@ mod tests {
 
     #[test]
     fn union_inclusion() {
-        assert!(is_subtype(&Type::Int64, &Type::Union(vec![Type::Int64, Type::Int32])));
+        assert!(is_subtype(
+            &Type::Int64,
+            &Type::Union(vec![Type::Int64, Type::Int32])
+        ));
     }
-
 
     #[test]
     fn test_intersection() {
@@ -193,8 +195,6 @@ mod tests {
     fn test_validate_intersection() {
         let a = Type::Union(vec![Type::Int64, Type::Int32]);
         let b = Type::Union(vec![Type::Int32, Type::Int16]);
-        assert!(validate_intersection(
-            &Type::Intersection(vec![a, b])
-        ).is_ok())
+        assert!(validate_intersection(&Type::Intersection(vec![a, b])).is_ok())
     }
 }

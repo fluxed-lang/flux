@@ -1,7 +1,18 @@
-use crate::ast::{Expr, get_type};
+use crate::ast::{get_type, Expr};
 use crate::types::Type;
 
 peg::parser!(pub grammar parser() for str {
+    rule traced<T>(e: rule<T>) -> T =
+        &(input:$([_]*) {
+            #[cfg(feature = "trace")]
+            println!("[PEG_INPUT_START]\n{}\n[PEG_TRACE_START]", input);
+        })
+        e:e()? {?
+            #[cfg(feature = "trace")]
+            println!("[PEG_TRACE_STOP]");
+            e.ok_or("")
+        }
+
     /// General statement matcher - attempts to match all statements in a file.
     pub rule statements() -> Vec<Expr>
         = s:(statement()*) { s }
@@ -30,7 +41,7 @@ peg::parser!(pub grammar parser() for str {
 
     /// Represents a declaration of a new variable.
     rule declaration() -> Expr
-        = "let" _ i:identifier()":" _ t:primitive_type() _ "=" _ e:assignable() { 
+        = "let" _ i:identifier()":" _ t:primitive_type() _ "=" _ e:assignable() {
             Expr::Declare(i, match t { Expr::Type(t) => t.into(), _ => panic!("parser returned an illegal expression type")}, e.into())
         }
         / "let" _ i:identifier() _ "=" _ e:assignable() { Expr::Declare(i, get_type(&e).into(), e.into()) }
@@ -48,7 +59,7 @@ peg::parser!(pub grammar parser() for str {
         // match chars 0-9 in repeated order with a decimal point - float type
         / float:$(['0'..='9']+ "." ['0'..='9']+) { Expr::Literal(float.to_owned(), Type::Float64.into())}
         // matches true or false - todo: merge these
-        / bool:$("true" / "false") { Expr::Literal(bool.to_owned(), Type::Bool.into())}
+        / bool:$("true" / "false") { Expr::Literal(bool.to_owned(), Type::Bool.into()) }
         / expected!("literal")
 
     rule identifier() -> String
@@ -60,52 +71,21 @@ peg::parser!(pub grammar parser() for str {
         / expected!("import")
 
     /// Whitespace and comment consumer rule
-    rule _() 
-        = comment() / whitespace()
+    rule _()
+        = comment()+ / whitespace()
 
     /// Comment consumer rule.
     rule comment()
         = single_line_comment() / multi_line_comment()
 
     /// Matches a single line # comment.
-    rule single_line_comment() 
-        = quiet!{"//" [_]* "\n"}
+    rule single_line_comment()
+        = quiet!{"//" [^ '\n']* ("\n"+ / ![_])}
 
     /// Matches a single line
     rule multi_line_comment()
-        = quiet!{"/*"[_]*"*/"}
-    
+        = quiet!{"/*" [_]* "*/"}
+
     rule whitespace()
         = quiet!{[' ' | '\t']*}
 });
-
-// /// Strip the comments from a source string.
-// pub(crate) fn strip_comments(source: String) -> String {
-//     lazy_static! {
-//         static ref SINGLE_LINE_COMMENT: Regex = Regex::new(r"\/\/.+?(\n|$)").unwrap();
-//         static ref MULTI_LINE_COMMENT: Regex = Regex::new(r"\/*.+*/").unwrap();
-//     }
-//     // replace comments
-//     MULTI_LINE_COMMENT.replace_all(
-//         &SINGLE_LINE_COMMENT.replace_all(&source, ""), "")
-//     .to_string()
-// }
-
-// /// Collapse code into a single column of expressions.
-// pub(crate) fn collapse_code(source: String) -> String {
-//     let expressions = Vec::new();
-//     // iterate over the lines and remove empty strings
-//     for line in source.lines() {
-//         if line.len() == 0 {
-//             continue;
-//         }
-//         // check for access
-//         if line.starts_with('.') {
-//             expressions.get(index)
-//         } else {
-//             expressions.push(line)
-//         }
-//     }
-//     // join expressions with new-lines again
-//     expressions.join("\n")
-// }
