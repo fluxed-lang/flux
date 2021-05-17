@@ -3,6 +3,7 @@ use crate::lexer::parser;
 use crate::types::Type;
 use std::{collections::HashMap, error::Error};
 
+#[derive(Debug)]
 pub enum Expr {
     /// Represents a literal type. The second argument is the type of the literal.
     Literal(String, Box<Type>),

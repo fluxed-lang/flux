@@ -14,33 +14,33 @@ peg::parser!(pub grammar parser() for str {
         }
 
     /// General statement matcher - attempts to match all statements in a file.
-    pub rule statements() -> Vec<Expr>
+    pub(crate) rule statements() -> Vec<Expr>
         = s:(statement()*) { s }
 
     /// General statement matcher - attempts to match an expression, consuming whitespace around it.
     /// Expressions end with a new-line, or when EOF is reached.
-    rule statement() -> Expr // hello i'm Ben and i like crisps and watching peppa pig :)
+    pub(crate) rule statement() -> Expr // hello i'm Ben and i like crisps and watching peppa pig :)
         = _ e:expression() _ ("\n"+ / ![_]) { e }
 
     /// Represents a language expression.
-    rule expression() -> Expr
+    pub(crate) rule expression() -> Expr
         = literal()
         / declaration()
         / assignment()
         / import()
 
-    rule assignable() -> Expr
+    pub(crate) rule assignable() -> Expr
         = literal()
 
     /// Represents a primitive type name
-    rule primitive_type() -> Expr
+    pub(crate) rule primitive_type() -> Expr
         = "int" { Expr::Type(Type::Int64.into()) }
         / "float" { Expr::Type(Type::Float64.into()) }
         / "bool" { Expr::Type(Type::Bool.into()) }
         / expected!("primitive")
 
     /// Represents a declaration of a new variable.
-    rule declaration() -> Expr
+    pub(crate) rule declaration() -> Expr
         = "let" _ i:identifier()":" _ t:primitive_type() _ "=" _ e:assignable() {
             Expr::Declare(i, match t { Expr::Type(t) => t.into(), _ => panic!("parser returned an illegal expression type")}, e.into())
         }
@@ -48,12 +48,12 @@ peg::parser!(pub grammar parser() for str {
         / expected!("declaration")
 
     /// Represents an assignment of an existing variable.
-    rule assignment() -> Expr
+    pub(crate) rule assignment() -> Expr
         = !"let" i:identifier() _ "=" _ e:expression() { Expr::Assign(i, Box::new(e)) }
         / expected!("assignment")
 
     /// Represents a literal value.
-    rule literal() -> Expr
+    pub(crate) rule literal() -> Expr
         // match chars 0-9 in repeated order - integer type
         = int:$(['0'..='9']+) { Expr::Literal(int.to_owned(), Type::Int64.into()) }
         // match chars 0-9 in repeated order with a decimal point - float type
@@ -62,11 +62,11 @@ peg::parser!(pub grammar parser() for str {
         / bool:$("true" / "false") { Expr::Literal(bool.to_owned(), Type::Bool.into()) }
         / expected!("literal")
 
-    rule identifier() -> String
+    pub(crate) rule identifier() -> String
         = quiet!{ n:$(['a'..='z' | 'A'..='Z' | '_']['a'..='z' | 'A'..='Z' | '0'..='9' | '_']*) { n.to_owned() } }
         / expected!("identifier")
 
-    rule import() -> Expr
+    pub(crate) rule import() -> Expr
         = "import" _ i:identifier() _ "from" _ n:$(['a'..='z']) _ { Expr::Import(i, n.to_owned()) }
         / expected!("import")
 
@@ -75,17 +75,46 @@ peg::parser!(pub grammar parser() for str {
         = comment()+ / whitespace()
 
     /// Comment consumer rule.
-    rule comment()
+    pub(crate) rule comment()
         = single_line_comment() / multi_line_comment()
 
     /// Matches a single line # comment.
-    rule single_line_comment()
+    pub(crate) rule single_line_comment()
         = quiet!{"//" [^ '\n']* ("\n"+ / ![_])}
 
     /// Matches a single line
-    rule multi_line_comment()
+    pub(crate) rule multi_line_comment()
         = quiet!{"/*" [_]* "*/"}
 
-    rule whitespace()
+    pub(crate) rule whitespace()
         = quiet!{[' ' | '\t']*}
 });
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_whitespace() {
+        parser::whitespace(" ").expect("failed to match whitespace");
+        parser::whitespace("x").expect_err("illegal whitespace match");
+    }
+
+    #[test]
+    fn test_ident() {
+        parser::identifier("x").expect("failed to match identifier");
+        parser::identifier("1234").expect_err("illegal ident match");
+    }
+
+    #[test]
+    fn test_assign() {
+        parser::assignment("x = 1").expect("failed to match assignment");
+        parser::assignment("1 = 1").expect_err("illegal assignment match");
+    }
+
+    #[test]
+    fn test_declaration() {
+        parser::declaration("let x = 1").expect("failed to match declaration");
+        parser::declaration("x = 3").expect_err("illegal declaration match");
+    }
+}
