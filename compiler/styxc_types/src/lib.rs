@@ -61,7 +61,7 @@ impl PartialEq for Type {
 }
 
 /// Test if an intersection type is valid.
-pub(crate) fn validate_intersection(t: &Type) -> Result<(), Box<dyn Error>> {
+pub fn validate_intersection(t: &Type) -> Result<(), Box<dyn Error>> {
     match t {
         Type::Intersection(types) => {
             // iterate over types
@@ -79,7 +79,7 @@ pub(crate) fn validate_intersection(t: &Type) -> Result<(), Box<dyn Error>> {
 }
 
 /// Test if one type is included within another. Can be used to test for extension.
-pub(crate) fn is_subtype(a: &Type, b: &Type) -> bool {
+pub fn is_subtype(a: &Type, b: &Type) -> bool {
     // set a can never be a member of set a
     if equate_types(a, b) {
         return false;
@@ -92,7 +92,7 @@ pub(crate) fn is_subtype(a: &Type, b: &Type) -> bool {
 }
 
 /// Test if type `a` is equal to type `b`.
-pub(crate) fn equate_types(a: &Type, b: &Type) -> bool {
+pub fn equate_types(a: &Type, b: &Type) -> bool {
     // test if can use primitive equality
     if is_primitive(a) && is_primitive(b) {
         return equate_primitives(a, b);
@@ -103,7 +103,7 @@ pub(crate) fn equate_types(a: &Type, b: &Type) -> bool {
 }
 
 /// Test if type `t` is a primitive.
-pub(crate) fn is_primitive(t: &Type) -> bool {
+pub fn is_primitive(t: &Type) -> bool {
     use Type::*;
     match t {
         Int64 => true,
@@ -122,7 +122,7 @@ pub(crate) fn is_primitive(t: &Type) -> bool {
 }
 
 /// Test if two primitive types are equal.
-pub(crate) fn equate_primitives(a: &Type, b: &Type) -> bool {
+pub fn equate_primitives(a: &Type, b: &Type) -> bool {
     use Type::*;
     match (a, b) {
         (Int64, Int64) => true,
@@ -141,7 +141,7 @@ pub(crate) fn equate_primitives(a: &Type, b: &Type) -> bool {
 }
 
 /// Validate if a type is valid for insertion into a map.
-pub(crate) fn validate_map_insertion(k: &Type, v: &Type, map: &Type) -> bool {
+pub fn validate_map_insertion(k: &Type, v: &Type, map: &Type) -> bool {
     use Type::*;
     match map {
         Map(key, value) => is_subtype(key, k) && is_subtype(value, v),
@@ -150,7 +150,7 @@ pub(crate) fn validate_map_insertion(k: &Type, v: &Type, map: &Type) -> bool {
 }
 
 /// Validate if a type is valid for insertion into a map.
-pub(crate) fn validate_set_insertion(v: &Type, set: &Type) -> bool {
+pub fn validate_set_insertion(v: &Type, set: &Type) -> bool {
     use Type::*;
     match set {
         Set(value) => is_subtype(value, v),
@@ -159,7 +159,7 @@ pub(crate) fn validate_set_insertion(v: &Type, set: &Type) -> bool {
 }
 
 /// Validate if a type is valid for insertion into a map.
-pub(crate) fn validate_array_insertion(v: &Type, array: &Type) -> bool {
+pub fn validate_array_insertion(v: &Type, array: &Type) -> bool {
     use Type::*;
     match array {
         Array(value) => is_subtype(value, v),
@@ -169,7 +169,7 @@ pub(crate) fn validate_array_insertion(v: &Type, array: &Type) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::types::{equate_types, is_subtype, validate_intersection, Type};
+    use super::*;
 
     #[test]
     fn type_equality() {
