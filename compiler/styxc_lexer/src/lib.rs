@@ -30,6 +30,12 @@ fn float_e_notation(lex: &mut Lexer<TokenType>) -> Option<f64> {
 /// An enum of possible token types.
 #[derive(Logos, Debug, PartialEq, Clone)]
 pub enum TokenType {
+    #[regex(r"//.+\n")]
+    LineComment,
+
+    #[regex(r"/*.+*/")]
+    BlockComment,
+
     /// An identifier token.
     #[regex(r"[a-zA-Z_]+", |lex| lex.slice().parse())]
     Ident(String),
@@ -45,6 +51,22 @@ pub enum TokenType {
     /// Represents a function initiator.
     #[token("fn")]
     FuncInitiator,
+
+    /// Represents a function return identifier.
+    #[token("->")]
+    FuncReturn,
+
+    #[token("(")]
+    ParenthesesOpen,
+
+    #[token(")")]
+    ParenthesesClose,
+
+    #[token("{")]
+    BracesOpen,
+
+    #[token("}")]
+    BracesClose,
 
     /// Represents an assignment operator.
     #[token("=")]
