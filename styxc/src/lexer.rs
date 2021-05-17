@@ -67,7 +67,7 @@ peg::parser!(pub grammar parser() for str {
         / expected!("identifier")
 
     pub(crate) rule import() -> Expr
-        = "import" _ i:identifier() _ "from" _ n:$(['a'..='z']) _ { Expr::Import(i, n.to_owned()) }
+        = "import" _ i:identifier() _ "from" _ n:$(['a'..='z']+) _ { Expr::Import(i, n.to_owned()) }
         / expected!("import")
 
     /// Whitespace and comment consumer rule
@@ -116,5 +116,22 @@ mod tests {
     fn test_declaration() {
         parser::declaration("let x = 1").expect("failed to match declaration");
         parser::declaration("x = 3").expect_err("illegal declaration match");
+    }
+
+    #[test]
+    fn test_single_line_comment() {
+        parser::single_line_comment("// hello world").expect("failed to match single line comment");
+        parser::single_line_comment("let x = 1").expect_err("illegal single line comment match");
+    }
+
+    #[test]
+    fn test_expression() {
+        parser::expression("let x = 1").expect("failed to match expression");
+    }
+
+    #[test]
+    fn test_import() {
+        parser::import("import fox from fox").expect("failed to match import");
+        parser::import("import fox from ./").expect_err("illegal import match");
     }
 }
