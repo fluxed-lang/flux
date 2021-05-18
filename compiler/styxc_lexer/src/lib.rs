@@ -21,12 +21,6 @@ fn integer_mega(lex: &mut Lexer<TokenType>) -> Option<i64> {
     Some(n * 1_000_000)
 }
 
-fn float_e_notation(lex: &mut Lexer<TokenType>) -> Option<f64> {
-    let slice = lex.slice();
-    let n: f64 = slice[..slice.len() - 1].parse().ok()?;
-    Some(n)
-}
-
 /// An enum of possible token types.
 #[derive(Logos, Debug, PartialEq, Clone)]
 pub enum TokenType {
@@ -115,9 +109,17 @@ pub enum TokenType {
     Integer(i64),
 
     /// Represents a float literal.
-    #[regex(r"[0-9]+\.[0-9]+", |lex| lex.slice().parse())]
-    #[regex(r"[0-9]+\.[0-9]+e[0-9]+", float_e_notation)]
+    #[regex(r"-?[0-9]+\.[0-9]+", |lex| lex.slice().parse())]
+    #[regex(r"-?[0-9]+\.[0-9]+e-?[0-9]+", |lex| lex.slice().parse())]
     Float(f64),
+
+    /// Represents a character literal.
+    #[regex(r#"'[a-zA-Z]'"#, |lex| lex.slice().parse())]
+    Char(char),
+
+    /// Represents a string literal.
+    #[regex(r#"".+""#, |lex| lex.slice().parse())]
+    String(String),
 
     #[error]
     #[regex(r"[ \t\n\f]+", logos::skip)]
@@ -142,8 +144,9 @@ mod tests {
 
     #[test]
     fn test_ident() {
-        let mut lex = TokenType::lexer("hello_world");
+        let mut lex = TokenType::lexer("hello_world\ni_love_foxes");
         assert_eq!(lex.next(), Some(TokenType::Ident("hello_world".into())));
+        assert_eq!(lex.next(), Some(TokenType::Ident("i_love_foxes".into())));
     }
 
     #[test]
@@ -157,8 +160,11 @@ mod tests {
 
     #[test]
     fn test_float() {
-        let mut lex = TokenType::lexer("1.0\n2e2\n3.1e3");
+        let mut lex = TokenType::lexer("1.0\n2.0e2\n3.1e3\n-46.2e-3");
         assert_eq!(lex.next(), Some(TokenType::Float(1.0)));
+        assert_eq!(lex.next(), Some(TokenType::Float(2e2)));
+        assert_eq!(lex.next(), Some(TokenType::Float(3.1e3)));
+        assert_eq!(lex.next(), Some(TokenType::Float(-46.2e-3)));
     }
 
     #[test]
@@ -175,13 +181,18 @@ mod tests {
     #[test]
     fn test_binary_expr() {
         let mut lex = TokenType::lexer("x <= 3");
-        assert_eq!(lex.next().unwrap(), TokenType::Ident("x".into()));
-        assert_eq!(lex.next().unwrap(), TokenType::Le);
-        assert_eq!(lex.next().unwrap(), TokenType::Integer(3));
+        assert_eq!(lex.next(), Some(TokenType::Ident("x".into())));
+        assert_eq!(lex.next(), Some(TokenType::Le));
+        assert_eq!(lex.next(), Some(TokenType::Integer(3)));
 
         let mut lex = TokenType::lexer("x += 2");
-        assert_eq!(lex.next().unwrap(), TokenType::Ident("x".into()));
-        assert_eq!(lex.next().unwrap(), TokenType::PlusEq);
-        assert_eq!(lex.next().unwrap(), TokenType::Integer(2));
+        assert_eq!(lex.next(), Some(TokenType::Ident("x".into())));
+        assert_eq!(lex.next(), Some(TokenType::PlusEq));
+        assert_eq!(lex.next(), Some(TokenType::Integer(2)));
+    }
+    #[test]
+    fn test_char() {
+        let mut lex = TokenType::lexer("'u'");
+        assert_eq!(lex.next(), Some(TokenType::Char('u')));
     }
 }

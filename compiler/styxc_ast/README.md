@@ -1,3 +1,3 @@
 # styxc_ast
 
-Contains the AST builder for the Styx language.
+Contains the AST definitions for the Styx language.

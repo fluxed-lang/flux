@@ -1,7 +1,8 @@
 [workspace]
 members = [
-    "styxc",
     "styxc_ast",
     "styxc_lexer",
-    "styxc_types"
+    "styxc_parser",
+    "styxc_types",
+    "styxc"
 ]
