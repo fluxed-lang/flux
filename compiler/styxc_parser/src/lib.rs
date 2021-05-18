@@ -1,3 +1,8 @@
+use std::error::Error;
+
+use styxc_ast::{expr::Expr, scope::Scope};
+use styxc_lexer::Token;
+
 
 pub struct Parser {
     source: String,
