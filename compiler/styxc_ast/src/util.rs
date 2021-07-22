@@ -1,8 +1,6 @@
 use std::error::Error;
 
-use styxc_types::Type;
-
-use crate::{expr::Expr, scope::Scope, var::Var};
+use crate::{expr::Expr, scope::Scope, types::Type, var::Var};
 
 /// Recursively descend through the AST and ensure all types are correct.
 pub fn validate_ast(scope: &mut Scope, expressions: Vec<Expr>) -> Result<(), Box<dyn Error>> {

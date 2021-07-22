@@ -4,8 +4,5 @@ version = "0.1.0"
 authors = ["SkyezerFox <actuallyori@gmail.com>"]
 edition = "2018"
 
-[dependencies.styxc_types]
-path = "../styxc_types"
-
 [dependencies.styxc_lexer]
 path = "../styxc_lexer"

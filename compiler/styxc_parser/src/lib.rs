@@ -3,11 +3,10 @@ use std::error::Error;
 use styxc_ast::{expr::Expr, scope::Scope};
 use styxc_lexer::Token;
 
-
 pub struct Parser {
     source: String,
-    tokens: Box<dyn Iterator<Item = Token>>, 
-    global_scope: Scope
+    tokens: Box<dyn Iterator<Item = Token>>,
+    global_scope: Scope,
 }
 
 impl Parser {
@@ -16,16 +15,16 @@ impl Parser {
         Self {
             source: raw_source.into(),
             global_scope: Scope::default(),
-            tokens: tokens
+            tokens: tokens,
         }
     }
-    
+
     /// Attempt to build the AST.
     pub fn build(&mut self) -> Result<(), Box<dyn Error>> {
         // store the top level expressions.
         let expressions: Vec<Expr> = match self.build_expressions() {
             Ok(exprs) => exprs,
-            Err(e) => return Err(e.into())
+            Err(e) => return Err(e.into()),
         };
 
         Ok(())
@@ -46,7 +45,7 @@ impl Parser {
         // can only build a function if it has an identifier.
         let name = match next_token.unwrap().token_type {
             Ident(n) => n,
-            _ => return Err("attempted to match function without an identifier".into())
+            _ => return Err("attempted to match function without an identifier".into()),
         };
         // get the opening parameter parenthesis, single identifier, or typ
         let ident_or_parens = self.tokens.next();

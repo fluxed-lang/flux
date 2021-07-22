@@ -4,52 +4,36 @@ use std::error::Error;
 pub enum Type {
     /// Represents a 64-bit integer type.
     Int64,
-
     /// Represents a 32-bit integer type.
     Int32,
-
     /// Represents a 16-bit integer type.
     Int16,
-
     /// Represents an 8-bit integer type.
     Int8,
-
     /// Represents an unsigned 64-bit integer type.
     UInt64,
-
     /// Represents an unsigned 32-bit integer type.
     UInt32,
-
     /// Represents an unsigned 16-bit integer type.
     UInt16,
-
     /// Represents an unsigned 8-bit integer type.
     UInt8,
-
     /// Represents a 128-bit floating point type.
     Float128,
-
     /// Represents a 64-bit floating point type.
     Float64,
-
     /// Represents a boolean type.
     Bool,
-
     /// Represents an array type.
     Array(Box<Type>),
-
     /// Represents a map type.
     Map(Box<Type>, Box<Type>),
-
     /// Represents a set type.
     Set(Box<Type>),
-
     /// Represents an optional type.
     Optional(Box<Type>),
-
     /// Represents a union of types.
     Union(Vec<Type>),
-
     /// Represents an intersection type.
     Intersection(Vec<Type>),
 }

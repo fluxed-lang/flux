@@ -1,141 +1,252 @@
-use std::iter::from_fn;
+extern crate pest;
+#[macro_use]
+extern crate pest_derive;
 
 use logos::{Lexer, Logos};
+use std::{error::Error, str::Chars};
 
-/// Represents a token parsed by the lexer.
-#[derive(Clone)]
-pub struct Token {
-    pub length: usize,
-    pub token_type: TokenType,
+mod parser;
+
+fn parse_char(lexer: &mut Lexer<Token>) -> Result<char, Box<dyn Error>> {
+    // remove surrounding quotes
+    let mut chars = lexer.slice().chars();
+    chars.next();
+    chars.next_back();
+    let res = chars.as_str();
+
+    println!("{}", res);
+
+    match res.parse() {
+        Ok(char) => Ok(char),
+        Err(e) => Err(e.into()),
+    }
 }
 
-fn integer_kilo(lex: &mut Lexer<TokenType>) -> Option<i64> {
-    let slice = lex.slice();
-    let n: i64 = slice[..slice.len() - 1].parse().ok()?; // skip 'k'
-    Some(n * 1_000)
+fn extract_base_or_default(input: &str) -> Base {
+    let mut chars = input.chars();
+    if chars.next().unwrap() == '0' {
+        return match chars.next() {
+            Some('b') => Base::Binary,
+            Some('x') => Base::Hexadecimal,
+            Some('o') => Base::Octal,
+            // int is just a 0
+            None => {
+                return Base::Decimal;
+            }
+            // default to decimal
+            _ => Base::Decimal,
+        };
+    }
+    Base::Decimal
 }
 
-fn integer_mega(lex: &mut Lexer<TokenType>) -> Option<i64> {
-    let slice = lex.slice();
-    let n: i64 = slice[..slice.len() - 1].parse().ok()?; // skip 'm'
-    Some(n * 1_000_000)
+/// Represents an integer literal in the token stream.
+/// Holds information about its base prefix, and whether this is an invalid 'empty' integer.
+#[derive(Debug, PartialEq)]
+pub struct IntegerLiteral {
+    base: Base,
+    empty_int: bool,
 }
 
-/// An enum of possible token types.
-#[derive(Logos, Debug, PartialEq, Clone)]
-pub enum TokenType {
-    #[regex(r"//.+\n")]
+fn parse_integer(lexer: &mut Lexer<Token>) -> IntegerLiteral {
+    let mut chars: Chars = lexer.slice().chars();
+    // if starts with a base char
+    let mut base = Base::Decimal;
+    // okay to unwrap, must have matched at least one character
+    if chars.next().unwrap() == '0' {
+        base = match chars.next() {
+            Some('b') => Base::Binary,
+            Some('x') => Base::Hexadecimal,
+            Some('o') => Base::Octal,
+            // int is just a 0
+            None => {
+                return IntegerLiteral {
+                    base: Base::Decimal,
+                    empty_int: false,
+                }
+            }
+            // default to decimal
+            _ => Base::Decimal,
+        };
+    }
+    // if the next char is a digit, otherwise it is just a base prefix
+    match chars.next() {
+        None => IntegerLiteral {
+            base,
+            empty_int: true,
+        },
+        Some(_) => IntegerLiteral {
+            base,
+            empty_int: false,
+        },
+    }
+}
+
+/// Represents a float literal in the token stream.
+/// Holds information about its base prefix, and whether the exponent of the float is 'empty'.
+#[derive(Debug, PartialEq)]
+pub struct FloatLiteral {
+    base: Base,
+    empty_exponent: bool,
+}
+fn parse_float(lexer: &mut Lexer<Token>) -> FloatLiteral {
+    let mut chars: Chars = lexer.slice().chars();
+    // if starts with a base char
+    let mut base = Base::Decimal;
+    // okay to unwrap, must have matched at least one character
+    if chars.next().unwrap() == '0' {
+        base = match chars.next() {
+            Some('b') => Base::Binary,
+            Some('x') => Base::Hexadecimal,
+            Some('o') => Base::Octal,
+            // int is just a 0
+            None => {
+                return FloatLiteral {
+                    base: Base::Decimal,
+                    empty_exponent: true,
+                }
+            }
+            // default to decimal
+            _ => Base::Decimal,
+        };
+    }
+    let mut found_exponent = false;
+    loop {
+        if let Some(x) = chars.next() {
+            if x == 'e' && chars.next().is_some() {
+                found_exponent = true;
+                break;
+            }
+            continue;
+        }
+        break;
+    }
+
+    FloatLiteral {
+        base,
+        empty_exponent: !found_exponent,
+    }
+}
+
+/// Represents the base of a float or integer literal.
+#[derive(Debug, PartialEq)]
+pub enum Base {
+    Binary,
+    Octal,
+    Hexadecimal,
+    Decimal,
+}
+
+#[derive(Logos, Debug, PartialEq)]
+pub enum Token {
+    #[regex(r"[a-zA-Z_][a-zA-Z_0-9]+")]
+    Ident,
+
+    #[regex(r"-?[0-9]+", |lex| parse_integer(lex))]
+    #[regex(r"-?0[bdox][0-9a-fA-F]*", |lex| parse_integer(lex))]
+    Integer(IntegerLiteral),
+
+    #[regex(r"(-?[0-9]+)((\.[0-9]*)(e-?[0-9]+)?|(e-?[0-9]+))", |lex| parse_float(lex))]
+    #[regex(r"-?0[bdox][0-9a-fA-F]+\.[0-9a-fA-F]*", |lex| parse_float(lex))]
+    Float(FloatLiteral),
+
+    #[regex(r#""."?"#)]
+    String,
+
+    // #[regex(r"'.+'", |lex| parse_char(lex))]
+    // Char,
+    #[regex(r"//.*")]
     LineComment,
 
-    #[regex(r"/*.+*/")]
+    #[regex(r"/\*\s?(.*)\s?\*/")]
     BlockComment,
 
-    /// An identifier token.
-    #[regex(r"[a-zA-Z_]+", |lex| lex.slice().parse())]
-    Ident(String),
-
-    /// Represents the 'let' token.
-    #[token("let")]
-    Declaration,
-
-    /// Represents a constant initiator.
-    #[token("const")]
-    ConstantDeclaration,
-
-    /// Represents a function initiator.
-    #[token("fn")]
-    FuncInitiator,
-
-    /// Represents a function return identifier.
-    #[token("->")]
-    FuncReturn,
-
+    // One-char tokens:
+    /// ";"
+    #[token(";")]
+    Semi,
+    /// ","
+    #[token(",")]
+    Comma,
+    /// "."
+    #[token(".")]
+    Dot,
+    /// "("
     #[token("(")]
-    ParenthesesOpen,
-
+    OpenParen,
+    /// ")"
     #[token(")")]
-    ParenthesesClose,
-
+    CloseParen,
+    /// "{"
     #[token("{")]
-    BracesOpen,
-
+    OpenBrace,
+    /// "}"
     #[token("}")]
-    BracesClose,
-
-    /// Represents an assignment operator.
+    CloseBrace,
+    /// "["
+    #[token("[")]
+    OpenBracket,
+    /// "]"
+    #[token("]")]
+    CloseBracket,
+    /// "@"
+    #[token("@")]
+    At,
+    /// "#"
+    #[token("#")]
+    Pound,
+    /// "~"
+    #[token("~")]
+    Tilde,
+    /// "?"
+    #[token("?")]
+    Question,
+    /// ":"
+    #[token(":")]
+    Colon,
+    /// "$"
+    #[token("$")]
+    Dollar,
+    /// "="
     #[token("=")]
-    Assign,
-
-    /// Represents an addition operator.
-    #[token("+")]
-    Plus,   
-
-    /// Represents an increment operator.
-    #[token("+=")]
-    PlusEq,
-
-    /// Represents an equality operator.
-    #[token("==")]
     Eq,
-
-    /// Represents a less than operator.
+    /// "!"
+    #[token("!")]
+    Bang,
+    /// "<"
     #[token("<")]
     Lt,
-
-    /// Represents a greater than operator.
+    /// ">"
     #[token(">")]
     Gt,
-
-    /// Represents a less than or equal operator.
-    #[token("<=")]
-    Le,
-
-    /// Represents a greater than or equal to operator.
-    #[token(">=")]  
-    Ge,
-
-    /// Represents a logical or operator.
-    #[token("||")]
-    Or,
-
-    /// Represents a logical and operator.
-    #[token("&&")]
+    /// "-"
+    #[token("-")]
+    Minus,
+    /// "&"
+    #[token("&")]
     And,
-
-    /// Represents an integer literal.
-    #[regex("-?[0-9]+", |lex| lex.slice().parse())]
-    #[regex("-?[0-9]+k", integer_kilo)]
-    #[regex("-?[0-9]+m", integer_mega)]
-    Integer(i64),
-
-    /// Represents a float literal.
-    #[regex(r"-?[0-9]+\.[0-9]+", |lex| lex.slice().parse())]
-    #[regex(r"-?[0-9]+\.[0-9]+e-?[0-9]+", |lex| lex.slice().parse())]
-    Float(f64),
-
-    /// Represents a character literal.
-    #[regex(r#"'[a-zA-Z]'"#, |lex| lex.slice().parse())]
-    Char(char),
-
-    /// Represents a string literal.
-    #[regex(r#"".+""#, |lex| lex.slice().parse())]
-    String(String),
+    /// "|"
+    #[token("|")]
+    Or,
+    /// "+"
+    #[token("+")]
+    Plus,
+    /// "*"
+    #[token("*")]
+    Star,
+    /// "/"
+    #[token("/")]
+    Slash,
+    /// "^"
+    #[token("^")]
+    Caret,
+    /// "%"
+    #[token("%")]
+    Percent,
 
     #[error]
     #[regex(r"[ \t\n\f]+", logos::skip)]
     Error,
-}
-
-/// Creates an iterator that produces tokens from the input string.
-pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
-    let mut lex = TokenType::lexer(input);
-    from_fn(move || {
-        let token = Token {
-            token_type: lex.next().unwrap(),
-            length: lex.slice().len(),
-        };
-        Some(token)
-    })
 }
 
 #[cfg(test)]
@@ -144,55 +255,161 @@ mod tests {
 
     #[test]
     fn test_ident() {
-        let mut lex = TokenType::lexer("hello_world\ni_love_foxes");
-        assert_eq!(lex.next(), Some(TokenType::Ident("hello_world".into())));
-        assert_eq!(lex.next(), Some(TokenType::Ident("i_love_foxes".into())));
+        let mut lexer = Token::lexer("hello_world;\n 1234");
+        assert_eq!(lexer.next(), Some(Token::Ident));
+        assert_eq!(lexer.next(), Some(Token::Semi));
+        assert_eq!(
+            lexer.next(),
+            Some(Token::Integer(IntegerLiteral {
+                base: Base::Decimal,
+                empty_int: false
+            }))
+        );
     }
 
     #[test]
-    fn test_integer() {
-        let mut lex = TokenType::lexer("1\n-30\n2k\n3m");
-        assert_eq!(lex.next(), Some(TokenType::Integer(1)));
-        assert_eq!(lex.next(), Some(TokenType::Integer(-30)));
-        assert_eq!(lex.next(), Some(TokenType::Integer(2_000)));
-        assert_eq!(lex.next(), Some(TokenType::Integer(3_000_000)));
+    fn test_integer_literal() {
+        let mut lexer = Token::lexer("1234 -4321 0x3f 0b10101 0o70 0x");
+        assert_eq!(
+            lexer.next(),
+            Some(Token::Integer(IntegerLiteral {
+                base: Base::Decimal,
+                empty_int: false
+            }))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::Integer(IntegerLiteral {
+                base: Base::Decimal,
+                empty_int: false
+            }))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::Integer(IntegerLiteral {
+                base: Base::Hexadecimal,
+                empty_int: false
+            }))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::Integer(IntegerLiteral {
+                base: Base::Binary,
+                empty_int: false
+            }))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::Integer(IntegerLiteral {
+                base: Base::Octal,
+                empty_int: false
+            }))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::Integer(IntegerLiteral {
+                base: Base::Hexadecimal,
+                empty_int: true
+            }))
+        );
     }
 
     #[test]
-    fn test_float() {
-        let mut lex = TokenType::lexer("1.0\n2.0e2\n3.1e3\n-46.2e-3");
-        assert_eq!(lex.next(), Some(TokenType::Float(1.0)));
-        assert_eq!(lex.next(), Some(TokenType::Float(2e2)));
-        assert_eq!(lex.next(), Some(TokenType::Float(3.1e3)));
-        assert_eq!(lex.next(), Some(TokenType::Float(-46.2e-3)));
+    fn test_float_literal() {
+        let mut lexer = Token::lexer("1.0 1. 0x1.f 10e3");
+        assert_eq!(
+            lexer.next(),
+            Some(Token::Float(FloatLiteral {
+                base: Base::Decimal,
+                empty_exponent: true
+            }))
+        );
+
+        assert_eq!(
+            lexer.next(),
+            Some(Token::Float(FloatLiteral {
+                base: Base::Decimal,
+                empty_exponent: true
+            }))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::Float(FloatLiteral {
+                base: Base::Hexadecimal,
+                empty_exponent: true
+            }))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::Float(FloatLiteral {
+                base: Base::Decimal,
+                empty_exponent: false
+            }))
+        );
     }
 
     #[test]
-    fn test_tokenize() {
-        let mut iter = tokenize("input\n123");
-        let first = iter.next().unwrap();
-        let second = iter.next().unwrap();
-        assert_eq!(first.length, "input".len());
-        assert_eq!(first.token_type, TokenType::Ident("input".into()));
-        assert_eq!(second.length, "123".len());
-        assert_eq!(second.token_type, TokenType::Integer(123));
+    fn test_string_literal() {
+        let mut lexer = Token::lexer("\"hello\n\"; \"world\n\";");
+        assert_eq!(lexer.next(), Some(Token::String));
+        assert_eq!(lexer.next(), Some(Token::Semi));
+        assert_eq!(lexer.next(), Some(Token::String));
+    }
+
+    // #[test]
+    // fn test_char_literal() {
+    //     let mut lexer = Token::lexer("'a'");
+    //     assert_eq!(lexer.next(), Some(Token::Char('a')));
+    // }
+
+    #[test]
+    fn test_line_comment() {
+        let mut lexer = Token::lexer("// this is a comment");
+        assert_eq!(lexer.next(), Some(Token::LineComment));
     }
 
     #[test]
-    fn test_binary_expr() {
-        let mut lex = TokenType::lexer("x <= 3");
-        assert_eq!(lex.next(), Some(TokenType::Ident("x".into())));
-        assert_eq!(lex.next(), Some(TokenType::Le));
-        assert_eq!(lex.next(), Some(TokenType::Integer(3)));
-
-        let mut lex = TokenType::lexer("x += 2");
-        assert_eq!(lex.next(), Some(TokenType::Ident("x".into())));
-        assert_eq!(lex.next(), Some(TokenType::PlusEq));
-        assert_eq!(lex.next(), Some(TokenType::Integer(2)));
+    fn test_line_comment_with_token() {
+        let mut lexer = Token::lexer("// this is a comment\n;");
+        assert_eq!(lexer.next(), Some(Token::LineComment));
+        assert_eq!(lexer.next(), Some(Token::Semi));
     }
+
     #[test]
-    fn test_char() {
-        let mut lex = TokenType::lexer("'u'");
-        assert_eq!(lex.next(), Some(TokenType::Char('u')));
+    fn test_block_comment() {
+        let mut lexer = Token::lexer("/* this is a comment */");
+        assert_eq!(lexer.next(), Some(Token::BlockComment));
+    }
+
+    #[test]
+    fn test_single_char_tokens() {
+        let mut lexer = Token::lexer(";,.(){}[]@#~?:$=!<>-&|+*/^%");
+        assert_eq!(lexer.next(), Some(Token::Semi));
+        assert_eq!(lexer.next(), Some(Token::Comma));
+        assert_eq!(lexer.next(), Some(Token::Dot));
+        assert_eq!(lexer.next(), Some(Token::OpenParen));
+        assert_eq!(lexer.next(), Some(Token::CloseParen));
+        assert_eq!(lexer.next(), Some(Token::OpenBrace));
+        assert_eq!(lexer.next(), Some(Token::CloseBrace));
+        assert_eq!(lexer.next(), Some(Token::OpenBracket));
+        assert_eq!(lexer.next(), Some(Token::CloseBracket));
+        assert_eq!(lexer.next(), Some(Token::At));
+        assert_eq!(lexer.next(), Some(Token::Pound));
+        assert_eq!(lexer.next(), Some(Token::Tilde));
+        assert_eq!(lexer.next(), Some(Token::Question));
+        assert_eq!(lexer.next(), Some(Token::Colon));
+        assert_eq!(lexer.next(), Some(Token::Dollar));
+        assert_eq!(lexer.next(), Some(Token::Eq));
+        assert_eq!(lexer.next(), Some(Token::Bang));
+        assert_eq!(lexer.next(), Some(Token::Lt));
+        assert_eq!(lexer.next(), Some(Token::Gt));
+        assert_eq!(lexer.next(), Some(Token::Minus));
+        assert_eq!(lexer.next(), Some(Token::And));
+        assert_eq!(lexer.next(), Some(Token::Or));
+        assert_eq!(lexer.next(), Some(Token::Plus));
+        assert_eq!(lexer.next(), Some(Token::Star));
+        assert_eq!(lexer.next(), Some(Token::Slash));
+        assert_eq!(lexer.next(), Some(Token::Caret));
+        assert_eq!(lexer.next(), Some(Token::Percent));
     }
 }

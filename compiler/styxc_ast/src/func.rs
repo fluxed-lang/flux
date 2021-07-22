@@ -1,4 +1,4 @@
-use styxc_types::Type;
+use crate::types::Type;
 
 /// Represents a function declaration in the AST.
 #[derive(Clone)]

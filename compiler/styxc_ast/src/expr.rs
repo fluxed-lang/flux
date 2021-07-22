@@ -1,6 +1,6 @@
-use styxc_types::Type;
+use crate::types::Type;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expr {
     /// Represents a literal type. The second argument is the type of the literal.
     Literal(String, Box<Type>),

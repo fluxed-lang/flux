@@ -1,4 +1,4 @@
-use styxc_types::Type;
+use crate::types::Type;
 
 /// Represents a variable in the AST.
 #[derive(Clone)]

@@ -1,0 +1,140 @@
+WHITESPACE = _{ " " }
+
+ident = { ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+
+////////////////////////////////
+// Primitives
+////////////////////////////////
+
+// general number rules
+num_hex = { ASCII_HEX_DIGIT+ }
+num_oct = { '0'..'7'+ }
+num_bin = { '0'..'1'+ }
+num_dec = { ASCII_DIGIT+ }
+
+num_base = { "0" ~ ("b" | "d" | "o" | "x") }
+num_negation = { "-" }
+
+// int
+int_hex = { "0x" ~ num_hex }
+int_oct = { "0o" ~ num_oct }
+int_bin = { "0b" ~ num_bin }
+int_dec = { "0d"? ~ num_dec }
+int = { num_negation? ~ (int_hex | int_oct | int_bin | int_dec) }
+
+// float
+float_dp = { "." }
+float_hex = { "0x" ~ num_hex? ~ float_dp ~ num_hex }
+float_oct = { "0o" ~ num_oct? ~ float_dp ~ num_oct }
+float_bin = { "0b" ~ num_bin? ~ float_dp ~ num_bin }
+
+float_dec_simple = { num_dec? ~ float_dp ~ num_dec }
+float_dec_base_specific = { "0d" ~ num_dec ~ float_dp ~ num_dec }
+float_dec_exp = { "e" | "E" }
+float_dec_with_exp = { (float_dec_simple | num_dec) ~ float_dec_exp ~ num_negation? ~ num_dec }
+float_dec = { float_dec_base_specific | float_dec_with_exp | float_dec_simple }
+
+float = { num_negation? ~ (float_hex | float_oct | float_bin | float_dec) }
+
+// char
+raw_char = {
+    !("\"" | "\\") ~ ANY
+    | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+    | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+}
+char_inner = @{ raw_char }
+char = ${ "'" ~ char_inner ~ "'" }
+
+// string
+string_inner = @{ raw_char* }
+string = ${ "\"" ~ string_inner ~ "\"" }
+
+literal = _{ float | int | char | string } 
+
+////////////////////////////////
+// Operations
+////////////////////////////////
+
+// binary operations
+
+binary_op_add = { "+" }
+binary_op_sub = { "-" }
+binary_op_mul = { "*" }
+binary_op_div = { "/" }
+binary_op_mod = { "%" }
+binary_op_and = { "&" }
+binary_op_or = { "|" }
+binary_op_xor = { "^" }
+binary_op_shl = { "<<" }
+binary_op_shr = { ">>" }
+binary_op_eq = { "==" }
+binary_op_neq = { "!=" }
+binary_op_lt = { "<" }
+binary_op_lte = { "<=" }
+binary_op_gt = { ">" }
+binary_op_gte = { ">=" }
+
+// TODO: BIDMAS
+binary_op = _{ 
+    binary_op_add |
+    binary_op_sub |
+    binary_op_mul |
+    binary_op_div |
+    binary_op_mod |
+    binary_op_and |
+    binary_op_or |
+    binary_op_xor |
+    binary_op_shl |
+    binary_op_shr |
+    binary_op_eq |
+    binary_op_neq |
+    binary_op_lt |
+    binary_op_lte |
+    binary_op_gt |
+    binary_op_gte
+}
+
+binary_operation = { binary_op_inner ~ binary_op ~ binary_op_inner }
+binary_op_inner = _{ literal | "(" ~ expression ~ ")" }
+
+operatable = _{ binary_operation | unary_operation | ident | literal   }
+
+// unary operations
+unary_op_assign = { "=" }
+unary_op_plus_equals = { "+=" }
+unary_op_minus_equals = { "-=" }
+unary_op_times_equals = { "*=" }
+unary_op_div_equals = { "/=" }
+unary_op_mod_equals = { "%=" }
+unary_op_and_equals = { "&=" }
+unary_op_or_equals = { "|=" }
+unary_op_xor_equals = { "^=" }
+unary_op_shl_equals = { "<<=" }
+unary_op_shr_equals = { ">>=" }
+unary_op_incr = { "++" }
+unary_op_decr = { "--" }
+unary_op_not = { "!" }
+
+unary_op = {
+    unary_op_assign |
+    unary_op_plus_equals |
+    unary_op_minus_equals |
+    unary_op_times_equals |
+    unary_op_div_equals |
+    unary_op_mod_equals |
+    unary_op_and_equals |
+    unary_op_or_equals |
+    unary_op_xor_equals |
+    unary_op_shl_equals |
+    unary_op_shr_equals |
+    unary_op_incr |
+    unary_op_decr
+}
+
+unary_operation = { (ident ~ unary_op) | (unary_op_not ~ operatable)  }
+
+// assignment operation
+assign = { ident ~ "=" ~ operatable }
+
+expression = { assign | literal | binary_operation | unary_operation | ident }
+

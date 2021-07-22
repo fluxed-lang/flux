@@ -1,8 +1,6 @@
 use std::{collections::HashMap, error::Error};
 
-use styxc_types::Type;
-
-use crate::{expr::Expr, func::Func, var::Var};
+use crate::{expr::Expr, func::Func, types::Type, var::Var};
 
 /// Represents the current scope for a given block.
 #[derive(Clone)]
