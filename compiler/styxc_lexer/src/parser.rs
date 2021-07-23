@@ -6,7 +6,7 @@ struct IdentParser;
 
 #[cfg(test)]
 mod tests {
-    use pest::{iterators::Pair, Span};
+    use pest::Span;
 
     use super::*;
 
@@ -132,5 +132,29 @@ mod tests {
         assert_eq!(res.as_rule(), Rule::char);
         assert_eq!(res.as_span(), Span::new("'\\uFF0F'", 0, 8).unwrap());
         assert_eq!(res.as_str(), "'\\uFF0F'");
+    }
+
+    #[test]
+    fn test_string() {
+        // "hello world"
+        let mut res = IdentParser::parse(Rule::string, "\"hello world\"").unwrap_or_else(|e| panic!("{}", e));
+        let res = res.next().expect("Expected match for rule string");
+        assert_eq!(res.as_rule(), Rule::string);
+        assert_eq!(res.as_span(), Span::new("\"hello world\"", 0, 13).unwrap());
+        assert_eq!(res.as_str(), "\"hello world\"");
+
+        // "hello, \u60ff"
+        let mut res = IdentParser::parse(Rule::string, "\"hello, \\u60ff\"").unwrap_or_else(|e| panic!("{}", e));
+        let res = res.next().expect("Expected match for rule string");
+        assert_eq!(res.as_rule(), Rule::string);
+        assert_eq!(res.as_span(), Span::new("\"hello, \\u60ff\"", 0, 15).unwrap());
+        assert_eq!(res.as_str(), "\"hello, \\u60ff\"");
+
+        // hello, 🦊
+        let mut res = IdentParser::parse(Rule::string, "\"hello, 🦊\"").unwrap_or_else(|e| panic!("{}", e));
+        let res = res.next().expect("Expected match for rule string");
+        assert_eq!(res.as_rule(), Rule::string);
+        assert_eq!(res.as_span(), Span::new("\"hello, 🦊\"", 0, 13).unwrap());
+        assert_eq!(res.as_str(), "\"hello, 🦊\"");
     }
 }

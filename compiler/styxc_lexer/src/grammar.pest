@@ -6,35 +6,55 @@ ident = { ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 // Primitives
 ////////////////////////////////
 
-// general number rules
+num_negated = { "-" }
 num_hex = { ASCII_HEX_DIGIT+ }
+num_dec = { ASCII_DIGIT+ }
 num_oct = { '0'..'7'+ }
 num_bin = { '0'..'1'+ }
-num_dec = { ASCII_DIGIT+ }
 
-num_base = { "0" ~ ("b" | "d" | "o" | "x") }
-num_negation = { "-" }
+num_base_hex = _{ "0x" }
+num_base_dec = _{ "0d" }
+num_base_oct = _{ "0o" }
+num_base_bin = _{ "0b" }
 
-// int
-int_hex = { "0x" ~ num_hex }
-int_oct = { "0o" ~ num_oct }
-int_bin = { "0b" ~ num_bin }
-int_dec = { "0d"? ~ num_dec }
-int = { num_negation? ~ (int_hex | int_oct | int_bin | int_dec) }
+num_base = { num_base_hex | num_base_dec | num_base_oct | num_base_bin }
 
-// float
+int_hex = _{ num_base_hex ~ num_hex }
+int_dec = _{ num_base_dec ~ num_dec }
+int_oct = _{ num_base_oct ~ num_oct }
+int_bin = _{ num_base_bin ~ num_bin }
+
+int_with_base = _{ 
+	int_hex |
+    int_dec |
+    int_oct |
+    int_bin
+}
+int_default = _{ num_dec }
+int = ${ num_negated? ~ (int_with_base | int_default) }
+
 float_dp = { "." }
-float_hex = { "0x" ~ num_hex? ~ float_dp ~ num_hex }
-float_oct = { "0o" ~ num_oct? ~ float_dp ~ num_oct }
-float_bin = { "0b" ~ num_bin? ~ float_dp ~ num_bin }
 
-float_dec_simple = { num_dec? ~ float_dp ~ num_dec }
-float_dec_base_specific = { "0d" ~ num_dec ~ float_dp ~ num_dec }
-float_dec_exp = { "e" | "E" }
-float_dec_with_exp = { (float_dec_simple | num_dec) ~ float_dec_exp ~ num_negation? ~ num_dec }
-float_dec = { float_dec_base_specific | float_dec_with_exp | float_dec_simple }
+float_hex = _{ num_base_hex ~ num_hex? ~ float_dp ~ num_hex }
+float_dec = _{ num_base_dec ~ num_dec? ~ float_dp ~ num_dec }
+float_oct = _{ num_base_oct ~ num_oct? ~ float_dp ~ num_oct }
+float_bin = _{ num_base_bin ~ num_bin? ~ float_dp ~ num_bin }
 
-float = { num_negation? ~ (float_hex | float_oct | float_bin | float_dec) }
+float_with_base = _{
+	float_hex |
+    float_dec |
+    float_oct |
+    float_bin
+}
+
+float_exponent_char = _{ "e" }
+float_exponent = { float_exponent_char ~ num_negated? ~ num_dec }
+float_default = _{ 
+    num_dec? ~ float_dp ~ num_dec ~ float_exponent? |
+	num_dec ~ float_exponent
+}
+
+float = ${ num_negated? ~ (float_with_base | float_default) }
 
 // char
 raw_char = {
