@@ -5,8 +5,6 @@ extern crate pest_derive;
 use logos::{Lexer, Logos};
 use std::{error::Error, str::Chars};
 
-mod parser;
-
 fn parse_char(lexer: &mut Lexer<Token>) -> Result<char, Box<dyn Error>> {
     // remove surrounding quotes
     let mut chars = lexer.slice().chars();

@@ -1,0 +1,4 @@
+WHITESPACE = _{ " " }
+
+// literals
+// use "./literal/literal.pest"

@@ -1,0 +1,11 @@
+// use "./char.pest"
+// use "./float.pest"
+// use "./int.pest"
+// use "./string.pest"
+
+literal = {
+    float |
+    int |
+    string |
+    char
+}

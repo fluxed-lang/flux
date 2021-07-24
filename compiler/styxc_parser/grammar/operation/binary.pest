@@ -1,0 +1,39 @@
+// binary_op_add = { "+" }
+// binary_op_sub = { "-" }
+// binary_op_mul = { "*" }
+// binary_op_div = { "/" }
+// binary_op_mod = { "%" }
+// binary_op_and = { "&" }
+// binary_op_or = { "|" }
+// binary_op_xor = { "^" }
+// binary_op_shl = { "<<" }
+// binary_op_shr = { ">>" }
+// binary_op_eq = { "==" }
+// binary_op_neq = { "!=" }
+// binary_op_lt = { "<" }
+// binary_op_lte = { "<=" }
+// binary_op_gt = { ">" }
+// binary_op_gte = { ">=" }
+
+// // TODO: BIDMAS
+// binary_op = _{ 
+//     binary_op_add |
+//     binary_op_sub |
+//     binary_op_mul |
+//     binary_op_div |
+//     binary_op_mod |
+//     binary_op_and |
+//     binary_op_or |
+//     binary_op_xor |
+//     binary_op_shl |
+//     binary_op_shr |
+//     binary_op_eq |
+//     binary_op_neq |
+//     binary_op_lt |
+//     binary_op_lte |
+//     binary_op_gt |
+//     binary_op_gte
+// }
+
+// binary_operation = { binary_op_inner ~ binary_op ~ binary_op_inner }
+// binary_op_inner = _{ literal | "(" ~ expression ~ ")" }

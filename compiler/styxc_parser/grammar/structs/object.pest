@@ -1,0 +1,7 @@
+// use "../literal/literal.pest"
+// use "../ident.pest"
+
+object_key = { ident | string }
+object_value = { object | string  }
+object_key_value = { object_key ~ ":" ~ object_value }
+object = { "{" ~ (object_key_value ~ "," )* ~ object_key_value? ~  "}" }
