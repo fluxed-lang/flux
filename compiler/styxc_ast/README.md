@@ -1,3 +1,3 @@
 # styxc_ast
 
-Contains the AST definitions for the Styx language.
+Contains type definitions and handles the semantic analysis of the AST.
