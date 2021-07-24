@@ -2,6 +2,29 @@
 
 The Styx compiler is responsible for translating Styx source code into
 
+## Usage
+
+> Note: This is the usage specification for the compiler CLI, which does not currently exist! The Styx CLI is also referenced, which also does not currently exist!
+
+### Run a Styx script
+
+```sh
+$ styxc hello-world.stx
+# or, use the styx CLI
+$ styx hello-world.stx
+hello world!
+```
+
+### Compile a Styx script
+
+```sh
+$ styxc --binary hello-world.stx -o hello-world
+# or, use the styx CLI
+$ styx compile hello-world.stx -o hello-world
+$ ./hello-world
+hello world!
+```
+
 ## Stages
 
 1. Lexing - The compiler takes an input source file and generates a stream of identifiable tokens.
@@ -12,10 +35,11 @@ The Styx compiler is responsible for translating Styx source code into
 
 ## Crates
 
--   [`styxc_ast`]("./styxc_ast") - Contains type definitions and handles the semantic analysis of the AST.
--   [`styxc_ir`]("./styxc_ir") - Handles the generation of LLVM IR using the Cranelift IR generator from the AST.
--   [`styxc_lexer`]("./styxc_lexer") - Generates a `TokenStream` from an input string.
--   [`styxc_parser`]("./styxc_parser") - Parses a `TokenStream` into an AST.
+-   [`styxc`](./styxc) - The compiler entrypoint and CLI interface.
+-   [`styxc_ast`](./styxc_ast) - Contains type definitions and handles the semantic analysis of the AST.
+-   [`styxc_ir`](./styxc_ir) - Handles the generation of LLVM IR using the Cranelift IR generator from the AST.
+-   [`styxc_lexer`](./styxc_lexer) - Generates a `TokenStream` from an input string.
+-   [`styxc_parser`](./styxc_parser) - Parses a `TokenStream` into an AST.
 
 ## Modes
 
@@ -23,3 +47,7 @@ The Styx compiler has two distinct modes.
 
 -   JIT - The compiler immediately triggers execution of compiles source code as soon as it is finished. Dynamic imports are enabled, and will be compiled as soon as they are imported.
 -   AOT - The compiler builds a static binary for the target system and architecture which can be run at a later date.
+
+```
+
+```

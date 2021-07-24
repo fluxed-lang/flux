@@ -10,4 +10,4 @@ Converts a stream of tokens into an AST representing the source code.
     - Identifier validation ensures identifiers exist in the current scope they are used in. This includes functions and variables.
     - Type validation ensures the correct types are parsed to methods and variables.
 
-    This step is evaluated by methods in the [`styxc_ast`]("../styxc_ast) crate.
+    This step is evaluated by methods in the [`styxc_ast`](../styxc_ast) crate.
