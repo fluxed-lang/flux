@@ -1,5 +1,5 @@
 [package]
-name = "styxc_parser"
+name = "styxc_ir"
 version = "0.1.0"
 edition = "2018"
 

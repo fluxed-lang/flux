@@ -1,0 +1,9 @@
+WHITESPACE = _{ " " }
+
+line_comment = { "#" ~ (!NEW_LINE ~ ANY)* ~ (NEWLINE | EOI) }
+block_comment = { "/*" ~ ANY* "*/" }
+
+COMMENT = _{ block_comment | line_comment }
+
+// literals
+// use "./literal/literal.pest"

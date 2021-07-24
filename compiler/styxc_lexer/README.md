@@ -1,3 +1,3 @@
 # styxc_lexer
 
-The Styx lexer, which parses a source file into a token stream.
+The Styx lexer, which outputs a stream of tokens from a given input source string.

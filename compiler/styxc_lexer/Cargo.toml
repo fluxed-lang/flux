@@ -1,12 +1,9 @@
 [package]
-name = "styxc_lexer"
-version = "0.1.0"
+name = "styxc_lexerr"
+version = "0.0.0"
 authors = ["SkyezerFox <actuallyori@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-logos = "0.12"
 pest = "2.1"
 pest_derive = "2.1"
