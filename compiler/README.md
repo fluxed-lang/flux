@@ -47,7 +47,3 @@ The Styx compiler has two distinct modes.
 
 -   JIT - The compiler immediately triggers execution of compiles source code as soon as it is finished. Dynamic imports are enabled, and will be compiled as soon as they are imported.
 -   AOT - The compiler builds a static binary for the target system and architecture which can be run at a later date.
-
-```
-
-```
