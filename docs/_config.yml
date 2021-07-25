@@ -1,1 +1,5 @@
 theme: jekyll-theme-hacker
+title: [styx]
+description: [A programming language for cool people.]
+plugins:
+    - jekyll-readme-index
