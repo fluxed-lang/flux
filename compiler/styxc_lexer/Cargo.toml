@@ -1,5 +1,5 @@
 [package]
-name = "styxc_lexerr"
+name = "styxc_lexer"
 version = "0.0.0"
 authors = ["SkyezerFox <actuallyori@gmail.com>"]
 edition = "2018"

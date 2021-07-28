@@ -1,0 +1,9 @@
+import_builtin = {
+    "import" ~ ident
+}
+import_aliased = {
+    "import" ~ ident ~ "as" ~ ident
+}
+
+import = { import_aliased | import_builtin }
+ 

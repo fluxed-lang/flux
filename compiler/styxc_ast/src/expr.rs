@@ -6,7 +6,7 @@ pub enum Expr {
     Literal(String, Box<Type>),
 
     /// Represents an identifier. This could be a variable, class, or function name.
-    Identifier(String),
+    Ident(String),
 
     /// Represents a declaration.
     Declare(String, Box<Type>, Box<Expr>),
