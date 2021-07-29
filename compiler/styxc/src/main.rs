@@ -3,10 +3,11 @@ extern crate log;
 
 use clap::{AppSettings, Clap};
 use log::{debug, error, LevelFilter};
-use std::fs;
+use std::env;
+use std::fs::File;
+use std::io::Read;
 use std::path::Path;
-use std::process::exit;
-use styxc::ast::{build_ast, validate_ast, Scope};
+use styxc_main::Mode;
 
 /// Execute styx files using the Styx JIT compiler.
 #[derive(Clap)]
@@ -18,6 +19,19 @@ struct Opts {
     #[clap(short, long)]
     /// Enable verbose logging output.
     verbose: bool,
+    /// Print the version of styxc.
+    #[clap(long)]
+    version: bool,
+
+    /// The output directory for the generated binary files. If this is set,
+    /// the compiler is set to AOT mode. Defaults to the name of the target file
+    /// without an extension.
+    #[clap(short, long)]
+    output: Option<String>,
+
+    /// The compiler mode to use, defaults to JIT.
+    #[clap(short, long, default_value = "jit")]
+    mode: String,
 }
 
 fn main() {
@@ -31,49 +45,39 @@ fn main() {
         })
         .init();
 
-    let filepath = Path::new(&opts.input);
-    // check if the target file exists.
-    debug!("Checking if specified file exists...");
-    if !filepath.exists() {
-        error!("File '{}' does not exist!", opts.input);
-        exit(1);
-    }
-    // print file name
-    debug!("Target file is '{}'", opts.input);
-    // read target file into memory
-    let file = match fs::read_to_string(filepath) {
-        Ok(f) => f,
-        Err(e) => {
-            error!("Error while reading file '{}'", opts.input);
-            error!("{}", e);
-            exit(1);
-        }
-    };
-    // print code for debugging purposes
-    debug!("Building the AST...");
-    debug!("Code to compile:");
-    if opts.verbose {
-        println!("[PEG_INPUT_START]");
-        println!("{}", file);
-        println!("[PEG_TRACE_START]");
+    if opts.version {
+        println!("styxc version {}", env::var("CARGO_PKG_VERSION").unwrap());
+        return;
     }
 
-    // build the AST
-    let ast = match build_ast(file) {
-        Ok(ast) => ast,
-        Err(e) => {
-            error!("Exception encountered while building the AST!");
-            error!("{}", e);
-            exit(1);
+    debug!("styxc version {}", env::var("CARGO_PKG_VERSION").unwrap());
+
+    let input = Path::new(&opts.input);
+    // check if input doesn't exist
+    debug!("Cheking if input path exists...");
+    if !input.exists() {
+        error!("Input file does not exist: {:?}", input);
+        return;
+    }
+
+    match opts.mode.to_ascii_lowercase().as_str() {
+        "jit" => {
+            debug!("Compiling using JIT mode");
+            styxc_main::compile(input, Mode::JIT)
+                .map_err(|e| error!("Error compiling: {:?}", e))
+                .unwrap();
+        }
+        "aot" => {
+            debug!("Compiling using AOT mode");
+            let output_path = match opts.output {
+                Some(path) => path,
+                None => input.file_stem().unwrap().to_str().unwrap().into(),
+            };
+            let output = Path::new(&output_path);
+            styxc_main::compile(input, Mode::AOT(output)).unwrap();
+        }
+        _ => {
+            error!("Unrecognized compiler mode '{}'", opts.mode);
         }
     };
-    // check the ast
-    match validate_ast(&mut Scope::default(), ast) {
-        Ok(_) => debug!("ast successfuly validated"),
-        Err(e) => {
-            error!("Exception encountered while validating the AST!");
-            error!("{}", e);
-            exit(1);
-        }
-    }
 }
