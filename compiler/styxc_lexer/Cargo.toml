@@ -5,5 +5,4 @@ authors = ["SkyezerFox <actuallyori@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-pest = "2.1"
-pest_derive = "2.1"
+logos = "0.12"

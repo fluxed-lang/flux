@@ -1,5 +1,0 @@
-// use "./char.pest"
-
-// string
-string_inner = @{ raw_char* }
-string = ${ "\"" ~ string_inner ~ "\"" }

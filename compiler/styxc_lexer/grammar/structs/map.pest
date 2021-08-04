@@ -1,7 +1,0 @@
-// use "../literal/literal.pest"
-// use "../ident.pest"
-
-map_key = { ident | string }
-map_value = { object | string }
-map_key_value = { map_key ~ "=>" ~ map_value }
-map = { "map {" ~ (map_key_value ~ ",")* ~ map_key_value? ~ "}" }
