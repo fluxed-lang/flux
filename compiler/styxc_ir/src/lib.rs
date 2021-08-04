@@ -1,3 +1,7 @@
+use cranelift::frontend::FunctionBuilderContext;
+use cranelift_jit::{JITBuilder, JITModule};
+use cranelift_module::DataContext;
+
 use styxc_ast::expr::Expr;
 
 /// The basic JIT class.
