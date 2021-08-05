@@ -37,7 +37,7 @@ pub enum Type {
     /// Represents an intersection type.
     Intersection(Vec<Type>),
     /// Represents a type already referred to.
-    Circular(Box<Type>)
+    Circular(Box<Type>),
 }
 
 impl PartialEq for Type {

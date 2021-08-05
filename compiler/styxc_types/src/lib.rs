@@ -16,9 +16,8 @@ enum Primitive {
     Bool,
     String,
     Char,
-    Unit
+    Unit,
 }
-
 
 #[derive(Debug, PartialEq)]
 enum TypeKind {
@@ -37,7 +36,9 @@ mod tests {
 
     #[test]
     fn test_type_kind() {
-        let t = Type { kind: TypeKind::Primitive(Primitive::Uint128) };
+        let t = Type {
+            kind: TypeKind::Primitive(Primitive::Uint128),
+        };
         assert_eq!(t.kind, TypeKind::Primitive(Primitive::Uint128));
     }
 }

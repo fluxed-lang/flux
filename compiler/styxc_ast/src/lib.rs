@@ -79,7 +79,6 @@ pub enum NodeType {
     Import(String, String),
 }
 
-
 /// An enum of binary operation types.
 pub enum BinOpKind {
     /// Represents the "+" operator.
