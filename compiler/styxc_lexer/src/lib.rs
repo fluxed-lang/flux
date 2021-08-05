@@ -1,49 +1,5 @@
 use logos::{Lexer, Logos};
 
-/// A trait designed to be implemented by enums representing
-/// simple string-based tokens.
-trait Lexable {
-    fn lex(src: &str) -> Self;
-}
-
-#[derive(Debug, PartialEq)]
-pub enum Visibility {
-    Private,
-    Protected,
-    Public,
-}
-
-impl Lexable for Visibility {
-    fn lex(src: &str) -> Self {
-        use Visibility::*;
-        match src {
-            "private" => Private,
-            "protected" => Protected,
-            "public" => Public,
-            _ => panic!("attempted to lex {} which is not a visibility modifier", src),
-        }
-    }
-}
-
-#[derive(Logos, Debug, PartialEq)]
-pub enum Keyword {
-    #[error]
-    Error,
-
-    /// A visibility keyword, used for determining the visibility of a symbol.
-    Visibility(Visibility),
-}
-
-
-impl Keyword {
-    /// Parse the target slice into a keyword token.
-    pub fn parse(slice: &str) -> Keyword {
-        let mut lexer = Keyword::lexer(slice);
-        // okay to unwrap - should panic if fails.
-        lexer.next().unwrap()
-    }
-}
-
 #[derive(Debug, PartialEq)]
 pub enum Base {
     Hexadecimal,
@@ -52,7 +8,7 @@ pub enum Base {
     Binary,
 }
 
-impl Lexable for Base {
+impl Base {
     /// Parse the target slice into a string.
     fn lex(src: &str) -> Base {
         let mut slice = src.clone();
@@ -170,10 +126,14 @@ pub enum TokenKind {
     #[token("enum")]
     KeywordEnum,
 
-    #[token("public", |lex| Visibility::lex(lex.slice()))]
-    #[token("private", |lex| Visibility::lex(lex.slice()))]
-    #[token("protected", |lex| Visibility::lex(lex.slice()))]
-    KeywordVisibility(Visibility),
+    #[token("public")]
+    KeywordPublic,
+
+    #[token("private")]
+    KeywordPrivate,
+
+    #[token("protected")]
+    KeywordProtected,
 
     /// Represents a generic whitespace character. This includes tabs, spaces, and newlines.
     #[regex("\\s+", logos::skip)]
