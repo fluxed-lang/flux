@@ -1,4 +1,4 @@
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 enum Primitive {
     Uint128,
     Uint64,
@@ -20,13 +20,13 @@ enum Primitive {
 }
 
 
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 enum TypeKind {
     Primitive(Primitive),
     Intersection(Box<TypeKind>, Box<TypeKind>),
 }
 
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 struct Type {
     kind: TypeKind,
 }
