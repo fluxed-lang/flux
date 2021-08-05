@@ -243,7 +243,7 @@ mod literal_kind {
 #[derive(Logos, Debug, PartialEq)]
 pub enum TokenKind {
     #[error]
-    Error,
+    Unknown,
 
     /// Represents an identifier.
     #[regex("[a-zA-Z_][a-zA-Z_0-9]*")]
@@ -579,6 +579,7 @@ mod token {
     }
 }
 
+
 #[derive(Debug)]
 pub struct Token {
     pub kind: TokenKind,
@@ -596,6 +597,20 @@ pub struct LexerError {
     pub slice: String,
 }
 
+pub struct LexerResult {
+    /// A list of tokens that were successfully lexed. This does not include unknown tokens.
+    pub tokens: Vec<Token>,
+    /// A list of lexer errors that occurred. These correspond to unknown tokens.
+    pub errors: Vec<LexerError>
+}
+
+impl LexerResult {
+    /// Returns true if this lexer result contains errors.
+    pub fn has_errs(&self) -> bool {
+        self.errors.len() > 0
+    }
+}
+
 pub struct TokenLexer<'source> {
     lexer: Lexer<'source, TokenKind>,
 }
@@ -608,28 +623,31 @@ impl TokenLexer<'_> {
     }
 
     /// Parse tokens from the source.
-    pub fn parse<'source>(&mut self) -> Result<Vec<Token>, LexerError> {
+    pub fn parse<'source>(&mut self) -> LexerResult {
         let mut tokens = Vec::new();
+        let mut errors = Vec::new();
 
         while let Some(kind) = self.lexer.next() {
             // If encountered a lexing error, throw it
-            if let TokenKind::Error = kind {
-                return Err(LexerError {
+            if let TokenKind::Unknown = kind {
+                errors.push(LexerError {
                     index: self.lexer.span().start,
                     line: 0,
                     col: 0,
                     slice: self.lexer.slice().into(),
                 });
+            } else {
+                // Else, push tokens to output
+                tokens.push(Token {
+                    kind,
+                    index: self.lexer.span().start,
+                    len: self.lexer.span().len(),
+                    slice: self.lexer.slice().into(),
+                });
             }
-            // Else, push tokens to output
-            tokens.push(Token {
-                kind,
-                index: self.lexer.span().start,
-                len: self.lexer.span().len(),
-                slice: self.lexer.slice().into(),
-            });
         }
-        Ok(tokens)
+        
+        LexerResult { tokens, errors }
     }
 }
 
@@ -648,7 +666,7 @@ mod token_lexer {
         }"#;
 
         let mut lexer = TokenLexer::new(src);
-        let tokens: Vec<TokenKind> = lexer.parse().unwrap().into_iter().map(|t| t.kind).collect();
+        let tokens: Vec<TokenKind> = lexer.parse().tokens.into_iter().map(|t| t.kind).collect();
 
         assert_eq!(
             tokens,
@@ -683,19 +701,28 @@ mod token_lexer {
 
     #[test]
     fn test_token_lexer_error() {
-        let src = "let hello_world = ℵ";
+        let src = "let hello_world = ℵ;";
         let mut lexer = TokenLexer::new(src);
         let res = lexer.parse();
 
-        assert!(res.is_err());
+        assert!(res.has_errs());
+
+        let kinds: Vec<TokenKind> = res.tokens.into_iter().map(|t| t.kind).collect();
+        assert_eq!(kinds, vec![
+            TokenKind::Keyword(Keyword::Let),
+            TokenKind::Ident,
+            TokenKind::Eq,
+            TokenKind::Semi
+        ]);
+
         assert_eq!(
-            res.unwrap_err(),
+            res.errors[0],
             LexerError {
                 index: 18,
                 line: 0,
                 col: 0,
                 slice: "ℵ".into(),
             }
-        )
+        );
     }
 }
