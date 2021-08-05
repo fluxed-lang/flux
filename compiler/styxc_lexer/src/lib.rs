@@ -1,12 +1,28 @@
-use std::{error::Error, str::FromStr};
-
 use logos::{Lexer, Logos};
+
+/// A trait designed to be implemented by enums representing
+/// simple string-based tokens.
+trait Lexable {
+    fn lex(src: &str) -> Self;
+}
 
 #[derive(Debug, PartialEq)]
 pub enum Visibility {
     Private,
     Protected,
     Public,
+}
+
+impl Lexable for Visibility {
+    fn lex(src: &str) -> Self {
+        use Visibility::*;
+        match src {
+            "private" => Private,
+            "protected" => Protected,
+            "public" => Public,
+            _ => panic!("attempted to lex {} which is not a visibility modifier", src),
+        }
+    }
 }
 
 #[derive(Logos, Debug, PartialEq)]
@@ -36,10 +52,10 @@ pub enum Base {
     Binary,
 }
 
-impl Base {
+impl Lexable for Base {
     /// Parse the target slice into a string.
-    fn parse(s: &str) -> Base {
-        let mut slice = s.clone();
+    fn lex(src: &str) -> Base {
+        let mut slice = src.clone();
         // remove leading negation
         if slice.starts_with("-") {
             slice = &slice[1..];
@@ -52,107 +68,8 @@ impl Base {
             "0x" => Base::Hexadecimal,
             "0o" => Base::Octal,
             "0b" => Base::Binary,
-            _ => Base::Decimal,
+            _ => Base::Decimal
         }
-    }
-}
-
-#[derive(Logos, Debug, PartialEq)]
-pub enum LiteralKind {
-    #[error]
-    Error,
-
-    /// Represents any integer literal and its base.
-    /// Matches both raw ints and integers with their base specified, e.g. 1234, or 0x1fff.
-    #[regex("[+-]?[0-9]+", |lex| Base::parse(lex.slice()))]
-    #[regex("[+-]?0x[0-9a-fA-F]+", |lex| Base::parse(lex.slice()) )]
-    #[regex("[+-]?0d[0-9]+", |lex| Base::parse(lex.slice()) )]
-    #[regex("[+-]?0o[0-7]+", |lex| Base::parse(lex.slice()) )]
-    #[regex("[+-]?0b[01]+", |lex| Base::parse(lex.slice()) )]
-    Int(Base),
-
-    /// Represents any floating point literal. Matches both floating point and scientific notation.
-    /// e.g. 0.1, 1e-10, 1.0e-10, 1.0e+10, 1.0e10, 1.0e-10
-    #[regex("[+-]?[0-9]*\\.[0-9]+", |lex| Base::parse(lex.slice()))]
-    #[regex("[+-]?[0-9]+e[+-]?[0-9]+", |lex| Base::parse(lex.slice()))]
-    Float(Base),
-
-    #[regex("'.'")]
-    #[regex(r#"'\\u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]'"#)]
-    Char,
-
-    #[regex("\"([^\"]|(\\\\\"))*\"")]
-    String,
-}
-
-impl LiteralKind {
-    fn parse(s: &str) -> Result<LiteralKind, Box<dyn Error>> {
-        let mut lex = LiteralKind::lexer(s);
-        match lex.next() {
-            Some(kind) => Ok(kind),
-            None => Err("Failed to match literal kind".into()),
-        }
-    }
-}
-
-#[cfg(test)]
-mod literal_kind {
-    use super::*;
-
-    #[test]
-    fn test_int() {
-        let mut lexer = LiteralKind::lexer("1234");
-        assert_eq!(lexer.next(), Some(LiteralKind::Int(Base::Decimal)))
-    }
-
-    #[test]
-    fn test_int_hex() {
-        let mut lexer = LiteralKind::lexer("0x1234");
-        assert_eq!(lexer.next(), Some(LiteralKind::Int(Base::Hexadecimal)))
-    }
-
-    #[test]
-    fn test_int_oct() {
-        let mut lexer = LiteralKind::lexer("0o1234");
-        assert_eq!(lexer.next(), Some(LiteralKind::Int(Base::Octal)))
-    }
-
-    #[test]
-    fn test_int_bin() {
-        let mut lexer = LiteralKind::lexer("0b10100");
-        assert_eq!(lexer.next(), Some(LiteralKind::Int(Base::Binary)))
-    }
-
-    #[test]
-    fn test_float() {
-        let mut lexer = LiteralKind::lexer("12.34");
-        assert_eq!(lexer.next(), Some(LiteralKind::Float(Base::Decimal)))
-    }
-
-    #[test]
-    fn test_float_exp() {
-        let mut lexer = LiteralKind::lexer("12.34e-5");
-        assert_eq!(lexer.next(), Some(LiteralKind::Float(Base::Decimal)));
-        let mut lexer = LiteralKind::lexer("-432e+10");
-        assert_eq!(lexer.next(), Some(LiteralKind::Float(Base::Decimal)));
-    }
-
-    #[test]
-    fn test_char() {
-        let mut lexer = LiteralKind::lexer("'a'");
-        assert_eq!(lexer.next(), Some(LiteralKind::Char));
-    }
-
-    #[test]
-    fn test_unicode_char() {
-        let mut lexer = LiteralKind::lexer("'\\u1234'");
-        assert_eq!(lexer.next(), Some(LiteralKind::Char));
-    }
-
-    #[test]
-    fn test_string() {
-        let mut lexer = LiteralKind::lexer("\"foo\"");
-        assert_eq!(lexer.next(), Some(LiteralKind::String));
     }
 }
 
@@ -253,6 +170,11 @@ pub enum TokenKind {
     #[token("enum")]
     KeywordEnum,
 
+    #[token("public", |lex| Visibility::lex(lex.slice()))]
+    #[token("private", |lex| Visibility::lex(lex.slice()))]
+    #[token("protected", |lex| Visibility::lex(lex.slice()))]
+    KeywordVisibility(Visibility),
+
     /// Represents a generic whitespace character. This includes tabs, spaces, and newlines.
     #[regex("\\s+", logos::skip)]
     Whitespace,
@@ -265,17 +187,31 @@ pub enum TokenKind {
     #[regex(r#"/\*(.|\n)*\*/"#)]
     BlockComment,
 
-    /// Matches a literal.
-    #[regex("[+-]?[0-9]+", |lex| LiteralKind::parse(lex.slice()))]
-    #[regex("[+-]?0x[0-9a-fA-F]+", |lex| LiteralKind::parse(lex.slice()))]
-    #[regex("[+-]?0d[0-9]+", |lex| LiteralKind::parse(lex.slice()))]
-    #[regex("[+-]?0o[0-7]+", |lex| LiteralKind::parse(lex.slice()))]
-    #[regex("[+-]?0b[01]+", |lex|  LiteralKind::parse(lex.slice()))]
-    #[regex("[+-]?[0-9]*\\.[0-9]+", |lex| LiteralKind::parse(lex.slice()) )]
-    #[regex("[+-]?[0-9]+e[+-]?[0-9]+", |lex| LiteralKind::parse(lex.slice()))]
-    #[regex("'.'", |lex| LiteralKind::parse(lex.slice()))]
-    #[regex("\"(\"|[^\"])*\"", |lex| LiteralKind::parse(lex.slice()))]
-    Literal(LiteralKind),
+    ///
+    /// LITERALS
+    ///
+
+    /// Represents any integer literal and its base.
+    /// Matches both raw ints and integers with their base specified, e.g. 1234, or 0x1fff.
+    #[regex("[+-]?[0-9]+", |lex| Base::lex(lex.slice()))]
+    #[regex("[+-]?0x[0-9a-fA-F]+", |lex| Base::lex(lex.slice()) )]
+    #[regex("[+-]?0d[0-9]+", |lex| Base::lex(lex.slice()) )]
+    #[regex("[+-]?0o[0-7]+", |lex| Base::lex(lex.slice()) )]
+    #[regex("[+-]?0b[01]+", |lex| Base::lex(lex.slice()) )]
+    LiteralInt(Base),
+
+    /// Represents any floating point literal. Matches both floating point and scientific notation.
+    /// e.g. 0.1, 1e-10, 1.0e-10, 1.0e+10, 1.0e10, 1.0e-10
+    #[regex("[+-]?[0-9]*\\.[0-9]+", |lex| Base::lex(lex.slice()))]
+    #[regex("[+-]?[0-9]+e[+-]?[0-9]+", |lex| Base::lex(lex.slice()))]
+    LiteralFloat(Base),
+
+    #[regex("'.'")]
+    #[regex(r#"'\\u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]'"#)]
+    LiteralChar,
+
+    #[regex("\"([^\"]|(\\\\\"))*\"")]
+    LiteralString,
 
     #[token(";")]
     Semi,
@@ -437,6 +373,62 @@ mod token {
     }
 
     #[test]
+    fn test_int() {
+        let mut lexer = TokenKind::lexer("1234");
+        assert_eq!(lexer.next(), Some(TokenKind::LiteralInt(Base::Decimal)));
+    }
+
+    #[test]
+    fn test_int_hex() {
+        let mut lexer = TokenKind::lexer("0x1234");
+        assert_eq!(lexer.next(), Some(TokenKind::LiteralInt(Base::Hexadecimal)));
+    }
+
+    #[test]
+    fn test_int_oct() {
+        let mut lexer = TokenKind::lexer("0o1234");
+        assert_eq!(lexer.next(), Some(TokenKind::LiteralInt(Base::Octal)));
+    }
+
+    #[test]
+    fn test_int_bin() {
+        let mut lexer = TokenKind::lexer("0b10100");
+        assert_eq!(lexer.next(), Some(TokenKind::LiteralInt(Base::Binary)));
+    }
+
+    #[test]
+    fn test_float() {
+        let mut lexer = TokenKind::lexer("12.34");
+        assert_eq!(lexer.next(), Some(TokenKind::LiteralFloat(Base::Decimal)));
+    }
+
+    #[test]
+    fn test_float_exp() {
+        let mut lexer = TokenKind::lexer("12.34e-5");
+        assert_eq!(lexer.next(), Some(TokenKind::LiteralFloat(Base::Decimal)));
+        let mut lexer = TokenKind::lexer("-432e+10");
+        assert_eq!(lexer.next(), Some(TokenKind::LiteralFloat(Base::Decimal)));
+    }
+
+    #[test]
+    fn test_char() {
+        let mut lexer = TokenKind::lexer("'a'");
+        assert_eq!(lexer.next(), Some(TokenKind::LiteralChar));
+    }
+
+    #[test]
+    fn test_unicode_char() {
+        let mut lexer = TokenKind::lexer("'\\u1234'");
+        assert_eq!(lexer.next(), Some(TokenKind::LiteralChar));
+    }
+
+    #[test]
+    fn test_string() {
+        let mut lexer = TokenKind::lexer("\"foo\"");
+        assert_eq!(lexer.next(), Some(TokenKind::LiteralString));
+    }
+
+    #[test]
     fn test_expression() {
         let mut lexer = TokenKind::lexer("hello: int = 2;");
         assert_eq!(lexer.next(), Some(TokenKind::Ident));
@@ -445,7 +437,7 @@ mod token {
         assert_eq!(lexer.next(), Some(TokenKind::Eq));
         assert_eq!(
             lexer.next(),
-            Some(TokenKind::Literal(LiteralKind::Int(Base::Decimal)))
+            Some(TokenKind::LiteralInt(Base::Decimal))
         );
         assert_eq!(lexer.next(), Some(TokenKind::Semi));
         assert_eq!(lexer.next(), None);
@@ -456,17 +448,17 @@ mod token {
         let mut lexer = TokenKind::lexer("1 + 2 * 3");
         assert_eq!(
             lexer.next(),
-            Some(TokenKind::Literal(LiteralKind::Int(Base::Decimal)))
+            Some(TokenKind::LiteralInt(Base::Decimal))
         );
         assert_eq!(lexer.next(), Some(TokenKind::Plus));
         assert_eq!(
             lexer.next(),
-            Some(TokenKind::Literal(LiteralKind::Int(Base::Decimal)))
+            Some(TokenKind::LiteralInt(Base::Decimal))
         );
         assert_eq!(lexer.next(), Some(TokenKind::Star));
         assert_eq!(
             lexer.next(),
-            Some(TokenKind::Literal(LiteralKind::Int(Base::Decimal)))
+            Some(TokenKind::LiteralInt(Base::Decimal))
         );
         assert_eq!(lexer.next(), None);
     }
@@ -479,7 +471,7 @@ mod token {
         assert_eq!(lexer.next(), Some(TokenKind::Eq));
         assert_eq!(
             lexer.next(),
-            Some(TokenKind::Literal(LiteralKind::Int(Base::Decimal)))
+            Some(TokenKind::LiteralInt(Base::Decimal))
         );
         assert_eq!(lexer.next(), Some(TokenKind::Semi));
         assert_eq!(lexer.next(), None);
@@ -522,7 +514,7 @@ mod token {
         // 1
         assert_eq!(
             lexer.next(),
-            Some(TokenKind::Literal(LiteralKind::Int(Base::Decimal)))
+            Some(TokenKind::LiteralInt(Base::Decimal))
         );
         assert_eq!(lexer.next(), Some(TokenKind::Semi));
 
@@ -535,7 +527,7 @@ mod token {
         // 2
         assert_eq!(
             lexer.next(),
-            Some(TokenKind::Literal(LiteralKind::Int(Base::Decimal)))
+            Some(TokenKind::LiteralInt(Base::Decimal))
         );
         assert_eq!(lexer.next(), Some(TokenKind::Semi));
 
@@ -660,12 +652,12 @@ mod token_lexer {
                 TokenKind::KeywordLet, 
                 TokenKind::Ident,
                 TokenKind::Eq,
-                TokenKind::Literal(LiteralKind::Int(Base::Decimal)),
+                TokenKind::LiteralInt(Base::Decimal),
                 TokenKind::Semi,
                 TokenKind::KeywordLet,
                 TokenKind::Ident,
                 TokenKind::Eq,
-                TokenKind::Literal(LiteralKind::Int(Base::Decimal)),
+                TokenKind::LiteralInt(Base::Decimal),
                 TokenKind::Semi,
                 TokenKind::KeywordLet,
                 TokenKind::Ident,
