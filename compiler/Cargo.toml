@@ -5,5 +5,6 @@ members = [
     "styxc_parser",
     "styxc_ir",
     "styxc_types",
+    "styxc_errors",
     "styxc"
 ]
