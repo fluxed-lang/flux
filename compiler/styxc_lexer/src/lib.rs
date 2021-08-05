@@ -131,7 +131,7 @@ mod literal_kind {
 }
 
 #[derive(Logos, Debug, PartialEq)]
-pub enum Token {
+pub enum TokenKind {
     #[error]
     Error,
 
@@ -243,90 +243,90 @@ mod token {
 
     #[test]
     fn test_ident() {
-        let mut lexer = Token::lexer("hello_world i_like_foxes_123 xbox360");
-        assert_eq!(lexer.next(), Some(Token::Ident));
-        assert_eq!(lexer.next(), Some(Token::Ident));
-        assert_eq!(lexer.next(), Some(Token::Ident));
+        let mut lexer = TokenKind::lexer("hello_world i_like_foxes_123 xbox360");
+        assert_eq!(lexer.next(), Some(TokenKind::Ident));
+        assert_eq!(lexer.next(), Some(TokenKind::Ident));
+        assert_eq!(lexer.next(), Some(TokenKind::Ident));
         assert_eq!(lexer.next(), None);
     }
 
     #[test]
     fn test_line_comment() {
-        let mut lexer = Token::lexer("# this is a comment\nhello_world");
-        assert_eq!(lexer.next(), Some(Token::LineComment));
-        assert_eq!(lexer.next(), Some(Token::Ident));
+        let mut lexer = TokenKind::lexer("# this is a comment\nhello_world");
+        assert_eq!(lexer.next(), Some(TokenKind::LineComment));
+        assert_eq!(lexer.next(), Some(TokenKind::Ident));
         assert_eq!(lexer.next(), None);
     }
 
     #[test]
     fn test_block_comment() {
-        let mut lexer = Token::lexer("/*this is a comment*/");
-        assert_eq!(lexer.next(), Some(Token::BlockComment));
+        let mut lexer = TokenKind::lexer("/*this is a comment*/");
+        assert_eq!(lexer.next(), Some(TokenKind::BlockComment));
         assert_eq!(lexer.next(), None);
     }
 
     #[test]
     fn test_tokens() {
-        let mut lexer = Token::lexer(";{}[]()+-*/%=!&|<>^~?:.@");
+        let mut lexer = TokenKind::lexer(";{}[]()+-*/%=!&|<>^~?:.@");
 
-        assert_eq!(lexer.next(), Some(Token::Semi));
-        assert_eq!(lexer.next(), Some(Token::OpenBrace));
-        assert_eq!(lexer.next(), Some(Token::CloseBrace));
-        assert_eq!(lexer.next(), Some(Token::OpenBracket));
-        assert_eq!(lexer.next(), Some(Token::CloseBracket));
-        assert_eq!(lexer.next(), Some(Token::OpenParen));
-        assert_eq!(lexer.next(), Some(Token::CloseParen));
-        assert_eq!(lexer.next(), Some(Token::Plus));
-        assert_eq!(lexer.next(), Some(Token::Minus));
-        assert_eq!(lexer.next(), Some(Token::Star));
-        assert_eq!(lexer.next(), Some(Token::Slash));
-        assert_eq!(lexer.next(), Some(Token::Percent));
-        assert_eq!(lexer.next(), Some(Token::Eq));
-        assert_eq!(lexer.next(), Some(Token::Not));
-        assert_eq!(lexer.next(), Some(Token::And));
-        assert_eq!(lexer.next(), Some(Token::Or));
-        assert_eq!(lexer.next(), Some(Token::Lt));
-        assert_eq!(lexer.next(), Some(Token::Gt));
-        assert_eq!(lexer.next(), Some(Token::Caret));
-        assert_eq!(lexer.next(), Some(Token::Tilde));
-        assert_eq!(lexer.next(), Some(Token::Question));
-        assert_eq!(lexer.next(), Some(Token::Colon));
-        assert_eq!(lexer.next(), Some(Token::Dot));
-        assert_eq!(lexer.next(), Some(Token::At));
+        assert_eq!(lexer.next(), Some(TokenKind::Semi));
+        assert_eq!(lexer.next(), Some(TokenKind::OpenBrace));
+        assert_eq!(lexer.next(), Some(TokenKind::CloseBrace));
+        assert_eq!(lexer.next(), Some(TokenKind::OpenBracket));
+        assert_eq!(lexer.next(), Some(TokenKind::CloseBracket));
+        assert_eq!(lexer.next(), Some(TokenKind::OpenParen));
+        assert_eq!(lexer.next(), Some(TokenKind::CloseParen));
+        assert_eq!(lexer.next(), Some(TokenKind::Plus));
+        assert_eq!(lexer.next(), Some(TokenKind::Minus));
+        assert_eq!(lexer.next(), Some(TokenKind::Star));
+        assert_eq!(lexer.next(), Some(TokenKind::Slash));
+        assert_eq!(lexer.next(), Some(TokenKind::Percent));
+        assert_eq!(lexer.next(), Some(TokenKind::Eq));
+        assert_eq!(lexer.next(), Some(TokenKind::Not));
+        assert_eq!(lexer.next(), Some(TokenKind::And));
+        assert_eq!(lexer.next(), Some(TokenKind::Or));
+        assert_eq!(lexer.next(), Some(TokenKind::Lt));
+        assert_eq!(lexer.next(), Some(TokenKind::Gt));
+        assert_eq!(lexer.next(), Some(TokenKind::Caret));
+        assert_eq!(lexer.next(), Some(TokenKind::Tilde));
+        assert_eq!(lexer.next(), Some(TokenKind::Question));
+        assert_eq!(lexer.next(), Some(TokenKind::Colon));
+        assert_eq!(lexer.next(), Some(TokenKind::Dot));
+        assert_eq!(lexer.next(), Some(TokenKind::At));
         assert_eq!(lexer.next(), None);
     }
 
     #[test]
     fn test_expression() {
-        let mut lexer = Token::lexer("hello: int = 2;");
-        assert_eq!(lexer.next(), Some(Token::Ident));
-        assert_eq!(lexer.next(), Some(Token::Colon));
-        assert_eq!(lexer.next(), Some(Token::Ident));
-        assert_eq!(lexer.next(), Some(Token::Eq));
-        assert_eq!(lexer.next(), Some(Token::Literal(LiteralKind::Int(Base::Decimal))));
-        assert_eq!(lexer.next(), Some(Token::Semi));
+        let mut lexer = TokenKind::lexer("hello: int = 2;");
+        assert_eq!(lexer.next(), Some(TokenKind::Ident));
+        assert_eq!(lexer.next(), Some(TokenKind::Colon));
+        assert_eq!(lexer.next(), Some(TokenKind::Ident));
+        assert_eq!(lexer.next(), Some(TokenKind::Eq));
+        assert_eq!(lexer.next(), Some(TokenKind::Literal(LiteralKind::Int(Base::Decimal))));
+        assert_eq!(lexer.next(), Some(TokenKind::Semi));
         assert_eq!(lexer.next(), None);
     }
 
     #[test]
     fn test_binary_expression() {
-        let mut lexer = Token::lexer("1 + 2 * 3");
-        assert_eq!(lexer.next(), Some(Token::Literal(LiteralKind::Int(Base::Decimal))));
-        assert_eq!(lexer.next(), Some(Token::Plus));
-        assert_eq!(lexer.next(), Some(Token::Literal(LiteralKind::Int(Base::Decimal))));
-        assert_eq!(lexer.next(), Some(Token::Star));
-        assert_eq!(lexer.next(), Some(Token::Literal(LiteralKind::Int(Base::Decimal))));
+        let mut lexer = TokenKind::lexer("1 + 2 * 3");
+        assert_eq!(lexer.next(), Some(TokenKind::Literal(LiteralKind::Int(Base::Decimal))));
+        assert_eq!(lexer.next(), Some(TokenKind::Plus));
+        assert_eq!(lexer.next(), Some(TokenKind::Literal(LiteralKind::Int(Base::Decimal))));
+        assert_eq!(lexer.next(), Some(TokenKind::Star));
+        assert_eq!(lexer.next(), Some(TokenKind::Literal(LiteralKind::Int(Base::Decimal))));
         assert_eq!(lexer.next(), None);
     }
 
     #[test]
     fn test_assignment() {
-        let mut lexer = Token::lexer("let x = 2;");
-        assert_eq!(lexer.next(), Some(Token::Ident));
-        assert_eq!(lexer.next(), Some(Token::Ident));
-        assert_eq!(lexer.next(), Some(Token::Eq));
-        assert_eq!(lexer.next(), Some(Token::Literal(LiteralKind::Int(Base::Decimal))));
-        assert_eq!(lexer.next(), Some(Token::Semi));
+        let mut lexer = TokenKind::lexer("let x = 2;");
+        assert_eq!(lexer.next(), Some(TokenKind::Ident));
+        assert_eq!(lexer.next(), Some(TokenKind::Ident));
+        assert_eq!(lexer.next(), Some(TokenKind::Eq));
+        assert_eq!(lexer.next(), Some(TokenKind::Literal(LiteralKind::Int(Base::Decimal))));
+        assert_eq!(lexer.next(), Some(TokenKind::Semi));
         assert_eq!(lexer.next(), None);
     }
 
@@ -340,62 +340,70 @@ mod token {
             let z = x + y;
         }"#;
 
-        let mut lexer = Token::lexer(src);
+        let mut lexer = TokenKind::lexer(src);
 
         // newline and indentation
 
         // fn
-        assert_eq!(lexer.next(), Some(Token::Ident));
+        assert_eq!(lexer.next(), Some(TokenKind::Ident));
         // space
         // main
-        assert_eq!(lexer.next(), Some(Token::Ident));
+        assert_eq!(lexer.next(), Some(TokenKind::Ident));
         // ()
-        assert_eq!(lexer.next(), Some(Token::OpenParen));
-        assert_eq!(lexer.next(), Some(Token::CloseParen));
+        assert_eq!(lexer.next(), Some(TokenKind::OpenParen));
+        assert_eq!(lexer.next(), Some(TokenKind::CloseParen));
         // {
-        assert_eq!(lexer.next(), Some(Token::OpenBrace));
+        assert_eq!(lexer.next(), Some(TokenKind::OpenBrace));
 
         // comment
-        assert_eq!(lexer.next(), Some(Token::LineComment));
+        assert_eq!(lexer.next(), Some(TokenKind::LineComment));
 
         // let
-        assert_eq!(lexer.next(), Some(Token::Ident));
+        assert_eq!(lexer.next(), Some(TokenKind::Ident));
         // x
-        assert_eq!(lexer.next(), Some(Token::Ident));
+        assert_eq!(lexer.next(), Some(TokenKind::Ident));
         // =
-        assert_eq!(lexer.next(), Some(Token::Eq));
+        assert_eq!(lexer.next(), Some(TokenKind::Eq));
         // 1
-        assert_eq!(lexer.next(), Some(Token::Literal(LiteralKind::Int(Base::Decimal))));
-        assert_eq!(lexer.next(), Some(Token::Semi));
+        assert_eq!(lexer.next(), Some(TokenKind::Literal(LiteralKind::Int(Base::Decimal))));
+        assert_eq!(lexer.next(), Some(TokenKind::Semi));
 
         // let
-        assert_eq!(lexer.next(), Some(Token::Ident));
+        assert_eq!(lexer.next(), Some(TokenKind::Ident));
         // y
-        assert_eq!(lexer.next(), Some(Token::Ident));
+        assert_eq!(lexer.next(), Some(TokenKind::Ident));
         // =
-        assert_eq!(lexer.next(), Some(Token::Eq));
+        assert_eq!(lexer.next(), Some(TokenKind::Eq));
         // 2
-        assert_eq!(lexer.next(), Some(Token::Literal(LiteralKind::Int(Base::Decimal))));
-        assert_eq!(lexer.next(), Some(Token::Semi));
+        assert_eq!(lexer.next(), Some(TokenKind::Literal(LiteralKind::Int(Base::Decimal))));
+        assert_eq!(lexer.next(), Some(TokenKind::Semi));
 
         // let
-        assert_eq!(lexer.next(), Some(Token::Ident));
+        assert_eq!(lexer.next(), Some(TokenKind::Ident));
         // z
-        assert_eq!(lexer.next(), Some(Token::Ident));
+        assert_eq!(lexer.next(), Some(TokenKind::Ident));
         // =
-        assert_eq!(lexer.next(), Some(Token::Eq));
+        assert_eq!(lexer.next(), Some(TokenKind::Eq));
         // x
-        assert_eq!(lexer.next(), Some(Token::Ident));
+        assert_eq!(lexer.next(), Some(TokenKind::Ident));
         // +
-        assert_eq!(lexer.next(), Some(Token::Plus));
+        assert_eq!(lexer.next(), Some(TokenKind::Plus));
         // y
-        assert_eq!(lexer.next(), Some(Token::Ident));
-        assert_eq!(lexer.next(), Some(Token::Semi));
+        assert_eq!(lexer.next(), Some(TokenKind::Ident));
+        assert_eq!(lexer.next(), Some(TokenKind::Semi));
         
         // } and EOF
-        assert_eq!(lexer.next(), Some(Token::CloseBrace));
+        assert_eq!(lexer.next(), Some(TokenKind::CloseBrace));
         assert_eq!(lexer.next(), None);
     }
+}
+
+#[derive(Debug)]
+pub struct Token {
+    pub kind: TokenKind,
+    pub index: usize,
+    pub len: usize,
+    pub slice: String
 }
 
 /// Represents a lexer error thrown at the target position.
@@ -408,13 +416,13 @@ pub struct LexerError {
 }
 
 pub struct TokenLexer<'source> {
-    lexer: Lexer<'source, Token>,
+    lexer: Lexer<'source, TokenKind>,
 }
 
 impl TokenLexer<'_> {
     /// Create a new token parser.
     pub fn new<'source>(source: &'source str) -> TokenLexer<'source> {
-        let lexer = Token::lexer(source);
+        let lexer = TokenKind::lexer(source);
         TokenLexer { lexer }
     }
 
@@ -422,9 +430,9 @@ impl TokenLexer<'_> {
     pub fn parse<'source>(&mut self) -> Result<Vec<Token>, LexerError> {
         let mut tokens = Vec::new();
 
-        while let Some(token) = self.lexer.next() {
+        while let Some(kind) = self.lexer.next() {
             // If encountered a lexing error, throw it
-            if let Token::Error = token {
+            if let TokenKind::Error = kind {
                 return Err(LexerError {
                     index: self.lexer.span().start,
                     line: 0,
@@ -433,7 +441,12 @@ impl TokenLexer<'_> {
                 });
             }
             // Else, push tokens to output
-            tokens.push(token);
+            tokens.push(Token {
+                kind,
+                index: self.lexer.span().start,
+                len: self.lexer.span().len(),
+                slice: self.lexer.slice().into()
+            });
         }
         Ok(tokens)
     }
@@ -455,32 +468,33 @@ mod token_lexer {
         }"#;
 
         let mut lexer = TokenLexer::new(src);
-        let tokens = lexer.parse().unwrap();
+        let tokens: Vec<TokenKind> = lexer.parse().unwrap().into_iter().map(|t| t.kind).collect();
+
         assert_eq!(tokens, vec![
-            Token::Ident,
-            Token::Ident,
-            Token::OpenParen,
-            Token::CloseParen,
-            Token::OpenBrace,
-            Token::LineComment,
-            Token::Ident,
-            Token::Ident,
-            Token::Eq,
-            Token::Literal(LiteralKind::Int(Base::Decimal)),
-            Token::Semi,
-            Token::Ident,
-            Token::Ident,
-            Token::Eq,
-            Token::Literal(LiteralKind::Int(Base::Decimal)),
-            Token::Semi,
-            Token::Ident,
-            Token::Ident,
-            Token::Eq,
-            Token::Ident,
-            Token::Plus,
-            Token::Ident,
-            Token::Semi,
-            Token::CloseBrace
+            TokenKind::Ident,
+            TokenKind::Ident,
+            TokenKind::OpenParen,
+            TokenKind::CloseParen,
+            TokenKind::OpenBrace,
+            TokenKind::LineComment,
+            TokenKind::Ident,
+            TokenKind::Ident,
+            TokenKind::Eq,
+            TokenKind::Literal(LiteralKind::Int(Base::Decimal)),
+            TokenKind::Semi,
+            TokenKind::Ident,
+            TokenKind::Ident,
+            TokenKind::Eq,
+            TokenKind::Literal(LiteralKind::Int(Base::Decimal)),
+            TokenKind::Semi,
+            TokenKind::Ident,
+            TokenKind::Ident,
+            TokenKind::Eq,
+            TokenKind::Ident,
+            TokenKind::Plus,
+            TokenKind::Ident,
+            TokenKind::Semi,
+            TokenKind::CloseBrace
         ])
     }
 
