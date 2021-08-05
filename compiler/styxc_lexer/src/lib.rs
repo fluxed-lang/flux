@@ -110,18 +110,6 @@ pub enum TokenKind {
     #[token("match")]
     KeywordMatch,
 
-    /// The "try" keyword, used for declaring a try/catch block.
-    #[token("try")]
-    KeywordTry,
-
-    /// The "catch" keyword, used for declaring a catch block.
-    #[token("catch")]
-    KeywordCatch,
-
-    /// The "finally" keyword, used for declaring a finally block.
-    #[token("finally")]
-    KeywordFinally,
-
     /// The "enum" keyword, used for declaring an enumeration.
     #[token("enum")]
     KeywordEnum,
@@ -261,7 +249,7 @@ mod token {
 
     #[test]
     fn test_keyword() {
-        let mut lexer = TokenKind::lexer("let const for while loop break continue fn async return await import from type if else match try catch finally enum");
+        let mut lexer = TokenKind::lexer("let const for while loop break continue fn async return await import from type if else match enum");
         assert_eq!(lexer.next(), Some(TokenKind::KeywordLet));
         assert_eq!(lexer.next(), Some(TokenKind::KeywordConst));
         assert_eq!(lexer.next(), Some(TokenKind::KeywordFor));
@@ -279,9 +267,6 @@ mod token {
         assert_eq!(lexer.next(), Some(TokenKind::KeywordIf));
         assert_eq!(lexer.next(), Some(TokenKind::KeywordElse));
         assert_eq!(lexer.next(), Some(TokenKind::KeywordMatch));
-        assert_eq!(lexer.next(), Some(TokenKind::KeywordTry));
-        assert_eq!(lexer.next(), Some(TokenKind::KeywordCatch));
-        assert_eq!(lexer.next(), Some(TokenKind::KeywordFinally));
         assert_eq!(lexer.next(), Some(TokenKind::KeywordEnum));
         assert_eq!(lexer.next(), None);
     }
