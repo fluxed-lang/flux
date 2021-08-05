@@ -1,7 +1,7 @@
 <div align="center">
   <br />
   <p>
-    <a href="https://styx.skzr.dev"><img src="./assets/logo.png" width="546" alt="styx" /></a>
+    <a href="https://styx.skzr.dev"><img src="./assets/logo-dark.png" width="546" alt="styx" /></a>
   </p>
   <br />
 </div>
