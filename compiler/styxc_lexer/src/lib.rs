@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::{error::Error, str::FromStr};
 
 use logos::{Lexer, Logos};
 
@@ -14,94 +14,10 @@ pub enum Keyword {
     #[error]
     Error,
 
-    /// The "let" token, used in declarations.
-    #[token("let")]
-    Let,
-
-    /// The "const" token, used in constant declarations.
-    #[token("const")]
-    Const,
-
-    /// The "for" keyword, used for declaring loops over iterators or ranges.
-    #[token("for")]
-    For,
-
-    /// The "while" keyword, used for declaring a conditional loop.
-    #[token("while")]
-    While,
-
-    /// The "loop" keyword, used for declaring a unconditional loop.
-    #[token("loop")]
-    Loop,
-
-    /// The "break" keyword, used for breaking out of loops.
-    #[token("break")]
-    Break,
-
-    /// The "continue" keyword, used for continuing to the next iteration of a loop.
-    #[token("continue")]
-    Continue,
-
-    /// The "fn" keyword, used for declaring functions.
-    #[token("fn")]
-    Fn,
-
-    /// The "async" keyword, used to declare an asynchronous function.
-    #[token("async")]
-    Async,
-
-    /// The "return" keyword, used for returning from a function.
-    #[token("return")]
-    Return,
-
-
-    /// The "await" keyword, used to wait for the current asynchronous operation to finish.
-    #[token("await")]
-    Await,
-
-    /// The "import" keyword, used to import external modules.
-    #[token("import")]
-    Import,
-
-    /// The "from" keyword, used when declaring an aliased or destructing import.
-    #[token("from")]
-    ImportFrom,
-
-    /// The "type" keyword, used to declare a new type.
-    #[token("type")]
-    Type,
-
-    /// The "if" keyword, used for declaring conditional statements.
-    #[token("if")]
-    If,
-
-    /// The "else" keyword, used for declaring an "else" clause.
-    #[token("else")]
-    Else,
-
-    /// The "match" keyword, used for declaring a pattern match.
-    #[token("match")]
-    Match,
-
-    /// The "try" keyword, used for declaring a try/catch block.
-    #[token("try")]
-    Try,
-
-    /// The "catch" keyword, used for declaring a catch block.
-    #[token("catch")]
-    Catch,
-
-    /// The "finally" keyword, used for declaring a finally block.
-    #[token("finally")]
-    Finally,
-
-    /// The "enum" keyword, used for declaring an enumeration.
-    #[token("enum")]
-    Enum,
-
     /// A visibility keyword, used for determining the visibility of a symbol.
     Visibility(Visibility),
 }
+
 
 impl Keyword {
     /// Parse the target slice into a keyword token.
@@ -249,29 +165,93 @@ pub enum TokenKind {
     #[regex("[a-zA-Z_][a-zA-Z_0-9]*")]
     Ident,
 
-    /// Represents a keyword.
-    #[token("let", |lex| Keyword::parse(lex.slice()))]
-    #[token("const", |lex| Keyword::parse(lex.slice()))]
-    #[token("for", |lex| Keyword::parse(lex.slice()))]
-    #[token("while", |lex| Keyword::parse(lex.slice()))]
-    #[token("loop", |lex| Keyword::parse(lex.slice()))]
-    #[token("break", |lex| Keyword::parse(lex.slice()))]
-    #[token("continue", |lex| Keyword::parse(lex.slice()))]
-    #[token("fn", |lex| Keyword::parse(lex.slice()))]
-    #[token("async", |lex| Keyword::parse(lex.slice()))]
-    #[token("return", |lex| Keyword::parse(lex.slice()))]
-    #[token("await", |lex| Keyword::parse(lex.slice()))]
-    #[token("import", |lex| Keyword::parse(lex.slice()))]
-    #[token("from", |lex| Keyword::parse(lex.slice()))]
-    #[token("type", |lex| Keyword::parse(lex.slice()))]
-    #[token("if", |lex| Keyword::parse(lex.slice()))]
-    #[token("else", |lex| Keyword::parse(lex.slice()))]
-    #[token("match", |lex| Keyword::parse(lex.slice()))]
-    #[token("try", |lex| Keyword::parse(lex.slice()))]
-    #[token("catch", |lex| Keyword::parse(lex.slice()))]
-    #[token("finally", |lex| Keyword::parse(lex.slice()))]
-    #[token("enum", |lex| Keyword::parse(lex.slice()))]
-    Keyword(Keyword),
+    ///
+    /// KEYWORDS
+    ///
+    
+    /// The "let" token, used in declarations.
+    #[token("let")]
+    KeywordLet,
+
+    /// The "const" token, used in constant declarations.
+    #[token("const")]
+    KeywordConst,
+
+    /// The "for" keyword, used for declaring loops over iterators or ranges.
+    #[token("for")]
+    KeywordFor,
+
+    /// The "while" keyword, used for declaring a conditional loop.
+    #[token("while")]
+    KeywordWhile,
+
+    /// The "loop" keyword, used for declaring a unconditional loop.
+    #[token("loop")]
+    KeywordLoop,
+
+    /// The "break" keyword, used for breaking out of loops.
+    #[token("break")]
+    KeywordBreak,
+
+    /// The "continue" keyword, used for continuing to the next iteration of a loop.
+    #[token("continue")]
+    KeywordContinue,
+
+    /// The "fn" keyword, used for declaring functions.
+    #[token("fn")]
+    KeywordFn,
+
+    /// The "async" keyword, used to declare an asynchronous function.
+    #[token("async")]
+    KeywordAsync,
+
+    /// The "return" keyword, used for returning from a function.
+    #[token("return")]
+    KeywordReturn,
+
+    /// The "await" keyword, used to wait for the current asynchronous operation to finish.
+    #[token("await")]
+    KeywordAwait,
+
+    /// The "import" keyword, used to import external modules.
+    #[token("import")]
+    KeywordImport,
+
+    /// The "from" keyword, used when declaring an aliased or destructing import.
+    #[token("from")]
+    KeywordImportFrom,
+
+    /// The "type" keyword, used to declare a new type.
+    #[token("type")]
+    KeywordType,
+
+    /// The "if" keyword, used for declaring conditional statements.
+    #[token("if")]
+    KeywordIf,
+
+    /// The "else" keyword, used for declaring an "else" clause.
+    #[token("else")]
+    KeywordElse,
+
+    /// The "match" keyword, used for declaring a pattern match.
+    #[token("match")]
+    KeywordMatch,
+
+    /// The "try" keyword, used for declaring a try/catch block.
+    #[token("try")]
+    KeywordTry,
+
+    /// The "catch" keyword, used for declaring a catch block.
+    #[token("catch")]
+    KeywordCatch,
+
+    /// The "finally" keyword, used for declaring a finally block.
+    #[token("finally")]
+    KeywordFinally,
+
+    /// The "enum" keyword, used for declaring an enumeration.
+    #[token("enum")]
+    KeywordEnum,
 
     /// Represents a generic whitespace character. This includes tabs, spaces, and newlines.
     #[regex("\\s+", logos::skip)]
@@ -386,27 +366,27 @@ mod token {
     #[test]
     fn test_keyword() {
         let mut lexer = TokenKind::lexer("let const for while loop break continue fn async return await import from type if else match try catch finally enum");
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Let)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Const)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::For)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::While)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Loop)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Break)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Continue)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Fn)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Async)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Return)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Await)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Import)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::ImportFrom)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Type)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::If)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Else)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Match)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Try)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Catch)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Finally)));
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Enum)));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordLet));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordConst));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordFor));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordWhile));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordLoop));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordBreak));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordContinue));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordFn));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordAsync));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordReturn));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordAwait));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordImport));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordImportFrom));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordType));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordIf));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordElse));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordMatch));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordTry));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordCatch));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordFinally));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordEnum));
         assert_eq!(lexer.next(), None);
     }
 
@@ -494,7 +474,7 @@ mod token {
     #[test]
     fn test_assignment() {
         let mut lexer = TokenKind::lexer("let x = 2;");
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Let)));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordLet));
         assert_eq!(lexer.next(), Some(TokenKind::Ident));
         assert_eq!(lexer.next(), Some(TokenKind::Eq));
         assert_eq!(
@@ -520,7 +500,7 @@ mod token {
         // newline and indentation
 
         // fn
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Fn)));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordFn));
         // space
         // main
         assert_eq!(lexer.next(), Some(TokenKind::Ident));
@@ -534,7 +514,7 @@ mod token {
         assert_eq!(lexer.next(), Some(TokenKind::LineComment));
 
         // let
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Let)));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordLet));
         // x
         assert_eq!(lexer.next(), Some(TokenKind::Ident));
         // =
@@ -547,7 +527,7 @@ mod token {
         assert_eq!(lexer.next(), Some(TokenKind::Semi));
 
         // let
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Let)));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordLet));
         // y
         assert_eq!(lexer.next(), Some(TokenKind::Ident));
         // =
@@ -560,7 +540,7 @@ mod token {
         assert_eq!(lexer.next(), Some(TokenKind::Semi));
 
         // let
-        assert_eq!(lexer.next(), Some(TokenKind::Keyword(Keyword::Let)));
+        assert_eq!(lexer.next(), Some(TokenKind::KeywordLet));
         // z
         assert_eq!(lexer.next(), Some(TokenKind::Ident));
         // =
@@ -671,23 +651,23 @@ mod token_lexer {
         assert_eq!(
             tokens,
             vec![
-                TokenKind::Keyword(Keyword::Fn),
+                TokenKind::KeywordFn,
                 TokenKind::Ident,
                 TokenKind::OpenParen,
                 TokenKind::CloseParen,
                 TokenKind::OpenBrace,
                 TokenKind::LineComment,
-                TokenKind::Keyword(Keyword::Let),
+                TokenKind::KeywordLet, 
                 TokenKind::Ident,
                 TokenKind::Eq,
                 TokenKind::Literal(LiteralKind::Int(Base::Decimal)),
                 TokenKind::Semi,
-                TokenKind::Keyword(Keyword::Let),
+                TokenKind::KeywordLet,
                 TokenKind::Ident,
                 TokenKind::Eq,
                 TokenKind::Literal(LiteralKind::Int(Base::Decimal)),
                 TokenKind::Semi,
-                TokenKind::Keyword(Keyword::Let),
+                TokenKind::KeywordLet,
                 TokenKind::Ident,
                 TokenKind::Eq,
                 TokenKind::Ident,
@@ -709,7 +689,7 @@ mod token_lexer {
 
         let kinds: Vec<TokenKind> = res.tokens.into_iter().map(|t| t.kind).collect();
         assert_eq!(kinds, vec![
-            TokenKind::Keyword(Keyword::Let),
+            TokenKind::KeywordLet,
             TokenKind::Ident,
             TokenKind::Eq,
             TokenKind::Semi
