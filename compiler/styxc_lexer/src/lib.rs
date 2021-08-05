@@ -1,9 +1,9 @@
-use std::error::Error;
+use std::{error::Error};
 
-use logos::Logos;
+use logos::{Lexer, Logos};
 
 #[derive(Debug, PartialEq)]
-enum Base {
+pub enum Base {
     Hexadecimal,
     Decimal,
     Octal,
@@ -32,7 +32,7 @@ impl Base {
 }
 
 #[derive(Logos, Debug, PartialEq)]
-enum LiteralKind {
+pub enum LiteralKind {
     #[error]
     Error,
 
@@ -55,7 +55,7 @@ enum LiteralKind {
     #[regex(r#"'\\u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]'"#)]
     Char,
 
-    #[regex("\"(\"|[^\"])*\"")]
+    #[regex("\"([^\"]|(\\\\\"))*\"")]
     String
 }
 
@@ -131,16 +131,16 @@ mod literal_kind {
 }
 
 #[derive(Logos, Debug, PartialEq)]
-enum Token {
+pub enum Token {
     #[error]
     Error,
 
     /// Represents an identifier or keyword.
-    #[regex("[a-zA-Z_][a-zA-Z_0-9]+")]
+    #[regex("[a-zA-Z_][a-zA-Z_0-9]*")]
     Ident,
 
     /// Represents a generic whitespace character. This includes tabs, spaces, and newlines.
-    #[regex("\\s")]
+    #[regex("\\s+", logos::skip)]
     Whitespace,
     
     /// Represents a line comment.
@@ -148,7 +148,7 @@ enum Token {
     LineComment,
 
     /// Represents a block comment.
-    #[regex("/\\*.*\\*/")]
+    #[regex(r#"/\*(.|\n)*\*/"#)]
     BlockComment,
 
     /// Matches a literal.
@@ -236,34 +236,33 @@ enum Token {
     At
 }
 
+
 #[cfg(test)]
 mod token {
-    use logos::internal::LexerInternal;
-
     use super::*;
 
     #[test]
     fn test_ident() {
         let mut lexer = Token::lexer("hello_world i_like_foxes_123 xbox360");
         assert_eq!(lexer.next(), Some(Token::Ident));
-        assert_eq!(lexer.next(), Some(Token::Whitespace));
         assert_eq!(lexer.next(), Some(Token::Ident));
-        assert_eq!(lexer.next(), Some(Token::Whitespace));
         assert_eq!(lexer.next(), Some(Token::Ident));
+        assert_eq!(lexer.next(), None);
     }
 
     #[test]
     fn test_line_comment() {
         let mut lexer = Token::lexer("# this is a comment\nhello_world");
         assert_eq!(lexer.next(), Some(Token::LineComment));
-        assert_eq!(lexer.next(), Some(Token::Whitespace));
         assert_eq!(lexer.next(), Some(Token::Ident));
+        assert_eq!(lexer.next(), None);
     }
 
     #[test]
     fn test_block_comment() {
         let mut lexer = Token::lexer("/*this is a comment*/");
         assert_eq!(lexer.next(), Some(Token::BlockComment));
+        assert_eq!(lexer.next(), None);
     }
 
     #[test]
@@ -294,6 +293,7 @@ mod token {
         assert_eq!(lexer.next(), Some(Token::Colon));
         assert_eq!(lexer.next(), Some(Token::Dot));
         assert_eq!(lexer.next(), Some(Token::At));
+        assert_eq!(lexer.next(), None);
     }
 
     #[test]
@@ -301,33 +301,40 @@ mod token {
         let mut lexer = Token::lexer("hello: int = 2;");
         assert_eq!(lexer.next(), Some(Token::Ident));
         assert_eq!(lexer.next(), Some(Token::Colon));
-        assert_eq!(lexer.next(), Some(Token::Whitespace));
         assert_eq!(lexer.next(), Some(Token::Ident));
-        assert_eq!(lexer.next(), Some(Token::Whitespace));
         assert_eq!(lexer.next(), Some(Token::Eq));
-        assert_eq!(lexer.next(), Some(Token::Whitespace));
         assert_eq!(lexer.next(), Some(Token::Literal(LiteralKind::Int(Base::Decimal))));
         assert_eq!(lexer.next(), Some(Token::Semi));
+        assert_eq!(lexer.next(), None);
     }
 
     #[test]
     fn test_binary_expression() {
         let mut lexer = Token::lexer("1 + 2 * 3");
         assert_eq!(lexer.next(), Some(Token::Literal(LiteralKind::Int(Base::Decimal))));
-        assert_eq!(lexer.next(), Some(Token::Whitespace));
         assert_eq!(lexer.next(), Some(Token::Plus));
-        assert_eq!(lexer.next(), Some(Token::Whitespace));
         assert_eq!(lexer.next(), Some(Token::Literal(LiteralKind::Int(Base::Decimal))));
-        assert_eq!(lexer.next(), Some(Token::Whitespace));
         assert_eq!(lexer.next(), Some(Token::Star));
-        assert_eq!(lexer.next(), Some(Token::Whitespace));
         assert_eq!(lexer.next(), Some(Token::Literal(LiteralKind::Int(Base::Decimal))));
+        assert_eq!(lexer.next(), None);
+    }
+
+    #[test]
+    fn test_assignment() {
+        let mut lexer = Token::lexer("let x = 2;");
+        assert_eq!(lexer.next(), Some(Token::Ident));
+        assert_eq!(lexer.next(), Some(Token::Ident));
+        assert_eq!(lexer.next(), Some(Token::Eq));
+        assert_eq!(lexer.next(), Some(Token::Literal(LiteralKind::Int(Base::Decimal))));
+        assert_eq!(lexer.next(), Some(Token::Semi));
+        assert_eq!(lexer.next(), None);
     }
 
     #[test]
     fn test_code() {
         let src = r#"
         fn main() {
+            # assign variables
             let x = 1;
             let y = 2;
             let z = x + y;
@@ -335,44 +342,160 @@ mod token {
 
         let mut lexer = Token::lexer(src);
 
-        // \n
-        assert_eq!(lexer.next(), Some(Token::Whitespace));
-
-        // indent
-        for _ in 0..8 {
-            assert_eq!(lexer.next(), Some(Token::Whitespace));
-        }
+        // newline and indentation
 
         // fn
         assert_eq!(lexer.next(), Some(Token::Ident));
         // space
-        assert_eq!(lexer.next(), Some(Token::Whitespace));
         // main
         assert_eq!(lexer.next(), Some(Token::Ident));
         // ()
         assert_eq!(lexer.next(), Some(Token::OpenParen));
         assert_eq!(lexer.next(), Some(Token::CloseParen));
-        assert_eq!(lexer.next(), Some(Token::Whitespace));
         // {
         assert_eq!(lexer.next(), Some(Token::OpenBrace));
-        assert_eq!(lexer.next(), Some(Token::Whitespace));
 
-        for _ in 0..12 {
-            assert_eq!(lexer.next(), Some(Token::Whitespace));
-        }
+        // comment
+        assert_eq!(lexer.next(), Some(Token::LineComment));
 
         // let
         assert_eq!(lexer.next(), Some(Token::Ident));
-        assert_eq!(lexer.next(), Some(Token::Whitespace));
         // x
         assert_eq!(lexer.next(), Some(Token::Ident));
-        assert_eq!(lexer.next(), Some(Token::Whitespace));
         // =
         assert_eq!(lexer.next(), Some(Token::Eq));
-        assert_eq!(lexer.next(), Some(Token::Whitespace));
         // 1
         assert_eq!(lexer.next(), Some(Token::Literal(LiteralKind::Int(Base::Decimal))));
         assert_eq!(lexer.next(), Some(Token::Semi));
+
+        // let
+        assert_eq!(lexer.next(), Some(Token::Ident));
+        // y
+        assert_eq!(lexer.next(), Some(Token::Ident));
+        // =
+        assert_eq!(lexer.next(), Some(Token::Eq));
+        // 2
+        assert_eq!(lexer.next(), Some(Token::Literal(LiteralKind::Int(Base::Decimal))));
+        assert_eq!(lexer.next(), Some(Token::Semi));
+
+        // let
+        assert_eq!(lexer.next(), Some(Token::Ident));
+        // z
+        assert_eq!(lexer.next(), Some(Token::Ident));
+        // =
+        assert_eq!(lexer.next(), Some(Token::Eq));
+        // x
+        assert_eq!(lexer.next(), Some(Token::Ident));
+        // +
+        assert_eq!(lexer.next(), Some(Token::Plus));
+        // y
+        assert_eq!(lexer.next(), Some(Token::Ident));
+        assert_eq!(lexer.next(), Some(Token::Semi));
         
+        // } and EOF
+        assert_eq!(lexer.next(), Some(Token::CloseBrace));
+        assert_eq!(lexer.next(), None);
+    }
+}
+
+/// Represents a lexer error thrown at the target position.
+#[derive(Debug, PartialEq)]
+pub struct LexerError {
+    pub index: usize,
+    pub line: usize,
+    pub col: usize,
+    pub slice: String
+}
+
+pub struct TokenLexer<'source> {
+    lexer: Lexer<'source, Token>,
+}
+
+impl TokenLexer<'_> {
+    /// Create a new token parser.
+    pub fn new<'source>(source: &'source str) -> TokenLexer<'source> {
+        let lexer = Token::lexer(source);
+        TokenLexer { lexer }
+    }
+
+    /// Parse tokens from the source.
+    pub fn parse<'source>(&mut self) -> Result<Vec<Token>, LexerError> {
+        let mut tokens = Vec::new();
+
+        while let Some(token) = self.lexer.next() {
+            // If encountered a lexing error, throw it
+            if let Token::Error = token {
+                return Err(LexerError {
+                    index: self.lexer.span().start,
+                    line: 0,
+                    col: 0,
+                    slice: self.lexer.slice().into()
+                });
+            }
+            // Else, push tokens to output
+            tokens.push(token);
+        }
+        Ok(tokens)
+    }
+}
+
+
+#[cfg(test)]
+mod token_lexer {
+    use super::*;
+
+    #[test]
+    fn test_token_lexer() {
+        let src = r#"
+        fn main() {
+            # assign variables
+            let x = 1;
+            let y = 2;
+            let z = x + y;
+        }"#;
+
+        let mut lexer = TokenLexer::new(src);
+        let tokens = lexer.parse().unwrap();
+        assert_eq!(tokens, vec![
+            Token::Ident,
+            Token::Ident,
+            Token::OpenParen,
+            Token::CloseParen,
+            Token::OpenBrace,
+            Token::LineComment,
+            Token::Ident,
+            Token::Ident,
+            Token::Eq,
+            Token::Literal(LiteralKind::Int(Base::Decimal)),
+            Token::Semi,
+            Token::Ident,
+            Token::Ident,
+            Token::Eq,
+            Token::Literal(LiteralKind::Int(Base::Decimal)),
+            Token::Semi,
+            Token::Ident,
+            Token::Ident,
+            Token::Eq,
+            Token::Ident,
+            Token::Plus,
+            Token::Ident,
+            Token::Semi,
+            Token::CloseBrace
+        ])
+    }
+
+    #[test]
+    fn test_token_lexer_error() {
+        let src = "let hello_world = ℵ";
+        let mut lexer = TokenLexer::new(src);
+        let res = lexer.parse();
+
+        assert!(res.is_err());
+        assert_eq!(res.unwrap_err(), LexerError {
+            index: 18,
+            line: 0,
+            col: 0,
+            slice: "ℵ".into(),
+        })
     }
 }
