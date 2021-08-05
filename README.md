@@ -1,10 +1,12 @@
----
-description: General purpose programming language for cool people.
----
+<div align="center">
+  <br />
+  <p>
+    <a href="https://styx.skzr.dev"><img src="./assets/logo.png" width="546" alt="styx" /></a>
+  </p>
+  <br />
+</div>
 
-# Styx
-
-## Introduction
+## About
 
 Styx is a general purpose, multi-paradigm programming language. Designed to be an intermediary between [nodejs](https://nodejs.org) and [Python](https://python.org), and more advanced languages such as [Rust](https://www.rust-lang.org/) or [C++](https://en.wikipedia.org/wiki/C%2B%2B), it provides a friendly programming experience while maintaining the speed of a low-level language.
 
@@ -22,4 +24,3 @@ loop {
 ## License
 
 Styx is licensed under the MIT License.
-
