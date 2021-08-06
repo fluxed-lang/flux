@@ -4,6 +4,17 @@ use std::str::FromStr;
 use styxc_types::Type;
 
 /// Enum representing operator associativity.
+///
+/// Some operators are evaluated from left-to-right, while others are evaluated from right-to-left.
+/// This property is known as an operator's associativity. In order for the compiler to correctly
+/// generate machine code that performs as expected, the associativity of each operator must be defined
+/// in the language specification.
+///
+/// This enum contains two values:
+/// - `Associativity::Left`: The left-to-right associativity.
+/// - `Associativity::Right`: The right-to-left associativity.
+///
+/// Each operator is then matched to either one of these options, and compiled as such.
 pub enum Associativity {
     /// Left-to-right associativity.
     Ltr,
@@ -11,6 +22,9 @@ pub enum Associativity {
     Rtl,
 }
 
+/// Enum representing unary operator types.
+///
+/// Unary operators are operators that act on a single argument, such as `x++`, or `!x`.
 pub enum UnOpKind {
     /// The suffix increment operator, `++`.
     SuffixIncr,
@@ -31,7 +45,9 @@ pub enum UnOpKind {
     /// The de-reference operator, `*`.
     Deref,
     /// The call operator, `()`.
-    Call(Vec<Node>)
+    Call(Vec<Node>),
+    /// The negation operator.
+    Neg,
 }
 
 impl FromStr for UnOpKind {
@@ -47,9 +63,8 @@ impl FromStr for UnOpKind {
             chars.next_back();
             let inner: String = chars.collect();
             let index: usize = inner.parse::<usize>().unwrap_or(0);
-            return Ok(Index(index))
+            return Ok(Index(index));
         }
-        
 
         match s {
             "++" => Err("cannot determine associativity of operator".into()),
@@ -58,19 +73,22 @@ impl FromStr for UnOpKind {
             "~" => Ok(Not),
             "!" => Ok(LogNot),
             "*" => Ok(Deref),
-            _ => Err("invalid unary operator".into())
+            _ => Err("invalid unary operator".into()),
         }
     }
 }
 
 impl UnOpKind {
+    /// Fetch the precedence of this unary operator.
     pub const fn precedence(&self) -> usize {
         use UnOpKind::*;
         match self {
             SuffixIncr | SuffixDecr | Index(_) => 1,
-            _ => 2
+            _ => 2,
         }
     }
+
+    /// Fetch the associativity of this unary operator.
 
     pub const fn associativity(&self) -> Associativity {
         use UnOpKind::*;
@@ -214,7 +232,8 @@ pub enum Mutability {
     Mutable,
     /// An immutable variable.
     Immutable,
-    /// A constant.
+    /// A constant. Unlike an immutable variable, the type of a constant must be defined at compile time, such
+    /// that the size of the constant is known.
     Constant,
 }
 
@@ -263,7 +282,7 @@ pub enum NodeKind {
     Block {
         /// The list of statements in the block.
         children: Vec<Node>,
-    }
+    },
 }
 
 /// A struct representing a node in the AST tree.
