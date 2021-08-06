@@ -132,7 +132,7 @@ pub enum TokenKind {
     LineComment,
 
     /// Represents a block comment.
-    #[regex(r#"/\*(.|\s)*\*/"#)]
+    #[regex("/\\*[^*]*\\*/")]
     BlockComment,
 
     ///
@@ -281,7 +281,9 @@ mod token {
 
     #[test]
     fn test_block_comment() {
-        let mut lexer = TokenKind::lexer("/*this is a comment*/");
+        let mut lexer = TokenKind::lexer("/**/ /*a*/ /* this is a comment */");
+        assert_eq!(lexer.next(), Some(TokenKind::BlockComment));
+        assert_eq!(lexer.next(), Some(TokenKind::BlockComment));
         assert_eq!(lexer.next(), Some(TokenKind::BlockComment));
         assert_eq!(lexer.next(), None);
     }
