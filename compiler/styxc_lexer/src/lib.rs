@@ -24,7 +24,7 @@ impl Base {
             "0x" => Base::Hexadecimal,
             "0o" => Base::Octal,
             "0b" => Base::Binary,
-            _ => Base::Decimal
+            _ => Base::Decimal,
         }
     }
 }
@@ -41,7 +41,7 @@ pub enum TokenKind {
     ///
     /// KEYWORDS
     ///
-    
+
     /// The "let" token, used in declarations.
     #[token("let")]
     KeywordLet,
@@ -382,10 +382,7 @@ mod token {
         assert_eq!(lexer.next(), Some(TokenKind::SymbolColon));
         assert_eq!(lexer.next(), Some(TokenKind::Ident));
         assert_eq!(lexer.next(), Some(TokenKind::SymbolEq));
-        assert_eq!(
-            lexer.next(),
-            Some(TokenKind::LiteralInt(Base::Decimal))
-        );
+        assert_eq!(lexer.next(), Some(TokenKind::LiteralInt(Base::Decimal)));
         assert_eq!(lexer.next(), Some(TokenKind::SymbolSemi));
         assert_eq!(lexer.next(), None);
     }
@@ -393,20 +390,11 @@ mod token {
     #[test]
     fn test_binary_expression() {
         let mut lexer = TokenKind::lexer("1 + 2 * 3");
-        assert_eq!(
-            lexer.next(),
-            Some(TokenKind::LiteralInt(Base::Decimal))
-        );
+        assert_eq!(lexer.next(), Some(TokenKind::LiteralInt(Base::Decimal)));
         assert_eq!(lexer.next(), Some(TokenKind::SymbolPlus));
-        assert_eq!(
-            lexer.next(),
-            Some(TokenKind::LiteralInt(Base::Decimal))
-        );
+        assert_eq!(lexer.next(), Some(TokenKind::LiteralInt(Base::Decimal)));
         assert_eq!(lexer.next(), Some(TokenKind::SymbolStar));
-        assert_eq!(
-            lexer.next(),
-            Some(TokenKind::LiteralInt(Base::Decimal))
-        );
+        assert_eq!(lexer.next(), Some(TokenKind::LiteralInt(Base::Decimal)));
         assert_eq!(lexer.next(), None);
     }
 
@@ -416,10 +404,7 @@ mod token {
         assert_eq!(lexer.next(), Some(TokenKind::KeywordLet));
         assert_eq!(lexer.next(), Some(TokenKind::Ident));
         assert_eq!(lexer.next(), Some(TokenKind::SymbolEq));
-        assert_eq!(
-            lexer.next(),
-            Some(TokenKind::LiteralInt(Base::Decimal))
-        );
+        assert_eq!(lexer.next(), Some(TokenKind::LiteralInt(Base::Decimal)));
         assert_eq!(lexer.next(), Some(TokenKind::SymbolSemi));
         assert_eq!(lexer.next(), None);
     }
@@ -459,10 +444,7 @@ mod token {
         // =
         assert_eq!(lexer.next(), Some(TokenKind::SymbolEq));
         // 1
-        assert_eq!(
-            lexer.next(),
-            Some(TokenKind::LiteralInt(Base::Decimal))
-        );
+        assert_eq!(lexer.next(), Some(TokenKind::LiteralInt(Base::Decimal)));
         assert_eq!(lexer.next(), Some(TokenKind::SymbolSemi));
 
         // let
@@ -472,10 +454,7 @@ mod token {
         // =
         assert_eq!(lexer.next(), Some(TokenKind::SymbolEq));
         // 2
-        assert_eq!(
-            lexer.next(),
-            Some(TokenKind::LiteralInt(Base::Decimal))
-        );
+        assert_eq!(lexer.next(), Some(TokenKind::LiteralInt(Base::Decimal)));
         assert_eq!(lexer.next(), Some(TokenKind::SymbolSemi));
 
         // let
@@ -498,7 +477,6 @@ mod token {
     }
 }
 
-
 #[derive(Debug)]
 pub struct Token {
     pub kind: TokenKind,
@@ -520,7 +498,7 @@ pub struct LexerResult {
     /// A list of tokens that were successfully lexed. This does not include unknown tokens.
     pub tokens: Vec<Token>,
     /// A list of lexer errors that occurred. These correspond to unknown tokens.
-    pub errors: Vec<LexerError>
+    pub errors: Vec<LexerError>,
 }
 
 impl LexerResult {
@@ -565,7 +543,7 @@ impl TokenLexer<'_> {
                 });
             }
         }
-        
+
         LexerResult { tokens, errors }
     }
 }
@@ -596,7 +574,7 @@ mod token_lexer {
                 TokenKind::SymbolCloseParen,
                 TokenKind::SymbolOpenBrace,
                 TokenKind::LineComment,
-                TokenKind::KeywordLet, 
+                TokenKind::KeywordLet,
                 TokenKind::Ident,
                 TokenKind::SymbolEq,
                 TokenKind::LiteralInt(Base::Decimal),
@@ -627,12 +605,15 @@ mod token_lexer {
         assert!(res.has_errs());
 
         let kinds: Vec<TokenKind> = res.tokens.into_iter().map(|t| t.kind).collect();
-        assert_eq!(kinds, vec![
-            TokenKind::KeywordLet,
-            TokenKind::Ident,
-            TokenKind::SymbolEq,
-            TokenKind::SymbolSemi
-        ]);
+        assert_eq!(
+            kinds,
+            vec![
+                TokenKind::KeywordLet,
+                TokenKind::Ident,
+                TokenKind::SymbolEq,
+                TokenKind::SymbolSemi
+            ]
+        );
 
         assert_eq!(
             res.errors[0],

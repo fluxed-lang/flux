@@ -1,12 +1,10 @@
 use styxc_lexer::{Token, TokenKind};
 
 #[derive(thiserror::Error, Debug)]
-enum TokenParserError {
-
-}
+enum TokenParserError {}
 
 struct TokenParser {
-    tokens: Vec<Token>
+    tokens: Vec<Token>,
 }
 
 impl TokenParser {
@@ -22,12 +20,14 @@ impl TokenParser {
         // iterate over tokens and parse
         while let Some(token) = tokens.next() {
             match token.kind {
-                TokenKind::Ident => { &self.parse_ident_or_keyword(token); }
-                _ => { }
+                TokenKind::Ident => {
+                    &self.parse_ident_or_keyword(token);
+                }
+                _ => {}
             }
-        } 
+        }
 
-        Ok(())   
+        Ok(())
     }
 
     /// Parse an identifier or keyword.

@@ -1,217 +1,273 @@
-use crate::types::Type;
+use std::error::Error;
+use std::str::FromStr;
 
-pub mod func;
-pub mod types;
-pub mod var;
+use styxc_types::Type;
 
-pub enum NodeType {
-    /// Represents a literal type. The second argument is the type of the literal.
-    Literal(String, Box<Type>),
-
-    /// Represents an identifier. This could be a variable, class, or function name.
-    Ident(Ident),
-
-    /// Represents a declaration.
-    Declare(String, Box<Type>, Box<NodeType>),
-
-    /// Represents a constant declaration.
-    DeclareConst(String, Box<Type>, Box<NodeType>),
-
-    /// Represents an assignment.
-    Assign(String, Box<NodeType>),
-
-    /// Represents a primitive type.
-    Type(Box<Type>),
-
-    /// Represents a binary equality expression.
-    Eq(Box<NodeType>, Box<NodeType>),
-
-    /// Represents a binary inequality expression.
-    Ne(Box<NodeType>, Box<NodeType>),
-
-    /// Represents a binary less-than expression.
-    Lt(Box<NodeType>, Box<NodeType>),
-
-    /// Represents a binary less-than-or-equal expression.
-    Le(Box<NodeType>, Box<NodeType>),
-
-    /// Represents a binary greater-than expression.
-    Gt(Box<NodeType>, Box<NodeType>),
-
-    /// Represents a binary greater-than-or-equal expression.
-    Ge(Box<NodeType>, Box<NodeType>),
-
-    /// Represents a binary addition expression.
-    Add(Box<NodeType>, Box<NodeType>),
-
-    /// Represents a binary subtraction expression.
-    Sub(Box<NodeType>, Box<NodeType>),
-
-    /// Represents a binary multiplication expression.
-    Mul(Box<NodeType>, Box<NodeType>),
-
-    /// Represents a binary division expression.
-    Div(Box<NodeType>, Box<NodeType>),
-
-    /// Represents an if statement. The first argument is the condition expression,
-    /// the second argument is the statements to execute if this block is true.
-    If(Box<NodeType>, Block),
-
-    /// Represents an if-else statement. The first argument is the condition expression,
-    /// the second argument is a vector of statements to execute if the condition is true,
-    /// and the third s a vector of statements to execute if the condition expression is false.
-    IfElse(Box<NodeType>, Block, Block),
-
-    /// Represents a loop block.
-    Loop(Box<Option<NodeType>>, Block),
-
-    /// Represents a for block.
-    /// for (expr; expr; expr) {}
-    For(Box<NodeType>, Box<NodeType>, Box<NodeType>, Block),
-
-    /// Represents a function declaration expression.
-    FuncDeclare(FuncDeclare),
-
-    /// Represents a function call.
-    Call(String, Vec<NodeType>),
-
-    /// Represents a top-level import.
-    Import(String, String),
+/// Enum representing operator associativity.
+pub enum Associativity {
+    /// Left-to-right associativity.
+    Ltr,
+    /// Right-to-left associativity.
+    Rtl,
 }
 
-/// An enum of binary operation types.
-pub enum BinOpKind {
-    /// Represents the "+" operator.
-    Add,
-    /// Represents the "-" operator.
-    Sub,
-    /// Represents the "*" operator.
-    Mul,
-    /// Represents the "/" operator.
-    Div,
-    /// Represents the "%" operator.
-    Mod,
-    /// Represents the "==" operator.
-    Eq,
-    /// Represents the "<" operator.
-    Lt,
-    /// Represents the ">" operator.
-    Gt,
-    /// Represents the "<=" operator.
-    Le,
-    /// Represents the ">=" operator.
-    Ge,
-    /// Represents the ">>" operator.
-    Shr,
-    /// Represents the "<<" operator.
-    Shl,
-}
-
-impl BinOpKind {
-    /// Convert this operator to its string representation.
-    pub fn to_string(&self) -> &'static str {
-        use BinOpKind::*;
-        match *self {
-            Add => "+",
-            Sub => "-",
-            Mul => "*",
-            Div => "/",
-            Mod => "%",
-            Eq => "==",
-            Lt => "<",
-            Gt => ">",
-            Le => "<=",
-            Ge => ">=",
-            Shr => ">>",
-            Shl => "<<",
-        }
-    }
-
-    /// Test if this operation is a comparison operator.
-    pub fn is_comparison(&self) -> bool {
-        use BinOpKind::*;
-        match *self {
-            Eq | Lt | Gt | Le | Ge => true,
-            Add | Sub | Mul | Div | Mod | Shr | Shl => false,
-        }
-    }
-}
-
-/// An enum of unary operation types.
 pub enum UnOpKind {
-    /// Represents the "!" operator.
+    /// The suffix increment operator, `++`.
+    SuffixIncr,
+    /// The suffix decrement operator, `--`.
+    SuffixDecr,
+    /// The prefix increment operator, `++`.
+    PrefixIncr,
+    /// The prefix decrement operator, `--`.
+    PrefixDecr,
+    /// The index operator, `[n]`
+    Index(usize),
+    /// The address-of operator, `&`.
+    Addr,
+    /// The bitwise not operator, `~`.
     Not,
-    /// Represents the "-" operator.
-    Neg,
+    /// The logical not operator, `!`.
+    LogNot,
+    /// The de-reference operator, `*`.
+    Deref,
+}
+
+impl FromStr for UnOpKind {
+    type Err = Box<dyn Error>;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use UnOpKind::*;
+
+        // match index operator
+        if s.starts_with("[") && s.ends_with("]") {
+            let mut chars = s.chars();
+            chars.next();
+            chars.next_back();
+            let inner: String = chars.collect();
+            let index: usize = inner.parse::<usize>().unwrap_or(0);
+            return Ok(Index(index))
+        }
+        
+
+        match s {
+            "++" => Err("cannot determine associativity of operator".into()),
+            "--" => Err("cannot determine associativity of operator".into()),
+            "&" => Ok(Addr),
+            "~" => Ok(Not),
+            "!" => Ok(LogNot),
+            "*" => Ok(Deref),
+            _ => Err("invalid unary operator".into())
+        }
+    }
 }
 
 impl UnOpKind {
-    /// Convert this operator into its string representation.
-    pub fn to_string(&self) -> &'static str {
+    pub const fn precedence(&self) -> usize {
         use UnOpKind::*;
-        match *self {
-            Not => "!",
-            Neg => "-",
+        match self {
+            SuffixIncr | SuffixDecr | Index(_) => 1,
+            _ => 2
+        }
+    }
+
+    pub const fn associativity(&self) -> Associativity {
+        use UnOpKind::*;
+        match self {
+            SuffixIncr | SuffixDecr | Index(_) => Associativity::Ltr,
+            _ => Associativity::Rtl,
         }
     }
 }
 
-/// Represents a node in the AST tree.
-pub struct Node {}
-
-/// Represents an identifier.
-#[derive(Debug, Clone)]
-pub struct Ident {
-    /// The ID of this identifier in the AST.
-    pub id: i64,
-    /// The raw string name of this identifier.
-    pub val: String,
+pub enum BinOpKind {
+    /// The addition operator, `+`.
+    Add,
+    /// The subtraction operator, `-`.
+    Sub,
+    /// The multiplication operator, `*`.
+    Mul,
+    /// The division operator, `/`.
+    Div,
+    /// The modulo operator, `%`.
+    Mod,
+    /// The bitwise AND operator, `&`.
+    And,
+    /// The bitwise OR operator, `|`.
+    Or,
+    /// The bitwise XOR operator, `^`.
+    Xor,
+    /// The logical AND operator, `&&`.
+    LogAnd,
+    /// The logical OR operator, `||`.
+    LogOr,
+    /// The bit-wise left shift operator, `<<`.
+    Shl,
+    /// The bit-wise right shift operator, `>>`.
+    Shr,
+    /// The equality operator, `==`.
+    Eq,
+    /// The inequality operator, `!=`.
+    Ne,
+    /// The less-than operator, `<`.
+    Lt,
+    /// The greater-than operator, `>`.
+    Gt,
+    /// The less-than-or-equal operator, `<=`.
+    Le,
+    /// The greater-than-or-equal operator, `>=`.
+    Ge,
+    /// The assignment operator, `=`.
+    Assign,
+    /// The bitwise left-shift assignment operator, `<<=`.
+    ShlAssign,
+    /// The bitwise right-shift assignment operator, `>>=`.
+    ShrAssign,
+    /// The bitwise AND assignment operator, `&=`.
+    AndAssign,
+    /// The bitwise OR assignment operator, `|=`.
+    OrAssign,
+    /// The bitwise XOR assignment operator, `^=`.
+    XorAssign,
+    /// The assignment by sum operator, `+=`.
+    AddAssign,
+    /// The assignment by difference operator, `-=`.
+    SubAssign,
+    /// The assignment by product operator, `*=`.
+    MulAssign,
+    /// The assignment by division operator, `/=`.
+    DivAssign,
+    /// The assignment by modulo operator, `%=`.
+    ModAssign,
 }
 
-/// An enum of mutability state.
-/// e.g. a variable is mutable but a constant is not.
-#[derive(Debug, Clone)]
+impl FromStr for BinOpKind {
+    type Err = Box<dyn Error>;
+
+    fn from_str(s: &str) -> Result<BinOpKind, Self::Err> {
+        use BinOpKind::*;
+        match s {
+            "+" => Ok(Add),
+            "-" => Ok(Sub),
+            "*" => Ok(Mul),
+            "/" => Ok(Div),
+            "%" => Ok(Mod),
+            "&" => Ok(And),
+            "|" => Ok(Or),
+            "^" => Ok(Xor),
+            "<<" => Ok(Shl),
+            ">>" => Ok(Shr),
+            "==" => Ok(Eq),
+            "!=" => Ok(Ne),
+            "<" => Ok(Lt),
+            ">" => Ok(Gt),
+            "<=" => Ok(Le),
+            ">=" => Ok(Ge),
+            _ => Err("invalid binary operator".into()),
+        }
+    }
+}
+
+impl BinOpKind {
+    /// Fetch the precedence of this binary operator.
+    pub const fn precedence(&self) -> usize {
+        match self {
+            BinOpKind::Mul | BinOpKind::Div | BinOpKind::Mod => 3,
+            BinOpKind::Add | BinOpKind::Sub => 4,
+            BinOpKind::Shl | BinOpKind::Shr => 5,
+            BinOpKind::Lt | BinOpKind::Gt | BinOpKind::Le | BinOpKind::Ge => 6,
+            BinOpKind::Eq | BinOpKind::Ne => 7,
+            BinOpKind::And => 8,
+            BinOpKind::Xor => 9,
+            BinOpKind::Or => 10,
+            BinOpKind::LogAnd => 11,
+            BinOpKind::LogOr => 12,
+            BinOpKind::Assign => 14,
+            // all other assignment operators have precedence 15.
+            _ => 15,
+        }
+    }
+
+    /// Fetch the associativity of this binary operator.
+    pub const fn associativity(&self) -> Associativity {
+        match self {
+            BinOpKind::Assign
+            | BinOpKind::AddAssign
+            | BinOpKind::SubAssign
+            | BinOpKind::MulAssign
+            | BinOpKind::DivAssign
+            | BinOpKind::ModAssign
+            | BinOpKind::ShlAssign
+            | BinOpKind::ShrAssign
+            | BinOpKind::AndAssign
+            | BinOpKind::XorAssign
+            | BinOpKind::OrAssign => Associativity::Rtl,
+            _ => Associativity::Ltr,
+        }
+    }
+}
+
+/// An enum representing variable mutability.
 pub enum Mutability {
-    /// Represents an immutable state.
-    Not,
-    /// Represents a mutable state.
-    Mut,
+    /// A mutable variable.
+    Mutable,
+    /// An immutable variable.
+    Immutable,
+    /// A constant.
+    Constant,
 }
 
-/// Represents a variable.
-pub struct Variable {
-    /// The identifier of this variable.
-    pub ident: Ident,
-    /// The mutability status of this variable.
-    pub mutable: Mutability,
-    /// The type of this variable.
-    pub ty: Type,
+/// An enum of all possible node types.
+pub enum NodeKind {
+    /// The root AST node.
+    Root { children: Vec<Node> },
+
+    /// An identifier.
+    Ident {
+        /// The name of the identifier.
+        name: String,
+        /// The ID of the identifier.
+        id: usize,
+    },
+
+    /// The import statement.
+    Import {
+        /// The identifier the module is aliased to.
+        alias: Option<Box<Node>>,
+        /// The path or name of the module to import.
+        target: String,
+    },
+
+    /// A variable reference.
+    Variable {
+        /// The identifier that represents this variable.
+        ident: Box<Node>,
+        /// The type of this variable.
+        ty: Type,
+        /// The mutability of this variable.
+        mutability: Mutability,
+    },
+
+    /// A binary operation.
+    BinOp {
+        /// The kind of binary operation.
+        kind: BinOpKind,
+        /// The left operand.
+        lhs: Box<Node>,
+        /// The right operand.
+        rhs: Box<Node>,
+    },
+
+    /// A block of code, `{ /* ... */ }`.
+    Block {
+        /// The list of statements in the block.
+        children: Vec<Node>,
+    }
 }
 
-/// Represents a block.
-pub struct Block {
-    /// The parent block.
-    pub parent: Option<Box<Block>>,
-    /// Expressions contained within this block.
-    pub exprs: Vec<NodeType>,
-}
-
-/// Represents a function paretheses argument.
-pub struct ParenArgument {
-    /// The identifier of this paramenter.
-    pub name: Ident,
-    /// The type of this parameter.
-    pub ty: Type,
-}
-
-/// Represents a function declaration.
-pub struct FuncDeclare {
-    /// The identifier of this function.
-    ident: Ident,
-    /// The method block of the function.
-    method: Block,
-    /// The parentheses arguments given to this function.
-    args: Vec<ParenArgument>,
-    /// The return type of the function.
-    ret_ty: Type,
+/// A struct representing a node in the AST tree.
+pub struct Node {
+    /// The ID of this node in the tree.
+    pub id: usize,
+    /// The kind of this node.
+    pub kind: NodeKind,
 }
