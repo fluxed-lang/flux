@@ -30,6 +30,8 @@ pub enum UnOpKind {
     LogNot,
     /// The de-reference operator, `*`.
     Deref,
+    /// The call operator, `()`.
+    Call(Vec<Node>)
 }
 
 impl FromStr for UnOpKind {
@@ -100,9 +102,9 @@ pub enum BinOpKind {
     LogAnd,
     /// The logical OR operator, `||`.
     LogOr,
-    /// The bit-wise left shift operator, `<<`.
+    /// The bitwise left shift operator, `<<`.
     Shl,
-    /// The bit-wise right shift operator, `>>`.
+    /// The bitwise right shift operator, `>>`.
     Shr,
     /// The equality operator, `==`.
     Eq,
