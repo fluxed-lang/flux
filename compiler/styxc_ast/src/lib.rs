@@ -182,6 +182,17 @@ impl FromStr for BinOpKind {
             ">" => Ok(Gt),
             "<=" => Ok(Le),
             ">=" => Ok(Ge),
+            "=" => Ok(Assign),
+            "+=" => Ok(AddAssign),
+            "-=" => Ok(SubAssign),
+            "*=" => Ok(MulAssign),
+            "%=" => Ok(ModAssign),
+            "/=" => Ok(DivAssign),
+             "&=" => Ok(AndAssign),
+            "|=" => Ok(OrAssign),
+            "^=" => Ok(XorAssign),
+            "<<=" => Ok(ShlAssign),
+            ">>=" => Ok(ShrAssign),
             _ => Err("invalid binary operator".into()),
         }
     }
