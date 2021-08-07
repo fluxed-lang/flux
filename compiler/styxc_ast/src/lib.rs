@@ -3,6 +3,34 @@ use std::str::FromStr;
 
 use styxc_types::Type;
 
+/// Enum representing a base of a number.
+#[derive(Debug, PartialEq)]
+pub enum Base {
+    /// Decimal, base 10.
+    Decimal,
+    /// Hexadecimal, base 16.
+    Hexadecimal,
+    /// Octal, base 8.
+    Octal,
+    /// Binary, base 2.
+    Binary,
+}
+
+#[derive(Debug, PartialEq)]
+/// Enum representing the type of a literal.
+pub enum LiteralKind {
+    /// An integer literal (e.g. `1234`, `0x1234`, `0o1234`, `0b1234`).
+    Int(i64),
+    /// A floating-point literal (e.g. `1234.5`, `0x1234.5`, `0o1234.5`, `0b1234.5`).
+    Float(f64),
+    /// A string literal (e.g. `"hello"`, `"hello world"`).
+    String(String),
+    /// A character literal (e.g. `'a'`, `'\n'`).
+    Char(char),
+    /// A boolean literal (e.g. `true`, `false`).
+    Bool(bool),
+}
+
 /// Enum representing operator associativity.
 ///
 /// Some operators are evaluated from left-to-right, while others are evaluated from right-to-left.
@@ -15,6 +43,7 @@ use styxc_types::Type;
 /// - `Associativity::Right`: The right-to-left associativity.
 ///
 /// Each operator is then matched to either one of these options, and compiled as such.
+#[derive(Debug, PartialEq)]
 pub enum Associativity {
     /// Left-to-right associativity.
     Ltr,
@@ -25,6 +54,7 @@ pub enum Associativity {
 /// Enum representing unary operator types.
 ///
 /// Unary operators are operators that act on a single argument, such as `x++`, or `!x`.
+#[derive(Debug, PartialEq)]
 pub enum UnOpKind {
     /// The suffix increment operator, `++`.
     SuffixIncr,
@@ -99,6 +129,7 @@ impl UnOpKind {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub enum BinOpKind {
     /// The addition operator, `+`.
     Add,
@@ -188,7 +219,7 @@ impl FromStr for BinOpKind {
             "*=" => Ok(MulAssign),
             "%=" => Ok(ModAssign),
             "/=" => Ok(DivAssign),
-             "&=" => Ok(AndAssign),
+            "&=" => Ok(AndAssign),
             "|=" => Ok(OrAssign),
             "^=" => Ok(XorAssign),
             "<<=" => Ok(ShlAssign),
@@ -238,6 +269,7 @@ impl BinOpKind {
 }
 
 /// An enum representing variable mutability.
+#[derive(Debug, PartialEq)]
 pub enum Mutability {
     /// A mutable variable.
     Mutable,
@@ -249,6 +281,7 @@ pub enum Mutability {
 }
 
 /// An enum of all possible node types.
+#[derive(Debug, PartialEq)]
 pub enum NodeKind {
     /// The root AST node.
     Root { children: Vec<Node> },
@@ -294,9 +327,16 @@ pub enum NodeKind {
         /// The list of statements in the block.
         children: Vec<Node>,
     },
+
+    /// A literal value.
+    Literal(LiteralKind),
+
+    /// An unknown node kind, used while the tree is being constructed.
+    Unknown
 }
 
 /// A struct representing a node in the AST tree.
+#[derive(Debug, PartialEq)]
 pub struct Node {
     /// The ID of this node in the tree.
     pub id: usize,

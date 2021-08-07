@@ -14,7 +14,7 @@ pub enum Mode<'i> {
 pub fn compile_to_mem(input: String) -> Result<fn() -> (), Box<dyn Error>> {
     // 1. Parse input source
     let mut parser = styxc_lexer::TokenLexer::new(input.as_str());
-    let tokens = parser.parse().tokens; 
+    let tokens = parser.parse().tokens;
     Ok(|| ())
 }
 
