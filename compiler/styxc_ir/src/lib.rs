@@ -4,7 +4,7 @@ use cranelift::{codegen, frontend::FunctionBuilderContext};
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataContext, Module};
 
-use styxc_ast::{Node, NodeKind};
+use styxc_ast::{Node, ExprKind};
 
 /// The basic JIT class.
 pub struct IrTranslator {

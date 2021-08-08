@@ -477,11 +477,16 @@ mod token {
     }
 }
 
+// A lexed token, along with its kind, and a slice containing the matching string.
 #[derive(Debug)]
 pub struct Token {
+    /// The kind of token.
     pub kind: TokenKind,
+    /// The index of the token in the source text.
     pub index: usize,
+    /// The length of the token.
     pub len: usize,
+    /// A string slice containing the token.
     pub slice: String,
 }
 

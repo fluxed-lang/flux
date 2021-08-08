@@ -1,7 +1,41 @@
 use std::error::Error;
 use std::str::FromStr;
 
-use styxc_types::Type;
+/// A struct represnting a span of a string. The first paramteter is the start index of the span, 
+/// and the second parameter is the end index of the span (inclusive).
+pub struct Span(usize, usize);
+
+impl Span {
+    /// Returns true if this span includes another.
+    pub const fn includes(&self, other: &Span) -> bool {
+        self.0 < other.0 && self.1 > other.1
+    }
+
+    /// Returns true if this span overlaps with another.
+    pub const fn overlaps(&self, other: &Span) -> bool {
+        self.0 <= other.1 && self.1 >= other.0
+    }
+}
+
+#[cfg(test)]
+mod span_test {
+    use super::Span;
+    #[test]
+    fn span_test() {
+        // a contains b, but does not contain c
+        // a overlaps with both b and c.
+        // c does not overlap with b.
+        let a = Span(0, 10);
+        let b = Span(3, 5);
+        let c = Span(6, 11);
+
+        assert!(a.includes(&b));
+        assert!(!a.includes(&c));
+        assert!(a.overlaps(&b));
+        assert!(a.overlaps(&c));
+        assert!(!b.overlaps(&c));
+    }
+}
 
 /// Enum representing a base of a number.
 #[derive(Debug, PartialEq)]
@@ -19,9 +53,9 @@ pub enum Base {
 #[derive(Debug, PartialEq)]
 /// Enum representing the type of a literal.
 pub enum LiteralKind {
-    /// An integer literal (e.g. `1234`, `0x1234`, `0o1234`, `0b1234`).
+    /// An integer literal (e.g. `1234`, `0x1234`, `0o1234`, `0b1001`).
     Int(i64),
-    /// A floating-point literal (e.g. `1234.5`, `0x1234.5`, `0o1234.5`, `0b1234.5`).
+    /// A floating-point literal (e.g. `1234.5`, `0x1234.5`, `0o1234.5`, `0b0110.1`).
     Float(f64),
     /// A string literal (e.g. `"hello"`, `"hello world"`).
     String(String),
@@ -29,6 +63,15 @@ pub enum LiteralKind {
     Char(char),
     /// A boolean literal (e.g. `true`, `false`).
     Bool(bool),
+}
+
+/// An argument to a function call.
+#[derive(Debug, PartialEq)]
+pub struct ParenArgument {
+    /// The ID of the AST node.
+    pub id: usize,
+    /// The identifier representing the AST node.
+    pub ident: usize
 }
 
 /// Enum representing operator associativity.
@@ -75,7 +118,7 @@ pub enum UnOpKind {
     /// The de-reference operator, `*`.
     Deref,
     /// The call operator, `()`.
-    Call(Vec<Node>),
+    Call(Vec<ParenArgument>),
     /// The negation operator.
     Neg,
 }
@@ -280,66 +323,78 @@ pub enum Mutability {
     Constant,
 }
 
-/// An enum of all possible node types.
+/// Enum of possible statement kinds.
 #[derive(Debug, PartialEq)]
-pub enum NodeKind {
-    /// The root AST node.
-    Root { children: Vec<Node> },
-
-    /// An identifier.
-    Ident {
-        /// The name of the identifier.
-        name: String,
-        /// The ID of the identifier.
-        id: usize,
-    },
-
-    /// The import statement.
-    Import {
-        /// The identifier the module is aliased to.
-        alias: Option<Box<Node>>,
-        /// The path or name of the module to import.
-        target: String,
-    },
-
-    /// A variable reference.
-    Variable {
-        /// The identifier that represents this variable.
-        ident: Box<Node>,
-        /// The type of this variable.
-        ty: Type,
-        /// The mutability of this variable.
-        mutability: Mutability,
-    },
-
-    /// A binary operation.
-    BinOp {
-        /// The kind of binary operation.
-        kind: BinOpKind,
-        /// The left operand.
-        lhs: Box<Node>,
-        /// The right operand.
-        rhs: Box<Node>,
-    },
-
-    /// A block of code, `{ /* ... */ }`.
-    Block {
-        /// The list of statements in the block.
-        children: Vec<Node>,
-    },
-
-    /// A literal value.
-    Literal(LiteralKind),
-
-    /// An unknown node kind, used while the tree is being constructed.
-    Unknown
+enum StmtKind {
+    /// A block (e.g. `{ /* ... */ }`).
+    Block(Box<Block>),
+    /// A binary operation (e.g. `x = y * z + 1`.)
+    BinOp(),
 }
 
-/// A struct representing a node in the AST tree.
 #[derive(Debug, PartialEq)]
-pub struct Node {
-    /// The ID of this node in the tree.
+struct Stmt {
+    /// The kind of statement.
+    pub kind: StmtKind,
+}
+
+#[derive(Debug, PartialEq)]
+struct Block {
+    /// The list of statements in the block.
+    pub stmts: Vec<Stmt>,
+    /// The ID of this node in the AST.
     pub id: usize,
-    /// The kind of this node.
-    pub kind: NodeKind,
+    /// The span of text that defines this block.   
+    pub span: (usize, usize)
+}
+
+impl Block {
+    /// Create a child block from this block. It will inherit the 
+    fn create_child(&self, next_id: usize) -> Block {
+        Block {
+            stmts: vec![],
+            id: next_id,
+            span: self.span,
+        }
+    }
+}
+
+/// An external, imported module.
+struct Module {
+    /// The ID of the identifier representing this module.
+    pub id: usize
+}
+
+/// A declared variable in the current context.
+struct Var {
+    /// The ID of the identifier representing this variable.
+    pub ident: usize,
+    /// The mutability of this variable.
+    pub mutability: Mutability,
+
+}
+
+/// A literal.
+struct Literal {
+    /// The ID of this AST node.
+    pub id: usize,
+    /// The kind of literal.
+    pub kind: LiteralKind,
+    /// The slice containing this literal.
+    pub span: (usize, usize)
+}
+
+
+/// An AST context, in which variables are defined.
+struct Context {
+    /// The list of variables defined in this context.
+    pub vars: Vec<Var>,
+}
+
+/// The root AST instance.
+struct AST {
+    /// The list of top-level statements in the AST.
+    pub stmts: Vec<Stmt>,
+    /// The list of external modules imported into this file.
+    pub modules: Vec<Module>
 }
