@@ -1,20 +1,17 @@
-use std::borrow::BorrowMut;
-
 use styxc_ast::{Node, NodeKind};
 use styxc_lexer::{Token, TokenKind};
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug)]
 enum TokenParserError {}
 
 struct TokenParser {
-    tokens: Vec<Token>,
     next: usize,
 }
 
 impl TokenParser {
     /// Create a new token parser with the target tokens.
-    fn new(tokens: Vec<Token>) -> TokenParser {
-        TokenParser { tokens, next: 0 }
+    fn new() -> TokenParser {
+        TokenParser { next: 0 }
     }
 
     fn next_id(&mut self) -> usize {
@@ -23,9 +20,7 @@ impl TokenParser {
     }
 
     /// Parse the tokens into a list of tokens.
-    fn parse(&mut self) -> Result<Node, TokenParserError> {
-        let mut tokens = self.tokens.iter();
-
+    fn parse(mut self, tokens: Vec<Token>) -> Result<Node, TokenParserError> {
         // create the root ast node
         let root = Node {
             id: 0,
@@ -35,16 +30,68 @@ impl TokenParser {
         let mut children = Vec::new();
 
         // iterate over tokens and parse
-        while let Some(token) = tokens.next() {
+        for token in tokens {
             let next_node = Node {
-                id: self.next_id(),
+                id: self.next,
                 kind: NodeKind::Unknown
             };
             match token.kind {
                 TokenKind::Ident => {
-                    &self.parse_ident_or_keyword(token);
+                    self.parse_ident_or_keyword(token);
                 }
-                _ => {}
+                TokenKind::Unknown => todo!(),
+                TokenKind::KeywordLet => todo!(),
+                TokenKind::KeywordConst => todo!(),
+                TokenKind::KeywordFor => todo!(),
+                TokenKind::KeywordWhile => todo!(),
+                TokenKind::KeywordLoop => todo!(),
+                TokenKind::KeywordBreak => todo!(),
+                TokenKind::KeywordContinue => todo!(),
+                TokenKind::KeywordFn => todo!(),
+                TokenKind::KeywordAsync => todo!(),
+                TokenKind::KeywordReturn => todo!(),
+                TokenKind::KeywordAwait => todo!(),
+                TokenKind::KeywordImport => todo!(),
+                TokenKind::KeywordImportFrom => todo!(),
+                TokenKind::KeywordType => todo!(),
+                TokenKind::KeywordIf => todo!(),
+                TokenKind::KeywordElse => todo!(),
+                TokenKind::KeywordMatch => todo!(),
+                TokenKind::KeywordEnum => todo!(),
+                TokenKind::KeywordPublic => todo!(),
+                TokenKind::KeywordPrivate => todo!(),
+                TokenKind::KeywordProtected => todo!(),
+                TokenKind::Whitespace => todo!(),
+                TokenKind::LineComment => todo!(),
+                TokenKind::BlockComment => todo!(),
+                TokenKind::LiteralInt(_) => todo!(),
+                TokenKind::LiteralFloat(_) => todo!(),
+                TokenKind::LiteralChar => todo!(),
+                TokenKind::LiteralString => todo!(),
+                TokenKind::SymbolSemi => todo!(),
+                TokenKind::SymbolOpenBrace => todo!(),
+                TokenKind::SymbolCloseBrace => todo!(),
+                TokenKind::SymbolOpenParen => todo!(),
+                TokenKind::SymbolCloseParen => todo!(),
+                TokenKind::SymbolOpenBracket => todo!(),
+                TokenKind::SymbolCloseBracket => todo!(),
+                TokenKind::SymbolPlus => todo!(),
+                TokenKind::SymbolMinus => todo!(),
+                TokenKind::SymbolStar => todo!(),
+                TokenKind::SymbolSlash => todo!(),
+                TokenKind::SymbolPercent => todo!(),
+                TokenKind::SymbolEq => todo!(),
+                TokenKind::SymbolNot => todo!(),
+                TokenKind::SymbolAnd => todo!(),
+                TokenKind::SymbolOr => todo!(),
+                TokenKind::SymbolLt => todo!(),
+                TokenKind::SymbolGt => todo!(),
+                TokenKind::SymbolCaret => todo!(),
+                TokenKind::SymbolTilde => todo!(),
+                TokenKind::SymbolQuestion => todo!(),
+                TokenKind::SymbolColon => todo!(),
+                TokenKind::SymbolDot => todo!(),
+                TokenKind::SymbolAt => todo!(),
             }
             children.push(next_node);
         }
@@ -53,7 +100,7 @@ impl TokenParser {
     }
 
     /// Parse an identifier or keyword.
-    fn parse_ident_or_keyword(&self, token: &Token) -> () {
+    fn parse_ident_or_keyword(&self, token: Token) -> () {
         match token.slice.as_str() {
             "let" => {}
             _ => {}
@@ -71,7 +118,7 @@ mod tests {
     fn test_bin_exp() {
         // parse source
         let tokens = TokenLexer::new("x = y * z + 1").parse().tokens;
-        let root = TokenParser::new(tokens).parse().unwrap();
+        let root = TokenParser::new().parse(tokens).unwrap();
 
         assert_eq!(
             root,
