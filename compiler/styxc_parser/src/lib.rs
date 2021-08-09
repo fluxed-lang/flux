@@ -4,24 +4,28 @@ use styxc_ast::{Declaration, Ident, Mutability, Span, Stmt, StmtKind, AST};
 use styxc_lexer::{Token, TokenKind};
 
 #[derive(Debug)]
-enum TokenParserError {
+pub enum TokenParserError {
+    /// Parser reached the end of input without having completed parsing.
     UnexpectedEOI,
-    ExpectedToken {
+    /// Parser encountered an unexpected token.
+    UnexpectedToken {
+        position: Span,
         expected: Vec<TokenKind>,
         found: TokenKind,
     },
 }
 
-struct TokenParser {
+pub struct TokenParser {
     next: usize,
 }
 
 impl TokenParser {
     /// Create a new token parser with the target tokens.
-    fn new() -> TokenParser {
+    pub fn new() -> TokenParser {
         TokenParser { next: 0 }
     }
 
+    /// Increment the current AST node ID.
     fn next_id(&mut self) -> usize {
         self.next += 1;
         self.next
@@ -32,10 +36,10 @@ impl TokenParser {
         // create the root ast node
         let root = AST::new();
         let mut children = Vec::new();
-        let mut tokenIter = tokens.into_iter().peekable();
+        let mut tokens = tokens.into_iter().peekable();
         // iterate over tokens and parse
-        while let Some(token) = tokenIter.next() {
-            children.push(self.parse_stmt(&mut tokenIter)?);
+        while let Some(_) = tokens.peek() {
+            children.push(self.parse_stmt(&mut tokens)?);
         }
         Ok(root)
     }
@@ -47,7 +51,8 @@ impl TokenParser {
         }
         let token = token.unwrap();
         if token.kind != kind {
-            return Err(TokenParserError::ExpectedToken {
+            return Err(TokenParserError::UnexpectedToken {
+                position: Span(token.index, token.index + token.len),
                 expected: vec![kind],
                 found: token.kind,
             });
@@ -58,9 +63,9 @@ impl TokenParser {
     /// Parse a statement into an AST node.
     pub fn parse_stmt(
         &mut self,
-        mut tokens: &mut Peekable<IntoIter<Token>>,
+        tokens: &mut Peekable<IntoIter<Token>>,
     ) -> Result<Stmt, TokenParserError> {
-        let token = tokens.next();
+        let token = tokens.peek();
         // ensure token exists
         if token.is_none() {
             return Err(TokenParserError::UnexpectedEOI);
@@ -69,43 +74,40 @@ impl TokenParser {
         let token = token.unwrap();
         match token.kind {
             TokenKind::KeywordLet => self.parse_declaration(tokens),
-            _ => Err(TokenParserError::ExpectedToken {
+            TokenKind::Ident => self.parse_ident(tokens),
+            _ => Err(TokenParserError::UnexpectedToken {
+                position: Span(token.index, token.index + token.len),
                 expected: vec![TokenKind::KeywordLet],
                 found: token.kind,
             }),
         }
     }
 
+    /// Attempt to parse an identifier.
+    fn parse_ident(&mut self, tokens: &mut Peekable<IntoIter<Token>>) -> Result<Stmt, TokenParserError> { 
+        Self::require_token(tokens.next(), TokenKind::Ident).map(|token| Stmt {
+            id: self.next_id(),
+            kind: StmtKind::Ident(Ident {
+                 id: self.next_id(),
+                name: token.slice,
+                span: Span(token.index, token.index + token.len),
+            }),
+        })
+    }
+
     /// Attempt to parse a declaration.
     fn parse_declaration(
         &mut self,
-        mut tokens: &mut Peekable<IntoIter<Token>>,
+        tokens: &mut Peekable<IntoIter<Token>>,
     ) -> Result<Stmt, TokenParserError> {
-        let ident = tokens.next();
+        // parse let
+        Self::require_token(tokens.next(), TokenKind::KeywordLet)?;
         // parse identifier
-        let ident = match Self::require_token(ident, TokenKind::Ident) {
-            Ok(token) => token,
-            Err(e) => return Err(e.into()),
-        };
-        // create ident ndoe
-        let ident = Stmt {
-            id: self.next_id(),
-            kind: StmtKind::Ident(Ident {
-                id: self.next_id(),
-                name: ident.slice,
-                span: Span(ident.index, ident.index + ident.len),
-            }),
-        };
+        let ident = self.parse_ident(tokens)?;
         // parse '='
-        let eq = tokens.next();
-        match Self::require_token(eq, TokenKind::SymbolEq) {
-            Ok(_) => {}
-            Err(e) => return Err(e.into()),
-        };
-
+        Self::require_token(tokens.next(), TokenKind::SymbolEq)?;
         // attempt to parse a statement
         let value = self.parse_stmt(tokens)?;
-
         Ok(Stmt {
             id: ident.id,
             kind: StmtKind::Declaration(Declaration {
@@ -126,7 +128,9 @@ mod tests {
     #[test]
     fn test_bin_exp() {
         // parse source
-        let tokens = TokenLexer::new("x = y * z + 1").parse().tokens;
+        let tokens = TokenLexer::new("let x = y * z + 1").parse().tokens;
         let root = TokenParser::new().parse(tokens).unwrap();
+
+        assert_eq!(root.stmts, vec![]);
     }
 }

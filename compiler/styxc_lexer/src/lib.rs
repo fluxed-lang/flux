@@ -1,6 +1,6 @@
 use logos::{Lexer, Logos};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Base {
     Hexadecimal,
     Decimal,
@@ -29,7 +29,7 @@ impl Base {
     }
 }
 
-#[derive(Logos, Debug, PartialEq)]
+#[derive(Logos, Debug, PartialEq, Clone, Copy)]
 pub enum TokenKind {
     #[error]
     Unknown,
