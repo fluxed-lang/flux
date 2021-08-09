@@ -1,17 +1,17 @@
 use std::error::Error;
 use std::str::FromStr;
 
-/// A struct represnting a span of a string. The first paramteter is the start index of the span, 
+/// A struct represnting a span of a string. The first paramteter is the start index of the span,
 /// and the second parameter is the end index of the span (inclusive).
 #[derive(Debug, PartialEq)]
 pub struct Span(
     /// The start index of the span.
-    pub usize, 
+    pub usize,
     /// The end index of the span.
-    pub usize
+    pub usize,
 );
 
-impl Span { 
+impl Span {
     /// Returns true if this span includes another.
     pub const fn includes(&self, other: &Span) -> bool {
         self.0 < other.0 && self.1 > other.1
@@ -83,7 +83,7 @@ pub struct ParenArgument {
     /// The ID of the AST node.
     pub id: usize,
     /// The identifier representing the AST node.
-    pub ident: usize
+    pub ident: usize,
 }
 
 /// Enum representing operator associativity.
@@ -354,7 +354,7 @@ pub struct Ident {
     /// The name of this node.
     pub name: String,
     /// The span corresponding to this node.
-    pub span: Span
+    pub span: Span,
 }
 
 /// Enum of possible statement kinds.
@@ -369,7 +369,7 @@ pub enum StmtKind {
     /// An identifier.
     Ident(Ident),
     /// A declaration.
-    Declaration(Declaration)
+    Declaration(Declaration),
 }
 
 #[derive(Debug, PartialEq)]
@@ -387,11 +387,11 @@ pub struct Block {
     /// The ID of this node in the AST.
     pub id: usize,
     /// The span of text that defines this block.   
-    pub span: (usize, usize)
+    pub span: (usize, usize),
 }
 
 impl Block {
-    /// Create a child block from this block. It will inherit the 
+    /// Create a child block from this block. It will inherit the
     fn create_child(&self, next_id: usize) -> Block {
         Block {
             stmts: vec![],
@@ -404,7 +404,7 @@ impl Block {
 /// An external, imported module.
 pub struct Module {
     /// The ID of the identifier representing this module.
-    pub id: usize
+    pub id: usize,
 }
 
 /// A declared variable in the current context.
@@ -413,7 +413,6 @@ struct Var {
     pub ident: usize,
     /// The mutability of this variable.
     pub mutability: Mutability,
-
 }
 
 /// An AST context, in which variables are defined.
@@ -427,7 +426,7 @@ pub struct AST {
     /// The list of top-level statements in the AST.
     pub stmts: Vec<Stmt>,
     /// The list of external modules imported into this file.
-    pub modules: Vec<Module>
+    pub modules: Vec<Module>,
 }
 
 impl AST {
