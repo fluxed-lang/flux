@@ -1,13 +1,13 @@
 use std::{iter::Peekable, vec::IntoIter};
 
-use styxc_ast::{Node, ExprKind};
+use styxc_ast::{AST, Declaration, Ident, Mutability, Span, Stmt, StmtKind};
 use styxc_lexer::{Token, TokenKind};
 
 #[derive(Debug)]
 enum TokenParserError {
     UnexpectedEOI,
     ExpectedToken {
-        expected: TokenKind,
+        expected: Vec<TokenKind>,
         found: TokenKind
     }
 }
@@ -27,90 +27,89 @@ impl TokenParser {
         self.next
     }
 
-    /// Parse the tokens into a list of tokens.
-    pub fn parse(mut self, tokens: Vec<Token>) -> Result<Node, TokenParserError> {
-        // create the root ast node
-        let root = Node {
-            id: 0,
-            kind: ExprKind::Root { children: vec![] },
-        };
 
+
+    /// Parse the tokens into a list of tokens.
+    pub fn parse(mut self, tokens: Vec<Token>) -> Result<AST, TokenParserError> {
+        // create the root ast node
+        let root = AST::new();
         let mut children = Vec::new();
         let mut tokenIter = tokens.into_iter().peekable();
-
         // iterate over tokens and parse
         while let Some(token) = tokenIter.next() {
-            let next_node = Node {
-                id: self.next,
-                kind: ExprKind::Unknown
-            };
-            match token.kind {
-                TokenKind::KeywordLet => { self.parse_declaration(tokenIter); },
-                _ => panic!("unexpected token {:?}", token.kind)
-            }
-            children.push(next_node);
+            children.push(self.parse_stmt(&mut tokenIter)?);
         }
-
         Ok(root)
     }
 
     /// Require a token of the target kind.
-    fn require_token(token: Option<Token>, kind: TokenKind) -> Result<(), TokenParserError> { 
+    fn require_token(token: Option<Token>, kind: TokenKind) -> Result<Token, TokenParserError> { 
         if !token.is_some() {
             return Err(TokenParserError::UnexpectedEOI);
         }
         let token = token.unwrap();
         if token.kind != kind {
             return Err(TokenParserError::ExpectedToken {
-                expected: kind,
+                expected: vec![kind],
                 found: token.kind
             });
         }
-        Ok(())
+        Ok(token)
     }
 
-    fn declare_identifier(&mut self, identifier: String) {
-
+    /// Parse a statement into an AST node.
+    pub fn parse_stmt(&mut self, mut tokens: &mut Peekable<IntoIter<Token>>) -> Result<Stmt, TokenParserError> {
+        let token = tokens.next();
+        // ensure token exists
+        if token.is_none() {
+            return Err(TokenParserError::UnexpectedEOI);
+        }
+        // match the token kind
+        let token = token.unwrap();
+        match token.kind {
+            TokenKind::KeywordLet => self.parse_declaration(tokens),
+            _ => Err(TokenParserError::ExpectedToken {
+                expected: vec![TokenKind::KeywordLet],
+                found: token.kind
+            })
+        }
     }
 
-    fn declare_variable(&mut self) {
-
-    }
-
-    fn parse_declaration(&mut self, tokens: Peekable<IntoIter<Token>>) -> Result<Node, TokenParserError> {
+    /// Attempt to parse a declaration.
+    fn parse_declaration(&mut self, mut tokens: &mut Peekable<IntoIter<Token>>) -> Result<Stmt, TokenParserError> {
         let ident = tokens.next();
         // parse identifier
         let ident = match Self::require_token(ident, TokenKind::Ident) {
-            Ok(()) => ident.unwrap(),
+            Ok(token) => token,
             Err(e) => return Err(e.into())
         };
-        
         // create ident ndoe
-        let ident_node = Node {
-            kind: ExprKind::Ident {
-                id: 0,
-                name: "".into()
-            },
+        let ident = Stmt {
             id: self.next_id(),
+            kind: StmtKind::Ident(Ident {
+                id: self.next_id(),
+                name: ident.slice,
+                span: Span(ident.index, ident.index + ident.len)
+            }),
         };
-
-
         // parse '='
         let eq = tokens.next();
-        let eq = match Self::require_token(eq, TokenKind::SymbolEq) {
-            Ok(()) => eq.unwrap(),
+        match Self::require_token(eq, TokenKind::SymbolEq) {
+            Ok(_) => {},
             Err(e) => return Err(e.into())
         }; 
 
-
-        // create declaration node
-        let decl_node = Node {
-            id: self.next_id(),
-            kind: ExprKind::Declaration {
-                var: self.declare_variable(),
-                value: 
-            }
-        }
+        // attempt to parse a statement
+        let value = self.parse_stmt(tokens)?;
+        
+        Ok(Stmt {
+            id: ident.id,
+            kind: StmtKind::Declaration(Declaration {
+                ident: ident.into(),
+                mutability: Mutability::Immutable,
+                value: value.into()
+            })
+        })
     }
 }
 
@@ -125,63 +124,5 @@ mod tests {
         // parse source
         let tokens = TokenLexer::new("x = y * z + 1").parse().tokens;
         let root = TokenParser::new().parse(tokens).unwrap();
-
-        assert_eq!(
-            root,
-            Node {
-                id: 0,
-                kind: ExprKind::Root {
-                    children: vec![Node {
-                        id: 1,
-                        kind: ExprKind::BinOp {
-                            kind: BinOpKind::Assign,
-                            lhs: Node {
-                                id: 2,
-                                kind: ExprKind::Ident {
-                                    id: 0,
-                                    name: "x".into(),
-                                }
-                            }
-                            .into(),
-                            rhs: Node {
-                                id: 3,
-                                kind: ExprKind::BinOp {
-                                    kind: BinOpKind::Add,
-                                    lhs: Node {
-                                        id: 4,
-                                        kind: ExprKind::BinOp {
-                                            kind: BinOpKind::Mul,
-                                            lhs: Node {
-                                                id: 5,
-                                                kind: ExprKind::Ident {
-                                                    id: 1,
-                                                    name: "y".into(),
-                                                }
-                                            }
-                                            .into(),
-                                            rhs: Node {
-                                                id: 6,
-                                                kind: ExprKind::Ident {
-                                                    id: 2,
-                                                    name: "z".into(),
-                                                }
-                                            }
-                                            .into()
-                                        }
-                                    }
-                                    .into(),
-                                    rhs: Node {
-                                        id: 7,
-                                        kind: ExprKind::Literal(LiteralKind::Int(1)),
-                                    }
-                                    .into()
-                                }
-                            }
-                            .into()
-                        }
-                    }]
-                }
-            }
-        );
     }
 }

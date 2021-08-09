@@ -3,9 +3,15 @@ use std::str::FromStr;
 
 /// A struct represnting a span of a string. The first paramteter is the start index of the span, 
 /// and the second parameter is the end index of the span (inclusive).
-pub struct Span(usize, usize);
+#[derive(Debug, PartialEq)]
+pub struct Span(
+    /// The start index of the span.
+    pub usize, 
+    /// The end index of the span.
+    pub usize
+);
 
-impl Span {
+impl Span { 
     /// Returns true if this span includes another.
     pub const fn includes(&self, other: &Span) -> bool {
         self.0 < other.0 && self.1 > other.1
@@ -37,32 +43,38 @@ mod span_test {
     }
 }
 
-/// Enum representing a base of a number.
-#[derive(Debug, PartialEq)]
-pub enum Base {
-    /// Decimal, base 10.
-    Decimal,
-    /// Hexadecimal, base 16.
-    Hexadecimal,
-    /// Octal, base 8.
-    Octal,
-    /// Binary, base 2.
-    Binary,
-}
-
 #[derive(Debug, PartialEq)]
 /// Enum representing the type of a literal.
 pub enum LiteralKind {
     /// An integer literal (e.g. `1234`, `0x1234`, `0o1234`, `0b1001`).
-    Int(i64),
+    Int64(i64),
+    Int32(i32),
+    Int16(i16),
+    Int8(i8),
+    Uint64(u64),
+    Uint32(u32),
+    Uint16(u16),
+    Uint8(u8),
     /// A floating-point literal (e.g. `1234.5`, `0x1234.5`, `0o1234.5`, `0b0110.1`).
-    Float(f64),
+    Float64(f64),
+    Float32(f32),
     /// A string literal (e.g. `"hello"`, `"hello world"`).
     String(String),
     /// A character literal (e.g. `'a'`, `'\n'`).
     Char(char),
     /// A boolean literal (e.g. `true`, `false`).
     Bool(bool),
+}
+
+/// A literal value.
+#[derive(Debug, PartialEq)]
+pub struct Literal {
+    /// The ID of this node in the AST.
+    pub id: usize,
+    /// The kind of literal.
+    pub kind: LiteralKind,
+    /// The span containing the literal.
+    pub span: Span,
 }
 
 /// An argument to a function call.
@@ -272,6 +284,17 @@ impl FromStr for BinOpKind {
     }
 }
 
+/// A declaration of a variable.
+#[derive(Debug, PartialEq)]
+pub struct Declaration {
+    /// The identifier being declared.
+    pub ident: Box<Stmt>,
+    /// The mutability of the declared identifier.
+    pub mutability: Mutability,
+    /// The declared value.
+    pub value: Box<Stmt>,
+}
+
 impl BinOpKind {
     /// Fetch the precedence of this binary operator.
     pub const fn precedence(&self) -> usize {
@@ -323,23 +346,42 @@ pub enum Mutability {
     Constant,
 }
 
+/// An identifier.
+#[derive(Debug, PartialEq)]
+pub struct Ident {
+    /// The ID of this node in the AST.
+    pub id: usize,
+    /// The name of this node.
+    pub name: String,
+    /// The span corresponding to this node.
+    pub span: Span
+}
+
 /// Enum of possible statement kinds.
 #[derive(Debug, PartialEq)]
-enum StmtKind {
+pub enum StmtKind {
     /// A block (e.g. `{ /* ... */ }`).
     Block(Box<Block>),
     /// A binary operation (e.g. `x = y * z + 1`.)
-    BinOp(),
+    BinOp(BinOpKind, Box<Stmt>, Box<Stmt>),
+    /// A literal.
+    Literal(Literal),
+    /// An identifier.
+    Ident(Ident),
+    /// A declaration.
+    Declaration(Declaration)
 }
 
 #[derive(Debug, PartialEq)]
-struct Stmt {
+pub struct Stmt {
+    /// The ID of this node in the AST.
+    pub id: usize,
     /// The kind of statement.
     pub kind: StmtKind,
 }
 
 #[derive(Debug, PartialEq)]
-struct Block {
+pub struct Block {
     /// The list of statements in the block.
     pub stmts: Vec<Stmt>,
     /// The ID of this node in the AST.
@@ -360,7 +402,7 @@ impl Block {
 }
 
 /// An external, imported module.
-struct Module {
+pub struct Module {
     /// The ID of the identifier representing this module.
     pub id: usize
 }
@@ -374,17 +416,6 @@ struct Var {
 
 }
 
-/// A literal.
-struct Literal {
-    /// The ID of this AST node.
-    pub id: usize,
-    /// The kind of literal.
-    pub kind: LiteralKind,
-    /// The slice containing this literal.
-    pub span: (usize, usize)
-}
-
-
 /// An AST context, in which variables are defined.
 struct Context {
     /// The list of variables defined in this context.
@@ -392,9 +423,19 @@ struct Context {
 }
 
 /// The root AST instance.
-struct AST {
+pub struct AST {
     /// The list of top-level statements in the AST.
     pub stmts: Vec<Stmt>,
     /// The list of external modules imported into this file.
     pub modules: Vec<Module>
+}
+
+impl AST {
+    /// Create a new AST instance.
+    pub fn new() -> AST {
+        AST {
+            stmts: vec![],
+            modules: vec![],
+        }
+    }
 }
