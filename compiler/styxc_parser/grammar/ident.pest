@@ -1,1 +1,0 @@
-ident = { ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }

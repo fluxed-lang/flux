@@ -1,9 +1,0 @@
-func_param_name = @{ ident }
-func_param_type = @{ ident }
-func_param = { func_param_name ~ ":" ~ func_param_type }
-func_name = @{ ident }
-
-func_body = { exprs | expression }
-func_inner = { "{" ~ func_body ~ "}" }
-
-func = { func_name ~ (func_param ~ ",")* ~ func_param? ~ "->" ~ func_inner }
