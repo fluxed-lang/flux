@@ -288,11 +288,21 @@ impl FromStr for BinOpKind {
 #[derive(Debug, PartialEq)]
 pub struct Declaration {
     /// The identifier being declared.
-    pub ident: Box<Stmt>,
+    pub ident: Ident,
     /// The mutability of the declared identifier.
     pub mutability: Mutability,
     /// The declared value.
-    pub value: Box<Stmt>,
+    pub value: Expr,
+}
+
+///  A variable assignment.
+#[derive(Debug, PartialEq)]
+
+pub struct Assignment {
+    /// The identifier being assigned to.
+    pub ident: Ident,
+    /// The declared value.
+    pub value: Expr
 }
 
 impl BinOpKind {
@@ -360,16 +370,10 @@ pub struct Ident {
 /// Enum of possible statement kinds.
 #[derive(Debug, PartialEq)]
 pub enum StmtKind {
-    /// A block (e.g. `{ /* ... */ }`).
-    Block(Box<Block>),
-    /// A binary operation (e.g. `x = y * z + 1`.)
-    BinOp(BinOpKind, Box<Stmt>, Box<Stmt>),
-    /// A literal.
-    Literal(Literal),
-    /// An identifier.
-    Ident(Ident),
     /// A declaration.
     Declaration(Declaration),
+    /// An assignment.
+    Assignment(Assignment)
 }
 
 #[derive(Debug, PartialEq)]
@@ -378,6 +382,18 @@ pub struct Stmt {
     pub id: usize,
     /// The kind of statement.
     pub kind: StmtKind,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Expr {
+    /// A literal expression.
+    Literal(Literal),
+    /// An identifier expression.
+    Ident(Ident),
+    /// A binary operation expression.
+    BinOp(BinOpKind, Box<Expr>, Box<Expr>),
+    /// A block (e.g. `{ /* ... */ }`).
+    Block(Box<Block>),
 }
 
 #[derive(Debug, PartialEq)]
@@ -402,7 +418,7 @@ impl Block {
 }
 
 /// An external, imported module.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Module {
     /// The ID of the identifier representing this module.
     pub id: usize,
@@ -423,7 +439,7 @@ struct Context {
 }
 
 /// The root AST instance.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct AST {
     /// The list of top-level statements in the AST.
     pub stmts: Vec<Stmt>,
