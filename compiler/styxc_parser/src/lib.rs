@@ -1,7 +1,77 @@
-use std::{iter::Peekable, vec::IntoIter};
-
 use styxc_ast::{Declaration, Ident, Mutability, Span, Stmt, StmtKind, AST};
 use styxc_lexer::{Token, TokenKind};
+
+
+/// Trait that allows iterators to step backwards.
+pub trait BackwardIterator : Iterator {
+    fn prev(&mut self) -> Option<Self::Item>;
+}
+
+pub trait TinyPeekable : BackwardIterator {
+    /// Returns the next token without advancing the iterator.
+    fn peek(&mut self) -> Option<Self::Item>;
+    /// Returns the previous token without advancing the iterator.
+    fn peek_prev(&mut self) -> Option<Self::Item>;
+}
+
+/// A stream of tokens that can step forwards and backwards.
+pub struct TokenStream<'a> {
+    pos: Option<usize>,
+    tokens: &'a Vec<Token>,
+}
+
+impl<'a> TokenStream<'a> {
+    /// Create a new token stream from a vector of tokens.
+    pub fn new(tokens: &'a Vec<Token>) -> TokenStream<'a> {
+        TokenStream { pos: None, tokens }
+    }
+}
+
+impl<'a> Iterator for TokenStream<'a> {
+    type Item = &'a Token;
+
+    fn next(&mut self) -> Option<&'a Token> {
+        let index = 
+            match self.pos {
+                Some(i) => i + 1,
+                None => 0
+            };
+
+        self.pos = Some(index);
+        self.tokens.get(index)
+    }
+}
+
+impl<'a> BackwardIterator for TokenStream<'a> {
+    fn prev(&mut self) -> Option<&'a Token> {
+        let index = 
+            match self.pos {
+                Some(0) | None => return None,
+                Some(i) => i - 1
+            };
+
+        self.pos = Some(index);
+        self.tokens.get(index)
+    }
+}
+
+impl <'a> TinyPeekable for TokenStream<'a> {
+    fn peek(&mut self) -> Option<&'a Token> {
+        let index = match self.pos {
+            Some(i) => i + 1,
+            None => 0
+        };
+        self.tokens.get(index + 1)
+    }
+
+    fn peek_prev(&mut self) -> Option<&'a Token> {
+        let index = match self.pos {
+            Some(0) | None => return None,
+            Some(i) => i - 1
+        };
+        self.tokens.get(index)
+    }
+}
 
 #[derive(Debug)]
 pub enum TokenParserError {
@@ -36,16 +106,16 @@ impl TokenParser {
         // create the root ast node
         let root = AST::new();
         let mut children = Vec::new();
-        let mut tokens = tokens.into_iter().peekable();
+        let mut stream = TokenStream::new(&tokens);
         // iterate over tokens and parse
-        while let Some(_) = tokens.peek() {
-            children.push(self.parse_stmt(&mut tokens)?);
+        while let Some(_) = stream.peek() {
+            children.push(self.parse_stmt(&mut stream)?);
         }
         Ok(root)
     }
 
     /// Require a token of the target kind.
-    fn require_token(token: Option<Token>, kind: TokenKind) -> Result<Token, TokenParserError> {
+    fn require_token(token: Option<&Token>, kind: TokenKind) -> Result<&Token, TokenParserError> {
         if !token.is_some() {
             return Err(TokenParserError::UnexpectedEOI);
         }
@@ -63,9 +133,9 @@ impl TokenParser {
     /// Parse a statement into an AST node.
     pub fn parse_stmt(
         &mut self,
-        tokens: &mut Peekable<IntoIter<Token>>,
+        stream: &mut TokenStream,
     ) -> Result<Stmt, TokenParserError> {
-        let token = tokens.peek();
+        let token = stream.peek();
         // ensure token exists
         if token.is_none() {
             return Err(TokenParserError::UnexpectedEOI);
@@ -73,8 +143,8 @@ impl TokenParser {
         // match the token kind
         let token = token.unwrap();
         match token.kind {
-            TokenKind::KeywordLet => self.parse_declaration(tokens),
-            TokenKind::Ident => self.parse_ident(tokens),
+            TokenKind::KeywordLet => self.parse_declaration(stream),
+            TokenKind::Ident => self.parse_ident(stream),
             _ => Err(TokenParserError::UnexpectedToken {
                 position: Span(token.index, token.index + token.len),
                 expected: vec![TokenKind::KeywordLet],
@@ -83,13 +153,27 @@ impl TokenParser {
         }
     }
 
+    /// Peek the iterator and test if there is a binary operation.
+    fn peek_bin_op(&mut self, stream: &mut TokenStream) -> Option<Stmt> {
+        let token = stream.peek()?;
+        // if token is not a binary operation symbol
+        if !matches!(token.kind, TokenKind::SymbolStar | TokenKind::SymbolSlash | TokenKind::SymbolPlus | TokenKind::SymbolMinus) {
+            return None;
+        }
+        // check if the previous token.
+        let prev = stream.peek_prev()?;
+        
+
+        None
+    }
+
     /// Attempt to parse an identifier.
-    fn parse_ident(&mut self, tokens: &mut Peekable<IntoIter<Token>>) -> Result<Stmt, TokenParserError> { 
-        Self::require_token(tokens.next(), TokenKind::Ident).map(|token| Stmt {
+    fn parse_ident(&mut self, stream: &mut TokenStream) -> Result<Stmt, TokenParserError> { 
+        Self::require_token(stream.next(), TokenKind::Ident).map(|token| Stmt {
             id: self.next_id(),
             kind: StmtKind::Ident(Ident {
                  id: self.next_id(),
-                name: token.slice,
+                name: token.slice.clone(),
                 span: Span(token.index, token.index + token.len),
             }),
         })
@@ -98,16 +182,16 @@ impl TokenParser {
     /// Attempt to parse a declaration.
     fn parse_declaration(
         &mut self,
-        tokens: &mut Peekable<IntoIter<Token>>,
+        stream: &mut TokenStream,
     ) -> Result<Stmt, TokenParserError> {
         // parse let
-        Self::require_token(tokens.next(), TokenKind::KeywordLet)?;
+        Self::require_token(stream.next(), TokenKind::KeywordLet)?;
         // parse identifier
-        let ident = self.parse_ident(tokens)?;
+        let ident = self.parse_ident(stream)?;
         // parse '='
-        Self::require_token(tokens.next(), TokenKind::SymbolEq)?;
+        Self::require_token(stream.next(), TokenKind::SymbolEq)?;
         // attempt to parse a statement
-        let value = self.parse_stmt(tokens)?;
+        let value = self.parse_stmt(stream)?;
         Ok(Stmt {
             id: ident.id,
             kind: StmtKind::Declaration(Declaration {

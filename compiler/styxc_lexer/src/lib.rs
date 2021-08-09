@@ -1,3 +1,5 @@
+use std::iter::Peekable;
+
 use logos::{Lexer, Logos};
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -549,8 +551,9 @@ impl TokenLexer<'_> {
             }
         }
 
-        LexerResult { tokens, errors }
+        LexerResult { tokens, errors: errors }
     }
+    
 }
 
 #[cfg(test)]
