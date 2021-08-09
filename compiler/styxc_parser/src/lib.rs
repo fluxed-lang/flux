@@ -119,6 +119,15 @@ impl TokenParser {
     }
 
     /// Check delimiters are correct.
+    ///
+    /// Before the TokenParser builds the AST, it performs a preliminary check to ensure delimiters are correct.
+    /// It does this by iterating over all tokens, and keeping track of the most recent iterator in an iterator
+    /// stack: a vector of deliminators with their kinds and open/close state recorded. By checking whether
+    /// the last item on the stack is the same as the current deliminator when a closing deliminter is encountered,
+    /// the exact location of any mismatching delimiters can be determined.
+    ///
+    /// The downside of this method is that it can only locate one mismatching delimiter at a time, but I believe
+    /// it is impossible to do anything else without sacrificing knowledge of the delimiters whereabouts.
     fn check_delimitiers(tokens: &Vec<Token>) -> Result<(), TokenParserError> {
         /// An enum containing delimiter kind.
         #[derive(PartialEq)]
