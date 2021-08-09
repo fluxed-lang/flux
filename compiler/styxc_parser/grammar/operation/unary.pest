@@ -1,0 +1,33 @@
+// unary operations
+unary_op_assign = { "=" }
+unary_op_plus_equals = { "+=" }
+unary_op_minus_equals = { "-=" }
+unary_op_times_equals = { "*=" }
+unary_op_div_equals = { "/=" }
+unary_op_mod_equals = { "%=" }
+unary_op_and_equals = { "&=" }
+unary_op_or_equals = { "|=" }
+unary_op_xor_equals = { "^=" }
+unary_op_shl_equals = { "<<=" }
+unary_op_shr_equals = { ">>=" }
+unary_op_incr = { "++" }
+unary_op_decr = { "--" }
+unary_op_not = { "!" }
+
+unary_op = {
+    unary_op_assign |
+    unary_op_plus_equals |
+    unary_op_minus_equals |
+    unary_op_times_equals |
+    unary_op_div_equals |
+    unary_op_mod_equals |
+    unary_op_and_equals |
+    unary_op_or_equals |
+    unary_op_xor_equals |
+    unary_op_shl_equals |
+    unary_op_shr_equals |
+    unary_op_incr |
+    unary_op_decr
+}
+
+// unary_operation = { (ident ~ unary_op) | (unary_op_not ~ operatable)  }

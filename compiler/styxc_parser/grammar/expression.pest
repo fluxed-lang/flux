@@ -1,0 +1,3 @@
+// Root expression grammar
+expression = { func | literal }
+exprs = { (expression* ~ "\n") ~ expression | EOI } 
