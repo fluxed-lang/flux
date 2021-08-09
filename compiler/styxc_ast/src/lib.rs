@@ -402,6 +402,7 @@ impl Block {
 }
 
 /// An external, imported module.
+#[derive(Debug)]
 pub struct Module {
     /// The ID of the identifier representing this module.
     pub id: usize,
@@ -422,6 +423,7 @@ struct Context {
 }
 
 /// The root AST instance.
+#[derive(Debug)]
 pub struct AST {
     /// The list of top-level statements in the AST.
     pub stmts: Vec<Stmt>,

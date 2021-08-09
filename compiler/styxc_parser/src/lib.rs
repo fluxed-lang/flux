@@ -73,7 +73,7 @@ impl <'a> TinyPeekable for TokenStream<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum TokenParserError {
     /// Parser reached the end of input without having completed parsing.
     UnexpectedEOI,
@@ -83,6 +83,8 @@ pub enum TokenParserError {
         expected: Vec<TokenKind>,
         found: TokenKind,
     },
+    // Parser encountered a mismatching delimiter.
+    MismatchedDelimiter(Span)
 }
 
 pub struct TokenParser {
@@ -103,6 +105,8 @@ impl TokenParser {
 
     /// Parse the tokens into a list of tokens.
     pub fn parse(mut self, tokens: Vec<Token>) -> Result<AST, TokenParserError> {
+        // check delimiters before parsing
+        Self::check_delimitiers(&tokens)?;
         // create the root ast node
         let root = AST::new();
         let mut children = Vec::new();
@@ -112,6 +116,64 @@ impl TokenParser {
             children.push(self.parse_stmt(&mut stream)?);
         }
         Ok(root)
+    }
+
+    /// Check delimiters are correct.
+    fn check_delimitiers(tokens: &Vec<Token>) -> Result<(), TokenParserError> {
+        /// An enum containing delimiter kind.
+        #[derive(PartialEq)]
+        enum DelimiterKind {
+            Paren,
+            Bracket,
+            Brace
+        }   
+
+        /// A delimiter in the token stream.
+        struct Delimiter(DelimiterKind, bool);
+    
+        impl Delimiter {
+            /// Fetch a delimiter from a token kind.
+            fn from_kind(kind: TokenKind) -> Option<Delimiter> {
+                use DelimiterKind::*;
+                match kind {
+                    TokenKind::SymbolOpenParen => Some(Delimiter(Paren, true)),
+                    TokenKind::SymbolOpenBracket => Some(Delimiter(Bracket, true)),
+                    TokenKind::SymbolOpenBrace => Some(Delimiter(Brace, true)),
+                    TokenKind::SymbolCloseParen => Some(Delimiter(Paren, false)),
+                    TokenKind::SymbolCloseBracket => Some(Delimiter(Bracket, false)),
+                    TokenKind::SymbolCloseBrace => Some(Delimiter(Brace, false)),
+                    _ => None
+                }
+            }
+        }
+        // create a stack of delimiters.
+        let mut stack: Vec<Delimiter> = vec![];
+        // iterate over tokens and check delimiters
+        for token in tokens {
+            let delimiter = Delimiter::from_kind(token.kind);
+            if delimiter.is_none() {
+                continue;
+            }
+            let delimiter = delimiter.unwrap();
+            // pop from the stack
+            if !delimiter.1 {
+                // check if there was no last delimiter - encountered a closing delimiter without an opening one.
+                if stack.last().is_none() {
+                    return Err(TokenParserError::MismatchedDelimiter(Span(token.index, token.index + token.len)));
+                }
+                // check if the last delimiter was of a different kind.
+                let prev = stack.pop().unwrap();
+                if prev.0 != delimiter.0 {
+                    return Err(TokenParserError::MismatchedDelimiter(Span(token.index, token.index + token.len)));
+                }
+                // delimiter is okay, can continue.
+            } else {
+                // push to the stack
+                stack.push(delimiter);
+            }
+        }
+        
+        Ok(())
     }
 
     /// Require a token of the target kind.
@@ -208,6 +270,21 @@ mod tests {
     use super::*;
     use styxc_ast::{BinOpKind, LiteralKind};
     use styxc_lexer::TokenLexer;
+
+    #[test]
+    fn test_delimiters() {
+        let tokens = TokenLexer::new("())").parse().tokens;
+        let res = TokenParser::new().parse(tokens);
+
+        assert!(res.is_err());
+        assert_eq!(res.unwrap_err(), TokenParserError::MismatchedDelimiter(Span(2, 3)));
+
+        let tokens = TokenLexer::new("(]").parse().tokens;
+        let res = TokenParser::new().parse(tokens);
+
+        assert!(res.is_err());
+        assert_eq!(res.unwrap_err(), TokenParserError::MismatchedDelimiter(Span(1, 2)));
+    }
 
     #[test]
     fn test_bin_exp() {
