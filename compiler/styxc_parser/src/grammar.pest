@@ -77,7 +77,7 @@ num_base_oct = _{ "0o" }
 num_base_bin = _{ "0b" }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
-block = { "{" ~ (statement ~ stmt_delim)* ~ "}" }
+block = { "{" ~ statements ~ "}" }
 
 bin_op = { "/" | "*" | "+" | "-" }
 bin_exp = { (("(" ~ expression ~ ")") | expression) ~ bin_op ~  "("? ~ expression ~ ")"? }
@@ -102,7 +102,7 @@ statement = _{
     func_return
 }
 
-stmt_delim = _{ (";" ~ "\n"*) | "\n"+ }
-statements = _{ (statement ~ stmt_delim)* }
+stmt_delim = _{ NEWLINE+ | (";" ~ NEWLINE*) }
+statements = _{ (statement ~ stmt_delim)+ ~ statement ~ stmt_delim? | statement ~ stmt_delim? }
 
-root = { statements ~ EOI }
+styx = _{ SOI ~ statements ~ EOI }

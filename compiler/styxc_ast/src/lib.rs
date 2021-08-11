@@ -1,6 +1,9 @@
 use std::error::Error;
 use std::str::FromStr;
 
+use crate::passes::{validate_symbols, validate_types};
+
+mod passes;
 /// A struct represnting a span of a string. The first paramteter is the start index of the span,
 /// and the second parameter is the end index of the span (inclusive).
 #[derive(Debug, PartialEq)]
@@ -302,7 +305,7 @@ pub struct Assignment {
     /// The identifier being assigned to.
     pub ident: Ident,
     /// The declared value.
-    pub value: Expr
+    pub value: Expr,
 }
 
 impl BinOpKind {
@@ -373,7 +376,7 @@ pub enum StmtKind {
     /// A declaration.
     Declaration(Declaration),
     /// An assignment.
-    Assignment(Assignment)
+    Assignment(Assignment),
 }
 
 #[derive(Debug, PartialEq)]
@@ -454,5 +457,39 @@ impl AST {
             stmts: vec![],
             modules: vec![],
         }
+    }
+}
+
+/// A tree-walker that descends through the AST to ensure it is valid.
+struct ASTValidator {
+    /// A vector of passes the validator will perform.
+    passes: Vec<fn(ast: &AST) -> Result<(), Box<dyn Error>>>,
+}
+
+impl Default for ASTValidator {
+    fn default() -> ASTValidator {
+        ASTValidator {
+            passes: vec![validate_symbols, validate_types],
+        }
+    }
+}
+
+impl ASTValidator {
+    /// Add a pass to the AST validator.
+    pub fn add_pass(mut self, pass: fn(ast: &AST) -> Result<(), Box<dyn Error>>) -> Self {
+        self.passes.push(pass);
+        self
+    }
+
+    /// Walk the AST with the given
+    pub fn walk(self, ast: AST) -> Result<(), Box<dyn Error>> {
+        // iterate over passes
+        for pass in self.passes {
+            match pass(&ast) {
+                Ok(()) => {}
+                Err(err) => return Err(err),
+            }
+        }
+        Ok(())
     }
 }

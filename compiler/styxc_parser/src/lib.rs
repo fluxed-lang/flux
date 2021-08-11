@@ -4,20 +4,14 @@ extern crate pest_derive;
 
 use std::error::Error;
 
+use log::debug;
 use pest::{
     iterators::{Pair, Pairs},
     Parser,
 };
 use styxc_ast::{
-    Assignment, Declaration, Expr, Ident, Literal, LiteralKind, Mutability, Span, Stmt, StmtKind,
-    AST,
+    Assignment, Declaration, Expr, Ident, Literal, Mutability, Span, Stmt, StmtKind, AST,
 };
-
-/// A trait implemented in this crate for AST elements, allowing them to be parsed.
-trait Parse<T> {
-    /// Parse the given pair into this AST element.
-    fn parse(pair: Pair<Rule>) -> T;
-}
 
 #[derive(Parser)]
 #[grammar = "./grammar.pest"]
@@ -28,17 +22,19 @@ pub struct StyxParser {
 impl StyxParser {
     /// Build the AST by parsing the source.
     pub fn build(&mut self, source: &String) -> Result<AST, Box<dyn Error>> {
-        let mut root = Self::parse(Rule::root, source)?;
+        debug!("Building AST from source (len {})", source.len());
+        let mut root = Self::parse(Rule::styx, source)?;
         // know that the first rule will be a `statements` rule.
         let stmts = root.next().unwrap().into_inner();
         let stmts = self.parse_statements(stmts);
-
+        debug!("Produced {} top-level AST statements", stmts.len());
         Ok(AST {
             modules: vec![],
             stmts,
         })
     }
 
+    /// Fetch the next AST ID, incrementing the stored `next_id` field.
     fn next_id(&mut self) -> usize {
         self.next_id += 1;
         self.next_id
@@ -117,13 +113,15 @@ impl StyxParser {
     fn parse_literal(&mut self, pair: Pair<Rule>) -> Literal {
         let inner = pair.into_inner().next().unwrap();
         match inner.as_rule() {
-            Rule::int => Literal {
-                id: self.next_id(),
-                kind: LiteralKind::Int64(0),
-                span: Span(inner.as_span().start(), inner.as_span().end()),
-            },
+            Rule::int => self.parse_int_literal(inner),
             _ => unreachable!(),
         }
+    }
+
+    /// Parse an integer literal.
+    fn parse_int_literal(&mut self, pair: Pair<Rule>) -> Literal {
+        let inner = pair.into_inner().next().unwrap();
+        todo!("integer literal")
     }
 }
 
@@ -136,6 +134,7 @@ impl Default for StyxParser {
 #[cfg(test)]
 mod tests {
     use pest::Span;
+    use styxc_ast::*;
 
     use super::*;
 
@@ -335,5 +334,54 @@ mod tests {
         assert_eq!(res.as_rule(), Rule::string);
         assert_eq!(res.as_span(), Span::new("\"hello, 🦊\"", 0, 13).unwrap());
         assert_eq!(res.as_str(), "\"hello, 🦊\"");
+    }
+
+    #[test]
+    fn test_statement() {
+        // let x = 5;
+        let mut res = StyxParser::parse(Rule::statement, "let x = 5").unwrap_or_else(|e| panic!("{}", e));
+        let res = res.next().expect("Expected match for rule statement");
+        assert_eq!(res.as_rule(), Rule::declaration);
+        assert_eq!(res.as_span(), Span::new("let x = 5", 0, 9).unwrap());
+        assert_eq!(res.as_str(), "let x = 5");
+    }
+
+    #[test]
+    fn test_inline_statements() {
+        // let x = 5; x = 2
+        let mut res = StyxParser::parse(Rule::statements, "let x = 5; x = 2").unwrap_or_else(|e| panic!("{}", e));
+        // let x = 5;
+        let stmt = res.next().expect("Expected match for rule statement");
+        assert_eq!(stmt.as_rule(), Rule::declaration);
+        assert_eq!(stmt.as_span(), Span::new("let x = 5; x = 2", 0, 9).unwrap());
+        assert_eq!(stmt.as_str(), "let x = 5");
+        // x = 2
+        let stmt = res.next().expect("Expected match for rule statement");
+        assert_eq!(stmt.as_rule(), Rule::assignment);
+        assert_eq!(stmt.as_span(), Span::new("let x = 5; x = 2", 11, 16).unwrap());
+        assert_eq!(stmt.as_str(), "x = 2");
+    }
+
+    #[test]
+    fn test_block() {
+        // { let x = 5; x = 2 }
+        let mut res = StyxParser::parse(Rule::block, "{ let x = 5; x = 2 }").unwrap_or_else(|e| panic!("{}", e));
+        // unwrap block
+        let stmt = res.next().expect("expecte match for rule `block`");
+        assert_eq!(stmt.as_rule(), Rule::block);
+        assert_eq!(stmt.as_span(), Span::new("{ let x = 5; x = 2 }", 0, 20).unwrap());
+        assert_eq!(stmt.as_str(), "{ let x = 5; x = 2 }");
+        // unwrap block contents
+        let mut inner = stmt.into_inner();
+        // let x = 5;
+        let stmt = inner.next().expect("expected match for rule `declaration`");
+        assert_eq!(stmt.as_rule(), Rule::declaration);
+        assert_eq!(stmt.as_span(), Span::new("{ let x = 5; x = 2 }", 2, 11).unwrap());
+        assert_eq!(stmt.as_str(), "let x = 5");
+        // x = 2
+        let stmt = inner.next().expect("expected match for rule `assignment`");
+        assert_eq!(stmt.as_rule(), Rule::assignment);
+        assert_eq!(stmt.as_span(), Span::new("{ let x = 5; x = 2 }", 13, 18).unwrap());
+        assert_eq!(stmt.as_str(), "x = 2");
     }
 }
