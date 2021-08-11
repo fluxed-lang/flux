@@ -386,7 +386,7 @@ mod tests {
     }
 
     #[test]
-    fn test_multiline_statemets() {
+    fn test_multiline_statements() {
         // let x = 5
         // x = 2
         let mut res = StyxParser::parse(Rule::stmts, "let x = 5\nx = 2").unwrap_or_else(|e| panic!("{}", e));
@@ -401,5 +401,47 @@ mod tests {
         assert_eq!(stmt.as_rule(), Rule::assignment);
         assert_eq!(stmt.as_span(), Span::new("let x = 5\nx = 2", 10, 15).unwrap());
         assert_eq!(stmt.as_str(), "x = 2");
+    }
+
+    #[test]
+    fn test_multiline_xtreme() {
+        // let x = 1; x = 2;
+        // let y = 3; y = 4
+        // let z = 5;
+        // z = 6
+        let source = "let x = 1; x = 2\nlet y = 3; y = 4\nlet z = 5\nz = 6";
+        let mut res = StyxParser::parse(Rule::stmts, source).unwrap_or_else(|e| panic!("{}", e));
+        let mut stmts = res.next().unwrap().into_inner();
+        
+        // let x = 1
+        let stmt = stmts.next().expect("expected match for rule `declaration`");
+        assert_eq!(stmt.as_rule(), Rule::declaration);
+        assert_eq!(stmt.as_span(), Span::new(source, 0, 9).unwrap());
+        assert_eq!(stmt.as_str(), "let x = 1");
+        // x = 2
+        let stmt = stmts.next().expect("expected match for rule `assignment`");
+        assert_eq!(stmt.as_rule(), Rule::assignment);
+        assert_eq!(stmt.as_span(), Span::new(source, 11, 16).unwrap());
+        assert_eq!(stmt.as_str(), "x = 2");
+        // let y = 3
+        let stmt = stmts.next().expect("expected match for rule `declaration`");
+        assert_eq!(stmt.as_rule(), Rule::declaration);
+        assert_eq!(stmt.as_span(), Span::new(source, 17, 26).unwrap());
+        assert_eq!(stmt.as_str(), "let y = 3");
+        // y = 4
+        let stmt = stmts.next().expect("expected match for rule `assignment`");
+        assert_eq!(stmt.as_rule(), Rule::assignment);
+        assert_eq!(stmt.as_span(), Span::new(source, 28, 33).unwrap());
+        assert_eq!(stmt.as_str(), "y = 4");
+        // let z = 5
+        let stmt = stmts.next().expect("expected match for rule `declaration`");
+        assert_eq!(stmt.as_rule(), Rule::declaration);
+        assert_eq!(stmt.as_span(), Span::new(source, 34, 43).unwrap());
+        assert_eq!(stmt.as_str(), "let z = 5");
+        // z = 6
+        let stmt = stmts.next().expect("expected match for rule `assignment`");
+        assert_eq!(stmt.as_rule(), Rule::assignment);
+        assert_eq!(stmt.as_span(), Span::new(source, 44, 49).unwrap());
+        assert_eq!(stmt.as_str(), "z = 6");
     }
 }
