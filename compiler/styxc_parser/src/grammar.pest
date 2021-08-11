@@ -6,6 +6,20 @@ line_comment = { "#" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
 block_comment = { "/*" ~ ANY* ~ "*/" }
 COMMENT = _{ block_comment | line_comment }
 
+num_negated = { "-" }
+
+// num base digits
+num_hex = { ASCII_HEX_DIGIT+ }
+num_dec = { ASCII_DIGIT+ }
+num_oct = { '0'..'7'+ }
+num_bin = { '0'..'1'+ }
+
+// base prefixes
+num_base_hex = _{ "0x" }
+num_base_dec = _{ "0d" }
+num_base_oct = _{ "0o" }
+num_base_bin = _{ "0b" }
+
 int_hex = _{ num_base_hex ~ num_hex }
 int_dec = _{ num_base_dec ~ num_dec }
 int_oct = _{ num_base_oct ~ num_oct }
@@ -62,28 +76,55 @@ literal = {
     char
 }
 
-
-num_negated = { "-" }
-
-// num base digits
-num_hex = { ASCII_HEX_DIGIT+ }
-num_dec = { ASCII_DIGIT+ }
-num_oct = { '0'..'7'+ }
-num_bin = { '0'..'1'+ }
-
-// base prefixes
-num_base_hex = _{ "0x" }
-num_base_dec = _{ "0d" }
-num_base_oct = _{ "0o" }
-num_base_bin = _{ "0b" }
-
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 block = { "{" ~ stmts ~ "}" }
 
-bin_op = { "/" | "*" | "+" | "-" }
-bin_exp = { (("(" ~ expression ~ ")") | expression) ~ bin_op ~  "("? ~ expression ~ ")"? }
+bin_exp_inner = _{ ("(" ~ expression ~ ")") | ident | literal }
 
-expression = { ident | literal | block }
+bin_op_plus = { "+" }
+bin_op_minus = { "-" }
+bin_op_mul = { "*" }
+bin_op_div = { "/" }
+bin_op_mod = { "%" }
+bin_op_eq = { "==" }
+bin_op_ne = { "!=" }
+bin_op_lt = { "<" }
+bin_op_gt = { ">" }
+bin_op_le = { "<=" }
+bin_op_ge = { ">=" }
+bin_op_and = { "&" }
+bin_op_xor = { "^" }
+bin_op_or = { "|" }
+bin_op_lshift = { "<<" }
+bin_op_rshift = { ">>" }
+bin_op_log_and = { "&&" }
+bin_op_log_or = { "||" }
+
+
+bin_op = _{ 
+    bin_op_plus |
+    bin_op_minus |
+    bin_op_mul |
+    bin_op_div |
+    bin_op_mod |
+    bin_op_eq |
+    bin_op_ne |
+    bin_op_lt |
+    bin_op_gt |
+    bin_op_le |
+    bin_op_ge |
+    bin_op_and |
+    bin_op_xor |
+    bin_op_or |
+    bin_op_lshift |
+    bin_op_rshift |
+    bin_op_log_and |
+    bin_op_log_or
+}
+
+bin_exp = { bin_exp_inner ~ (bin_op ~ bin_exp_inner)+ }
+
+expression = { bin_exp | ident | literal | block }
 
 assignment_operator = { "=" | "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" | "^=" }
 assignment = !{ (ident ~ ",")* ~ ident ~ assignment_operator ~ (expression ~ ",")* ~ expression }

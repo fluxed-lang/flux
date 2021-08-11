@@ -4,6 +4,7 @@ use std::str::FromStr;
 use crate::passes::{validate_symbols, validate_types};
 
 mod passes;
+
 /// A struct represnting a span of a string. The first paramteter is the start index of the span,
 /// and the second parameter is the end index of the span (inclusive).
 #[derive(Debug, PartialEq)]
@@ -187,7 +188,7 @@ impl UnOpKind {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum BinOpKind {
     /// The addition operator, `+`.
     Add,
@@ -347,6 +348,19 @@ impl BinOpKind {
     }
 }
 
+/// A binary expression.
+#[derive(Debug, PartialEq)]
+pub struct BinOp {
+    /// The ID of this node in the AST.
+    pub id: usize,
+    /// The left hand side of the binary expression.
+    pub lhs: Box<Expr>,
+    /// The right hand side of the binary expression.
+    pub rhs: Box<Expr>,
+    /// The kind of binary expression.
+    pub kind: BinOpKind,
+}
+
 /// An enum representing variable mutability.
 #[derive(Debug, PartialEq)]
 pub enum Mutability {
@@ -394,7 +408,7 @@ pub enum Expr {
     /// An identifier expression.
     Ident(Ident),
     /// A binary operation expression.
-    BinOp(BinOpKind, Box<Expr>, Box<Expr>),
+    BinOp(BinOp),
     /// A block (e.g. `{ /* ... */ }`).
     Block(Box<Block>),
 }
@@ -407,17 +421,6 @@ pub struct Block {
     pub id: usize,
     /// The span of text that defines this block.   
     pub span: (usize, usize),
-}
-
-impl Block {
-    /// Create a child block from this block. It will inherit the
-    fn create_child(&self, next_id: usize) -> Block {
-        Block {
-            stmts: vec![],
-            id: next_id,
-            span: self.span,
-        }
-    }
 }
 
 /// An external, imported module.

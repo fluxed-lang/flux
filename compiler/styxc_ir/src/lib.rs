@@ -4,8 +4,6 @@ use cranelift::{codegen, frontend::FunctionBuilderContext};
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataContext, Module};
 
-use styxc_ast::{ExprKind, Node};
-
 /// The basic JIT class.
 pub struct IrTranslator {
     /// The function builder context, which is reused across multiple
@@ -38,28 +36,4 @@ impl Default for IrTranslator {
     }
 }
 
-impl IrTranslator {
-    fn translate_func(
-        &self,
-        name: String,
-        params: Vec<String>,
-        ret: String,
-        statements: Vec<Node>,
-    ) {
-    }
-
-    /// Translate an expression into LLVM IR.
-    fn translate_expr(&self, node: Node) -> Result<(), Box<dyn Error>> {
-        todo!()
-    }
-
-    /// Compile a root vector of expressions.
-    fn compile(&self, root: Node) -> Result<(), Box<dyn Error>> {
-        todo!()
-    }
-}
-
-pub fn compile_ir(input: Node) -> Result<(), ()> {
-    let mut ir = IrTranslator::default();
-    Ok(())
-}
+impl IrTranslator {}

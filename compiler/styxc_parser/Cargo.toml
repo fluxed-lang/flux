@@ -5,8 +5,9 @@ authors = ["SkyezerFox <actuallyori@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+lazy_static = "1"
 log = "0.4"
-pest = "2.1"
+pest = { version = "2.1" } 
 pest_derive = "2.1"
 
 styxc_ast = { path =  "../styxc_ast" }
