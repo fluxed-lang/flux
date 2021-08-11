@@ -1,8 +1,9 @@
-WHITESPACE = _{ " " | "\n" | "\t" | "\r" }
-
+// whitespace
+BLANK = _{ " " | "\t" }
+WHITESPACE = _{ BLANK | NEWLINE }
+// comments
 line_comment = { "#" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
 block_comment = { "/*" ~ ANY* ~ "*/" }
-
 COMMENT = _{ block_comment | line_comment }
 
 int_hex = _{ num_base_hex ~ num_hex }
@@ -77,7 +78,7 @@ num_base_oct = _{ "0o" }
 num_base_bin = _{ "0b" }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
-block = { "{" ~ statements ~ "}" }
+block = { "{" ~ stmts ~ "}" }
 
 bin_op = { "/" | "*" | "+" | "-" }
 bin_exp = { (("(" ~ expression ~ ")") | expression) ~ bin_op ~  "("? ~ expression ~ ")"? }
@@ -85,14 +86,14 @@ bin_exp = { (("(" ~ expression ~ ")") | expression) ~ bin_op ~  "("? ~ expressio
 expression = { ident | literal | block }
 
 assignment_operator = { "=" | "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" | "^=" }
-assignment = { (ident ~ ",")* ~ ident ~ assignment_operator ~ (expression ~ ",")* ~ expression }
+assignment = !{ (ident ~ ",")* ~ ident ~ assignment_operator ~ (expression ~ ",")* ~ expression }
 
-declaration = { "let" ~ assignment }
-func_return = { "return" ~ expression }
+declaration = !{ "let" ~ (ident ~ ",")* ~ ident ~ "=" ~ (expression ~ ",")* ~ expression }
+func_return = !{ "return" ~ expression }
 
-loop_block = { "loop" ~ block }
+loop_block = !{ "loop" ~ block }
 
-if_block = { "if" ~ expression ~ block }
+if_block = !{ "if" ~ expression ~ block }
 
 statement = _{ 
 	loop_block |
@@ -102,7 +103,7 @@ statement = _{
     func_return
 }
 
-stmt_delim = _{ NEWLINE+ | (";" ~ NEWLINE*) }
-statements = _{ (statement ~ stmt_delim)+ ~ statement ~ stmt_delim? | statement ~ stmt_delim? }
+line = @{ (statement ~ BLANK* ~ ";" ~ BLANK* ~ &statement)* ~ BLANK* ~ statement ~ BLANK* ~ ";"? }
+stmts = @{ (line ~ NEWLINE+ ~ &line)* ~ line ~ NEWLINE* }
 
-styx = _{ SOI ~ statements ~ EOI }
+styx = _{ SOI ~ stmts? ~ EOI }
