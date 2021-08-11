@@ -9,9 +9,7 @@ use pest::{
     iterators::{Pair, Pairs},
     Parser,
 };
-use styxc_ast::{
-    Assignment, Declaration, Expr, Ident, Literal, Mutability, Span, Stmt, StmtKind, AST,
-};
+use styxc_ast::{AST, Assignment, Declaration, Expr, Ident, Literal, LiteralKind, Mutability, Span, Stmt, StmtKind};
 
 #[derive(Parser)]
 #[grammar = "./grammar.pest"]
@@ -62,12 +60,9 @@ impl StyxParser {
 
     /// Parse a declaration.
     fn parse_declaration(&mut self, pair: Pair<Rule>) -> Declaration {
-        // access assignment rule
         let mut inner = pair.into_inner();
         let ident = inner.next().unwrap();
-        // =
         let value = inner.next().unwrap();
-
         Declaration {
             ident: self.parse_identifier(ident).into(),
             mutability: Mutability::Immutable,
@@ -120,7 +115,19 @@ impl StyxParser {
     /// Parse an integer literal.
     fn parse_int_literal(&mut self, pair: Pair<Rule>) -> Literal {
         let inner = pair.into_inner().next().unwrap();
-        todo!("integer literal")
+        let kind = match inner.as_rule() {
+            Rule::num_dec => LiteralKind::Int32(inner.as_str().parse().unwrap()),
+            Rule::num_hex => LiteralKind::Int32(inner.as_str().parse().unwrap()),
+            Rule::num_oct => LiteralKind::Int32(inner.as_str().parse().unwrap()),
+            Rule::num_bin => LiteralKind::Int32(inner.as_str().parse().unwrap()),
+            _ => unreachable!(),
+        };
+
+        Literal {
+            id: self.next_id(),
+            kind,
+            span: Span(inner.as_span().start(), inner.as_span().end()),
+        }
     }
 }
 
@@ -158,7 +165,7 @@ mod tests {
                             mutability: Mutability::Immutable,
                             value: Expr::Literal(Literal {
                                 id: 2,
-                                kind: LiteralKind::Int64(0),
+                                kind: LiteralKind::Int32(1),
                                 span: Span(8, 9),
                             })
                         })
