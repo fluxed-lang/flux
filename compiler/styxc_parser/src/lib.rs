@@ -25,6 +25,9 @@ pub struct StyxParser {
 }
 
 lazy_static! {
+    /// The PrecClimber for parsing binary expressions. Since binary expressions are recursive, and the precedence
+    /// of operators cannot easily be inferred, we use the PrecClimber to ensure that the parser grammar will not left recurse.
+    /// This has the added benefit of handling operator precedence and associativity properly.
     static ref BIN_EXP_CLIMBER: PrecClimber<Rule> = PrecClimber::new(vec![
         Operator::new(Rule::bin_op_plus, Assoc::Left)
             | Operator::new(Rule::bin_op_minus, Assoc::Left),
