@@ -361,7 +361,7 @@ pub struct Ident {
 #[derive(Debug, PartialEq)]
 pub enum StmtKind {
     /// A declaration.
-    Declaration(Vec<Declaration>),
+    Declaration(Declaration),
     /// An assignment.
     Assignment(Assignment),
     // A loop block.
