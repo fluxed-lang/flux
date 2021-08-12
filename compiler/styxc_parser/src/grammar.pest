@@ -140,6 +140,9 @@ func_param = !{ ident ~ ":" ~ ident }
 func_params = !{ ("(" ~ (func_param ~ ",")* ~ func_param ~ ")") | func_param }
 func_decl = !{ ident ~ func_params? ~ "->" ~ block }
 
+func_call_params = !{ (expression ~ ",")* ~ expression }
+func_call = !{ ident ~ func_call_params }
+
 while_block = !{ "while" ~ expression ~ block }
 loop_block = !{ "loop" ~ block }
 
@@ -155,6 +158,7 @@ statement = _{
     assignment |
     declaration |
     mut_declaration |
+    func_call |
     func_return
 }
 

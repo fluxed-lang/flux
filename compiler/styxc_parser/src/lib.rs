@@ -4,7 +4,7 @@ extern crate pest_derive;
 extern crate lazy_static;
 extern crate log;
 
-use std::error::Error;
+use std::{convert::TryInto, error::Error, panic::catch_unwind};
 
 use lazy_static::lazy_static;
 use log::debug;
@@ -43,7 +43,7 @@ impl StyxParser {
         let mut root = Self::parse(Rule::styx, source)?;
         // know that the first rule will be a `statements` rule.
         let stmts = root.next().unwrap().into_inner();
-        let stmts = self.parse_statements(stmts);
+        let stmts = self.parse_statements(stmts)?;
         debug!("Produced {} top-level AST statements", stmts.len());
         Ok(AST {
             modules: vec![],
@@ -58,15 +58,20 @@ impl StyxParser {
     }
 
     /// Parse a statements rule into an array of statement AST nodes.    
-    fn parse_statements(&mut self, pair: Pairs<Rule>) -> Vec<Stmt> {
+    fn parse_statements(&mut self, pair: Pairs<Rule>) -> Result<Vec<Stmt>, Box<dyn Error>> {
         let mut stmts = vec![];
         for inner in pair {
             let stmt = Stmt {
                 id: self.next_id(),
                 kind: match inner.as_rule() {
-                    Rule::declaration => StmtKind::Declaration(self.parse_declaration(inner)),
-                    Rule::assignment => StmtKind::Assignment(self.parse_assignment(inner)),
-                    Rule::loop_block => StmtKind::Loop(self.parse_loop_block(inner)),
+                    Rule::declaration => {
+                        StmtKind::Declaration(self.parse_declaration(inner, Mutability::Immutable)?)
+                    }
+                    Rule::mut_declaration => {
+                        StmtKind::Declaration(self.parse_declaration(inner, Mutability::Mutable)?)
+                    }
+                    Rule::assignment => StmtKind::Assignment(self.parse_assignment(inner)?),
+                    Rule::loop_block => StmtKind::Loop(self.parse_loop_block(inner)?),
                     Rule::EOI => break,
                     _ => {
                         unreachable!("unexpected match: {:?}", inner.as_rule())
@@ -75,89 +80,127 @@ impl StyxParser {
             };
             stmts.push(stmt);
         }
-        stmts
+        Ok(stmts)
     }
 
     /// Parse a declaration.
-    fn parse_declaration(&mut self, pair: Pair<Rule>) -> Declaration {
+    ///
+    /// The way this method achieves this is incredibly dumb and needs to be fixed at some point - there is far too much
+    /// moving and suspicious data wrangling going on.
+    fn parse_declaration(
+        &mut self,
+        pair: Pair<Rule>,
+        mutability: Mutability,
+    ) -> Result<Vec<Declaration>, Box<dyn Error>> {
         let mut inner = pair.into_inner();
-        let ident = inner.next().unwrap();
-        let value = inner.next().unwrap();
-        Declaration {
-            ident: self.parse_identifier(ident).into(),
-            mutability: Mutability::Immutable,
-            value: self.parse_expression(value),
+        let mut idents = vec![];
+        let mut exprs = vec![];
+        // concatenate all idents
+        loop {
+            let next = inner.next().unwrap();
+            if matches!(next.as_rule(), Rule::expression) {
+                exprs.push(next);
+                break;
+            }
+            idents.push(next);
         }
+        // concatenate all exprs
+        while let Some(expr) = inner.next() {
+            exprs.push(expr);
+        }
+        // panic if mismatching number of exprs and idents
+        let single_expr = exprs.len() == 1;
+        if !single_expr && exprs.len() != idents.len() {
+            panic!();
+        }
+        // iterate over idents and set
+        let mut index = 0;
+        let results: Vec<Result<Declaration, Box<dyn Error>>> = idents
+            .into_iter()
+            .map(|ident| {
+                let value = if single_expr {
+                    &exprs[index]
+                } else {
+                    &exprs[0]
+                };
+                index += 1;
+                Ok(Declaration {
+                    ident: self.parse_identifier(ident)?,
+                    mutability,
+                    value: self.parse_expression(value.clone())?,
+                })
+            })
+            .collect();
+        // iterate over results and find errors
+        let mut out = vec![];
+        for result in results {
+            if !result.is_ok() {
+                return Err(result.unwrap_err());
+            }
+            out.push(result.unwrap());
+        }
+        Ok(out)
     }
 
     /// Parse an assignment.
-    fn parse_assignment(&mut self, pair: Pair<Rule>) -> Assignment {
+    fn parse_assignment(&mut self, pair: Pair<Rule>) -> Result<Assignment, Box<dyn Error>> {
         let mut inner = pair.into_inner();
         let ident = inner.next().unwrap();
         // =
         inner.next();
         let value = inner.next().unwrap();
 
-        Assignment {
-            ident: self.parse_identifier(ident),
-            value: self.parse_expression(value),
-        }
+        Ok(Assignment {
+            ident: self.parse_identifier(ident)?,
+            value: self.parse_expression(value)?,
+        })
     }
 
     /// Parse an identifier.
-    fn parse_identifier(&mut self, pair: Pair<Rule>) -> Ident {
-        Ident {
+    fn parse_identifier(&mut self, pair: Pair<Rule>) -> Result<Ident, Box<dyn Error>> {
+        Ok(Ident {
             id: 0,
             name: pair.as_str().into(),
             span: Span(pair.as_span().start(), pair.as_span().end()),
-        }
+        })
     }
 
     /// Parse an expression.
-    fn parse_expression(&mut self, pair: Pair<Rule>) -> Expr {
+    fn parse_expression(&mut self, pair: Pair<Rule>) -> Result<Expr, Box<dyn Error>> {
         let inner = pair.into_inner().next().unwrap();
-        match inner.as_rule() {
-            Rule::ident => Expr::Ident(self.parse_identifier(inner)),
-            Rule::literal => Expr::Literal(self.parse_literal(inner)),
-            Rule::bin_exp => self.parse_bin_exp(inner),
+        Ok(match inner.as_rule() {
+            Rule::ident => Expr::Ident(self.parse_identifier(inner)?),
+            Rule::literal => Expr::Literal(self.parse_literal(inner)?),
+            Rule::bin_exp => self.parse_bin_exp(inner)?,
             _ => unreachable!(),
-        }
+        })
     }
 
     /// Parse a literal.
-    fn parse_literal(&mut self, pair: Pair<Rule>) -> Literal {
+    fn parse_literal(&mut self, pair: Pair<Rule>) -> Result<Literal, Box<dyn Error>> {
         let inner = pair.into_inner().next().unwrap();
-        match inner.as_rule() {
-            Rule::int => self.parse_int_literal(inner),
+        Ok(match inner.as_rule() {
+            Rule::int => self.parse_int_literal(inner)?,
             _ => unreachable!(),
-        }
+        })
     }
 
     /// Parse an integer literal.
-    fn parse_int_literal(&mut self, pair: Pair<Rule>) -> Literal {
-        let inner = pair.into_inner().next().unwrap();
-        let kind = match inner.as_rule() {
-            Rule::num_dec => LiteralKind::Int(inner.as_str().parse().unwrap()),
-            Rule::num_hex => LiteralKind::Int(inner.as_str().parse().unwrap()),
-            Rule::num_oct => LiteralKind::Int(inner.as_str().parse().unwrap()),
-            Rule::num_bin => LiteralKind::Int(inner.as_str().parse().unwrap()),
-            _ => unreachable!(),
-        };
-
-        Literal {
+    fn parse_int_literal(&mut self, pair: Pair<Rule>) -> Result<Literal, Box<dyn Error>> {
+        Ok(Literal {
             id: self.next_id(),
-            kind,
-            span: Span(inner.as_span().start(), inner.as_span().end()),
-        }
+            kind: LiteralKind::Int(pair.as_str().parse()?),
+            span: Span(pair.as_span().start(), pair.as_span().end()),
+        })
     }
 
     /// Parse a binary expression.
-    fn parse_bin_exp(&mut self, pair: Pair<Rule>) -> Expr {
+    fn parse_bin_exp(&mut self, pair: Pair<Rule>) -> Result<Expr, Box<dyn Error>> {
         let inner = pair.into_inner();
         let primary = |pair: Pair<Rule>| match pair.as_rule() {
-            Rule::ident => Expr::Ident(self.parse_identifier(pair)),
-            Rule::literal => Expr::Literal(self.parse_literal(pair)),
-            Rule::expression => self.parse_expression(pair),
+            Rule::ident => Expr::Ident(self.parse_identifier(pair).unwrap()),
+            Rule::literal => Expr::Literal(self.parse_literal(pair).unwrap()),
+            Rule::expression => self.parse_expression(pair).unwrap(),
             _ => unreachable!(),
         };
         let infix = |lhs: Expr, op: Pair<Rule>, rhs: Expr| {
@@ -174,26 +217,26 @@ impl StyxParser {
                 rhs: rhs.into(),
             })
         };
-        BIN_EXP_CLIMBER.climb(inner, primary, infix)
+        Ok(BIN_EXP_CLIMBER.climb(inner, primary, infix))
     }
 
     /// Parse a `loop {}` block.
-    fn parse_loop_block(&mut self, pair: Pair<Rule>) -> Loop {
-        Loop {
+    fn parse_loop_block(&mut self, pair: Pair<Rule>) -> Result<Loop, Box<dyn Error>> {
+        Ok(Loop {
             id: self.next_id(),
-            block: self.parse_block(pair.into_inner().next().unwrap()),
-        }
+            block: self.parse_block(pair.into_inner().next().unwrap())?,
+        })
     }
 
     /// Parse a `{ /* ... */}`.
-    fn parse_block(&mut self, pair: Pair<Rule>) -> Block {
+    fn parse_block(&mut self, pair: Pair<Rule>) -> Result<Block, Box<dyn Error>> {
         debug_assert!(pair.as_rule() == Rule::block);
         let inner = pair.into_inner().next().unwrap().into_inner();
-        let stmts = self.parse_statements(inner);
-        Block {
+        let stmts = self.parse_statements(inner)?;
+        Ok(Block {
             id: self.next_id(),
             stmts,
-        }
+        })
     }
 }
 
@@ -222,7 +265,7 @@ mod tests {
                 stmts: vec![
                     Stmt {
                         id: 1,
-                        kind: StmtKind::Declaration(Declaration {
+                        kind: StmtKind::Declaration(vec![Declaration {
                             ident: Ident {
                                 id: 0,
                                 name: "x".into(),
@@ -234,7 +277,7 @@ mod tests {
                                 kind: LiteralKind::Int(1),
                                 span: Span(8, 9),
                             })
-                        })
+                        }])
                     },
                     Stmt {
                         id: 3,
@@ -266,7 +309,7 @@ mod tests {
                 modules: vec![],
                 stmts: vec![Stmt {
                     id: 1,
-                    kind: StmtKind::Declaration(Declaration {
+                    kind: StmtKind::Declaration(vec![Declaration {
                         ident: Ident {
                             id: 0,
                             name: "x".into(),
@@ -289,7 +332,7 @@ mod tests {
                             })
                             .into(),
                         })
-                    })
+                    }])
                 }]
             }
         )
@@ -305,7 +348,7 @@ mod tests {
                 modules: vec![],
                 stmts: vec![Stmt {
                     id: 1,
-                    kind: StmtKind::Declaration(Declaration {
+                    kind: StmtKind::Declaration(vec![Declaration {
                         ident: Ident {
                             id: 0,
                             name: "x".into(),
@@ -350,7 +393,7 @@ mod tests {
                             })
                             .into()
                         })
-                    })
+                    }])
                 }]
             }
         )

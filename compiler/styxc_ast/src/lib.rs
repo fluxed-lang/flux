@@ -354,7 +354,7 @@ pub struct BinOp {
 }
 
 /// An enum representing variable mutability.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Mutability {
     /// A mutable variable.
     Mutable,
@@ -380,7 +380,7 @@ pub struct Ident {
 #[derive(Debug, PartialEq)]
 pub enum StmtKind {
     /// A declaration.
-    Declaration(Declaration),
+    Declaration(Vec<Declaration>),
     /// An assignment.
     Assignment(Assignment),
     // A loop block.
