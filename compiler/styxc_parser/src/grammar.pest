@@ -33,7 +33,7 @@ int_with_base = _{
 }
 
 int_default = _{ num_dec }
-int = ${ num_negated? ~ (int_with_base | int_default) }
+int = @{ num_negated? ~ (int_with_base | int_default) }
 
 float_dp = { "." }
 
@@ -56,7 +56,7 @@ float_default = _{
 	num_dec ~ float_exponent
 }
 
-float = ${ num_negated? ~ (float_with_base | float_default) }
+float = @{ num_negated? ~ (float_with_base | float_default) }
 
 raw_char = {
     !("\"" | "\\") ~ ANY
@@ -69,17 +69,20 @@ char = ${ "'" ~ char_inner ~ "'" }
 string_inner = @{ raw_char* }
 string = ${ "\"" ~ string_inner ~ "\"" }
 
+bool = { "true" | "false" }
+
 literal = {
     float |
     int |
     string |
-    char
+    char |
+    bool
 }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 block = { "{" ~ stmts? ~ "}" }
 
-bin_exp_inner = _{ ("(" ~ expression ~ ")") | ident | literal }
+bin_exp_inner = _{ ("(" ~ expression ~ ")") | literal | ident }
 
 bin_op_plus = { "+" }
 bin_op_minus = { "-" }
@@ -123,26 +126,39 @@ bin_op = _{
 
 bin_exp = { bin_exp_inner ~ (bin_op ~ bin_exp_inner)+ }
 
-expression = { bin_exp | ident | literal | block }
+expression = { bin_exp | literal | ident | block }
 
-assignment_operator = { "=" | "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" | "^=" }
-assignment = !{ (ident ~ ",")* ~ ident ~ assignment_operator ~ (expression ~ ",")* ~ expression }
+assignment_op = { "=" | "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" | "^=" }
+assignment = !{ (ident ~ ",")* ~ ident ~ assignment_op ~ (expression ~ ",")* ~ expression }
 
-declaration = !{ "let" ~ (ident ~ ",")* ~ ident ~ "=" ~ (expression ~ ",")* ~ expression }
-mut_declaration = !{ "mut" ~ (ident ~ ",")* ~ ident ~ "=" ~ (expression ~ ",")* ~ expression }
+declaration_type = { ":" ~ ident }
+declaration = !{ "let" ~ (ident ~ ",")* ~ ident ~ declaration_type? ~ "=" ~ (expression ~ ",")* ~ expression }
+mut_declaration = !{ "mut" ~ (ident ~ ",")* ~ ident ~ declaration_type? ~ "=" ~ (expression ~ ",")* ~ expression }
 
 func_return = !{ "return" ~ expression }
+func_param = !{ ident ~ ":" ~ ident }
+func_params = !{ ("(" ~ (func_param ~ ",")* ~ func_param ~ ")") | func_param }
+func_decl = !{ ident ~ func_params? ~ "->" ~ block }
 
+func_call_params = @{ (expression ~ ",")* ~ expression }
+func_call = !{ ident ~ func_call_params }
+
+while_block = !{ "while" ~ expression ~ block }
 loop_block = !{ "loop" ~ block }
 
 if_block = !{ "if" ~ expression ~ block }
+if_else_block = !{ if_block ~ "else" ~ block }
 
 statement = _{ 
+	while_block |
 	loop_block |
+    if_else_block |
 	if_block |
+    func_decl |
     assignment |
     declaration |
     mut_declaration |
+    func_call |
     func_return
 }
 

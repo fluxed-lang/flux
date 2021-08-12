@@ -38,11 +38,24 @@ pub enum Type {
     Intersection(Vec<Type>),
     /// Represents a type already referred to.
     Circular(Box<Type>),
+    /// Represents a type that can never occur.
+    Never,
 }
 
 impl PartialEq for Type {
     fn eq(&self, other: &Type) -> bool {
         equate_types(self, other)
+    }
+}
+
+impl Type {
+    /// Compute the intersection of this type with another.
+    pub fn intersect(self, other: Type) -> Type {
+        if self == other {
+            return self;
+        }
+
+        Type::Never
     }
 }
 

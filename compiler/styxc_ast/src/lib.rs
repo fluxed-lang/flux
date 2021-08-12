@@ -51,17 +51,9 @@ mod span_test {
 /// Enum representing the type of a literal.
 pub enum LiteralKind {
     /// An integer literal (e.g. `1234`, `0x1234`, `0o1234`, `0b1001`).
-    Int64(i64),
-    Int32(i32),
-    Int16(i16),
-    Int8(i8),
-    Uint64(u64),
-    Uint32(u32),
-    Uint16(u16),
-    Uint8(u8),
+    Int(i64),
     /// A floating-point literal (e.g. `1234.5`, `0x1234.5`, `0o1234.5`, `0b0110.1`).
-    Float64(f64),
-    Float32(f32),
+    Float(f64),
     /// A string literal (e.g. `"hello"`, `"hello world"`).
     String(String),
     /// A character literal (e.g. `'a'`, `'\n'`).
@@ -225,29 +217,7 @@ pub enum BinOpKind {
     /// The less-than-or-equal operator, `<=`.
     Le,
     /// The greater-than-or-equal operator, `>=`.
-    Ge,
-    /// The assignment operator, `=`.
-    Assign,
-    /// The bitwise left-shift assignment operator, `<<=`.
-    ShlAssign,
-    /// The bitwise right-shift assignment operator, `>>=`.
-    ShrAssign,
-    /// The bitwise AND assignment operator, `&=`.
-    AndAssign,
-    /// The bitwise OR assignment operator, `|=`.
-    OrAssign,
-    /// The bitwise XOR assignment operator, `^=`.
-    XorAssign,
-    /// The assignment by sum operator, `+=`.
-    AddAssign,
-    /// The assignment by difference operator, `-=`.
-    SubAssign,
-    /// The assignment by product operator, `*=`.
-    MulAssign,
-    /// The assignment by division operator, `/=`.
-    DivAssign,
-    /// The assignment by modulo operator, `%=`.
-    ModAssign,
+    Ge
 }
 
 impl FromStr for BinOpKind {
@@ -272,17 +242,6 @@ impl FromStr for BinOpKind {
             ">" => Ok(Gt),
             "<=" => Ok(Le),
             ">=" => Ok(Ge),
-            "=" => Ok(Assign),
-            "+=" => Ok(AddAssign),
-            "-=" => Ok(SubAssign),
-            "*=" => Ok(MulAssign),
-            "%=" => Ok(ModAssign),
-            "/=" => Ok(DivAssign),
-            "&=" => Ok(AndAssign),
-            "|=" => Ok(OrAssign),
-            "^=" => Ok(XorAssign),
-            "<<=" => Ok(ShlAssign),
-            ">>=" => Ok(ShrAssign),
             _ => Err("invalid binary operator".into()),
         }
     }
@@ -299,6 +258,32 @@ pub struct Declaration {
     pub value: Expr,
 }
 
+#[derive(Debug, PartialEq)]
+pub enum AssignmentKind {
+    /// The assignment operator, `=`.
+    Assign,
+    /// The bitwise left-shift assignment operator, `<<=`.
+    ShlAssign,
+    /// The bitwise right-shift assignment operator, `>>=`.
+    ShrAssign,
+    /// The bitwise AND assignment operator, `&=`.
+    AndAssign,
+    /// The bitwise OR assignment operator, `|=`.
+    OrAssign,
+    /// The bitwise XOR assignment operator, `^=`.
+    XorAssign,
+    /// The assignment by sum operator, `+=`.
+    AddAssign,
+    /// The assignment by difference operator, `-=`.
+    SubAssign,
+    /// The assignment by product operator, `*=`.
+    MulAssign,
+    /// The assignment by division operator, `/=`.
+    DivAssign,
+    /// The assignment by modulo operator, `%=`.
+    ModAssign
+}
+
 ///  A variable assignment.
 #[derive(Debug, PartialEq)]
 
@@ -307,6 +292,8 @@ pub struct Assignment {
     pub ident: Ident,
     /// The declared value.
     pub value: Expr,
+    /// The kind of assignment.
+    pub kind: AssignmentKind
 }
 
 impl BinOpKind {
@@ -322,27 +309,13 @@ impl BinOpKind {
             BinOpKind::Xor => 9,
             BinOpKind::Or => 10,
             BinOpKind::LogAnd => 11,
-            BinOpKind::LogOr => 12,
-            BinOpKind::Assign => 14,
-            // all other assignment operators have precedence 15.
-            _ => 15,
+            BinOpKind::LogOr => 12
         }
     }
 
     /// Fetch the associativity of this binary operator.
     pub const fn associativity(&self) -> Associativity {
         match self {
-            BinOpKind::Assign
-            | BinOpKind::AddAssign
-            | BinOpKind::SubAssign
-            | BinOpKind::MulAssign
-            | BinOpKind::DivAssign
-            | BinOpKind::ModAssign
-            | BinOpKind::ShlAssign
-            | BinOpKind::ShrAssign
-            | BinOpKind::AndAssign
-            | BinOpKind::XorAssign
-            | BinOpKind::OrAssign => Associativity::Rtl,
             _ => Associativity::Ltr,
         }
     }
@@ -362,7 +335,7 @@ pub struct BinOp {
 }
 
 /// An enum representing variable mutability.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Mutability {
     /// A mutable variable.
     Mutable,
@@ -388,7 +361,7 @@ pub struct Ident {
 #[derive(Debug, PartialEq)]
 pub enum StmtKind {
     /// A declaration.
-    Declaration(Declaration),
+    Declaration(Vec<Declaration>),
     /// An assignment.
     Assignment(Assignment),
     // A loop block.
@@ -492,7 +465,7 @@ impl ASTValidator {
         self
     }
 
-    /// Walk the AST with the given
+    /// Walk the AST with the specified parses.
     pub fn walk(self, ast: AST) -> Result<(), Box<dyn Error>> {
         // iterate over passes
         for pass in self.passes {
