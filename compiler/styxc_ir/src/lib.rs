@@ -1,8 +1,8 @@
-use cranelift::frontend::FunctionBuilderContext;
-use cranelift_jit::{JITBuilder, JITModule};
-use cranelift_module::DataContext;
+use std::error::Error;
 
-use styxc_ast::expr::Expr;
+use cranelift::{codegen, frontend::FunctionBuilderContext};
+use cranelift_jit::{JITBuilder, JITModule};
+use cranelift_module::{DataContext, Module};
 
 /// The basic JIT class.
 pub struct IrTranslator {
@@ -36,39 +36,4 @@ impl Default for IrTranslator {
     }
 }
 
-impl IrTranslator {
-    fn translate_func(
-        &self,
-        name: String,
-        params: Vec<String>,
-        ret: String,
-        statements: Vec<Expr>,
-    ) {
-    }
-
-    /// Translate an expression into LLVM IR.
-    fn translate_expr(&self, expr: Expr) -> Result<(), Box<dyn Error>> {
-        match expr {
-            Expr::Function(name, params, ret, statements) => {
-                self.translate_func(name, params, ret, statements)
-            }
-            _ => panic!("unsupported"),
-        }
-    }
-
-    /// Compile a root vector of expressions.
-    fn compile(&self, root: Vec<Expr>) -> Result<(), Box<dyn Error>> {
-        let mut exprs = root.iter();
-
-        while let Some(expr) = exprs.next() {
-            self.translate_expr(unwrap).unwrap();
-        }
-
-        Ok(())
-    }
-}
-
-pub fn compile_ir(input: Expr) -> Result<(), ()> {
-    let mut ir = IrTranslator::default();
-    ir.Ok(())
-}
+impl IrTranslator {}

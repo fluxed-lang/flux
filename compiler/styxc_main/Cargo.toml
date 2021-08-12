@@ -11,4 +11,4 @@ log = "0.4"
 styxc_ast = { path =  "../styxc_ast" }
 styxc_ir = { path =  "../styxc_ir" }
 styxc_parser = { path =  "../styxc_parser" }
-styxc_lexer = { path =  "../styxc_lexer" }
+

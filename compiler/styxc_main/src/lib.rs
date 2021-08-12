@@ -13,10 +13,8 @@ pub enum Mode<'i> {
 /// Compile the target input string into memory.
 pub fn compile_to_mem(input: String) -> Result<fn() -> (), Box<dyn Error>> {
     // 1. Parse input source
-    let tokens = match styxc_lexer::parse(&input) {
-        Ok(tokens) => tokens,
-        Err(e) => return Err(e),
-    };
+    let mut parser = styxc_parser::StyxParser::default();
+    let ast = parser.build(&input)?;
 
     Ok(|| ())
 }

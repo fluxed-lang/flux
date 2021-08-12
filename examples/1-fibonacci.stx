@@ -6,5 +6,5 @@ loop {
     z = x
     x += y
     y = z
-    print z
+    # print z
 }
