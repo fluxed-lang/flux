@@ -1,6 +1,6 @@
 # Compiler
 
-The Styx compiler is responsible for translating Styx source code into
+The Styx compiler is responsible for translating Styx source code into compiled Styx code (obviously). However, it's clearly not as simple as that, so I have gone into detail on how it works below.
 
 ## Usage
 
