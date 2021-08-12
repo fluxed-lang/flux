@@ -129,11 +129,11 @@ bin_exp = { bin_exp_inner ~ (bin_op ~ bin_exp_inner)+ }
 expression = { bin_exp | literal | ident | block }
 
 assignment_op = { "=" | "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" | "^=" }
-assignment = !{ (ident ~ ",")* ~ ident ~ assignment_op ~ (expression ~ ",")* ~ expression }
+assignment = !{ ident ~ assignment_op ~ expression }
 
 declaration_type = { ":" ~ ident }
-declaration = !{ "let" ~ (ident ~ ",")* ~ ident ~ declaration_type? ~ "=" ~ (expression ~ ",")* ~ expression }
-mut_declaration = !{ "mut" ~ (ident ~ ",")* ~ ident ~ declaration_type? ~ "=" ~ (expression ~ ",")* ~ expression }
+declaration = !{ "let" ~ ident ~ declaration_type? ~ "=" ~ expression }
+mut_declaration = !{ "mut" ~ ident ~ declaration_type? ~ "=" ~ expression }
 
 func_return = !{ "return" ~ expression }
 func_param = !{ ident ~ ":" ~ ident }

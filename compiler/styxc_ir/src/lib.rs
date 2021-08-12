@@ -94,6 +94,8 @@ impl IrTranslator {
         // cleanup context and finalize definitions
         self.module.clear_context(&mut self.ctx);
         // return the address of the main function
+
+        todo!()
     }
 }
 
@@ -120,10 +122,8 @@ impl<'a> FunctionTranslator<'a> {
     }
 
     /// Translate a declaration.
-    fn translate_declaration(&mut self, declaration: Vec<Declaration>) {
-        for decl in declaration {
-            
-        }
+    fn translate_declaration(&mut self, declaration: Declaration) -> Value {
+        todo!()       
     }
 
     /// Translate an expression.
