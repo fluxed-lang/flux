@@ -1,6 +1,6 @@
 use std::{error::Error, fs::File, io::Read, path::Path, time::Instant};
 
-use log::{debug, error};
+use log::debug;
 
 /// Enum of possible compiler modes.
 pub enum Mode<'i> {
@@ -15,7 +15,7 @@ pub fn compile_to_mem(input: String) -> Result<fn() -> (), Box<dyn Error>> {
     // 1. Parse input source
     let mut parser = styxc_parser::StyxParser::default();
     let ast = parser.build(&input)?;
-    let ir = styxc_ir::IrTranslator::default();
+    let ir = styxc_ir::IrTranslator::new()?;
     let addr = ir.translate(ast)?;
 
     Ok(|| ())

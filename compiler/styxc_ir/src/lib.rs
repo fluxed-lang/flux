@@ -1,14 +1,17 @@
 use std::error::Error;
+use std::str::FromStr;
 
 use cranelift::codegen;
 use cranelift::frontend::{FunctionBuilder, FunctionBuilderContext};
-use cranelift::prelude::{InstBuilder, IntCC, Type, Value};
+use cranelift::prelude::*;
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataContext, Linkage, Module};
+use cranelift_object::{ObjectBuilder, ObjectModule};
 use styxc_ast::{
     Assignment, BinOp, BinOpKind, Block, Declaration, Expr, Literal, LiteralKind, Stmt, StmtKind,
     AST,
 };
+use target_lexicon::triple;
 
 /// The basic JIT class.
 pub struct IrTranslator {
@@ -26,23 +29,32 @@ pub struct IrTranslator {
 
     /// The module, with the jit backend, which manages the JIT'd
     /// functions.
-     module: Module<FaerieBackend>,
+    module: ObjectModule,
 }
 
-impl Default for IrTranslator {
-    fn default() -> Self {
-        let builder = JITBuilder::new(cranelift_module::default_libcall_names());
-        let module = JITModule::new(builder);
-        Self {
+impl IrTranslator {
+    pub fn new() -> Result<Self, Box<dyn Error>> {
+        if cfg!(windows) {
+            return Err("windows targets are currently not supported".into());
+        }
+
+        let mut flag_builder = settings::builder();
+        flag_builder.enable("is_pic").unwrap();
+
+        let isa_builder = isa::lookup(triple!("x86_64-unknown-linux-gnu")).unwrap();
+        let isa = isa_builder.finish(settings::Flags::new(flag_builder));
+
+        let builder = ObjectBuilder::new(isa, "name", cranelift_module::default_libcall_names())?;
+        let module = ObjectModule::new(builder);
+
+        Ok(Self {
             builder_context: FunctionBuilderContext::new(),
             ctx: module.make_context(),
             data_ctx: DataContext::new(),
             module,
-        }
+        })
     }
-}
 
-impl IrTranslator {
     /// Translate an AST into LLVM IR.
     pub fn translate(mut self, ast: AST) -> Result<*const u8, Box<dyn Error>> {
         let mut builder = FunctionBuilder::new(&mut self.ctx.func, &mut self.builder_context);
@@ -81,10 +93,7 @@ impl IrTranslator {
 
         // cleanup context and finalize definitions
         self.module.clear_context(&mut self.ctx);
-        self.module.finalize_definitions();
-
         // return the address of the main function
-        Ok(self.module.get_finalized_function(id))
     }
 }
 
@@ -93,7 +102,7 @@ impl IrTranslator {
 struct FunctionTranslator<'a> {
     builder: FunctionBuilder<'a>,
     // variables: HashMap<String, Variable>,
-    module: &'a mut JITModule,
+    module: &'a mut ObjectModule,
 }
 
 impl<'a> FunctionTranslator<'a> {
@@ -111,8 +120,10 @@ impl<'a> FunctionTranslator<'a> {
     }
 
     /// Translate a declaration.
-    fn translate_declaration(&mut self, declaration: Vec<Declaration>) -> Value {
-        todo!()
+    fn translate_declaration(&mut self, declaration: Vec<Declaration>) {
+        for decl in declaration {
+            
+        }
     }
 
     /// Translate an expression.
