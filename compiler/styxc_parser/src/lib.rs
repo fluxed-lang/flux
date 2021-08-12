@@ -137,10 +137,10 @@ impl StyxParser {
     fn parse_int_literal(&mut self, pair: Pair<Rule>) -> Literal {
         let inner = pair.into_inner().next().unwrap();
         let kind = match inner.as_rule() {
-            Rule::num_dec => LiteralKind::Int32(inner.as_str().parse().unwrap()),
-            Rule::num_hex => LiteralKind::Int32(inner.as_str().parse().unwrap()),
-            Rule::num_oct => LiteralKind::Int32(inner.as_str().parse().unwrap()),
-            Rule::num_bin => LiteralKind::Int32(inner.as_str().parse().unwrap()),
+            Rule::num_dec => LiteralKind::Int(inner.as_str().parse().unwrap()),
+            Rule::num_hex => LiteralKind::Int(inner.as_str().parse().unwrap()),
+            Rule::num_oct => LiteralKind::Int(inner.as_str().parse().unwrap()),
+            Rule::num_bin => LiteralKind::Int(inner.as_str().parse().unwrap()),
             _ => unreachable!(),
         };
 
@@ -231,7 +231,7 @@ mod tests {
                             mutability: Mutability::Immutable,
                             value: Expr::Literal(Literal {
                                 id: 2,
-                                kind: LiteralKind::Int32(1),
+                                kind: LiteralKind::Int(1),
                                 span: Span(8, 9),
                             })
                         })
@@ -278,13 +278,13 @@ mod tests {
                             kind: BinOpKind::Add,
                             lhs: Expr::Literal(Literal {
                                 id: 2,
-                                kind: LiteralKind::Int32(1),
+                                kind: LiteralKind::Int(1),
                                 span: Span(8, 9),
                             })
                             .into(),
                             rhs: Expr::Literal(Literal {
                                 id: 3,
-                                kind: LiteralKind::Int32(2),
+                                kind: LiteralKind::Int(2),
                                 span: Span(12, 13),
                             })
                             .into(),
@@ -317,7 +317,7 @@ mod tests {
                             kind: BinOpKind::Add,
                             lhs: Expr::Literal(Literal {
                                 id: 2,
-                                kind: LiteralKind::Int32(1),
+                                kind: LiteralKind::Int(1),
                                 span: Span(8, 9),
                             })
                             .into(),
@@ -326,7 +326,7 @@ mod tests {
                                 kind: BinOpKind::Mul,
                                 lhs: Expr::Literal(Literal {
                                     id: 3,
-                                    kind: LiteralKind::Int32(2),
+                                    kind: LiteralKind::Int(2),
                                     span: Span(12, 13),
                                 })
                                 .into(),
@@ -335,13 +335,13 @@ mod tests {
                                     kind: BinOpKind::Div,
                                     lhs: Expr::Literal(Literal {
                                         id: 4,
-                                        kind: LiteralKind::Int32(3),
+                                        kind: LiteralKind::Int(3),
                                         span: Span(16, 17),
                                     })
                                     .into(),
                                     rhs: Expr::Literal(Literal {
                                         id: 5,
-                                        kind: LiteralKind::Int32(4),
+                                        kind: LiteralKind::Int(4),
                                         span: Span(20, 21),
                                     })
                                     .into(),

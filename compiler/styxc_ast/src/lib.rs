@@ -51,17 +51,9 @@ mod span_test {
 /// Enum representing the type of a literal.
 pub enum LiteralKind {
     /// An integer literal (e.g. `1234`, `0x1234`, `0o1234`, `0b1001`).
-    Int64(i64),
-    Int32(i32),
-    Int16(i16),
-    Int8(i8),
-    Uint64(u64),
-    Uint32(u32),
-    Uint16(u16),
-    Uint8(u8),
+    Int(i64),
     /// A floating-point literal (e.g. `1234.5`, `0x1234.5`, `0o1234.5`, `0b0110.1`).
-    Float64(f64),
-    Float32(f32),
+    Float(f64),
     /// A string literal (e.g. `"hello"`, `"hello world"`).
     String(String),
     /// A character literal (e.g. `'a'`, `'\n'`).
@@ -492,7 +484,7 @@ impl ASTValidator {
         self
     }
 
-    /// Walk the AST with the given
+    /// Walk the AST with the specified parses.
     pub fn walk(self, ast: AST) -> Result<(), Box<dyn Error>> {
         // iterate over passes
         for pass in self.passes {
