@@ -77,7 +77,7 @@ literal = {
 }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
-block = { "{" ~ stmts ~ "}" }
+block = { "{" ~ stmts? ~ "}" }
 
 bin_exp_inner = _{ ("(" ~ expression ~ ")") | ident | literal }
 
@@ -99,7 +99,6 @@ bin_op_lshift = { "<<" }
 bin_op_rshift = { ">>" }
 bin_op_log_and = { "&&" }
 bin_op_log_or = { "||" }
-
 
 bin_op = _{ 
     bin_op_plus |
@@ -130,6 +129,8 @@ assignment_operator = { "=" | "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" | "
 assignment = !{ (ident ~ ",")* ~ ident ~ assignment_operator ~ (expression ~ ",")* ~ expression }
 
 declaration = !{ "let" ~ (ident ~ ",")* ~ ident ~ "=" ~ (expression ~ ",")* ~ expression }
+mut_declaration = !{ "mut" ~ (ident ~ ",")* ~ ident ~ "=" ~ (expression ~ ",")* ~ expression }
+
 func_return = !{ "return" ~ expression }
 
 loop_block = !{ "loop" ~ block }
@@ -141,6 +142,7 @@ statement = _{
 	if_block |
     assignment |
     declaration |
+    mut_declaration |
     func_return
 }
 

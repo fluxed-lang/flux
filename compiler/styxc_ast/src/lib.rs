@@ -391,6 +391,8 @@ pub enum StmtKind {
     Declaration(Declaration),
     /// An assignment.
     Assignment(Assignment),
+    // A loop block.
+    Loop(Loop),
 }
 
 #[derive(Debug, PartialEq)]
@@ -419,8 +421,14 @@ pub struct Block {
     pub stmts: Vec<Stmt>,
     /// The ID of this node in the AST.
     pub id: usize,
-    /// The span of text that defines this block.   
-    pub span: (usize, usize),
+}
+
+#[derive(Debug, PartialEq)]
+pub struct Loop {
+    /// The ID of this node in the AST.
+    pub id: usize,
+    /// The block owned by this loop.
+    pub block: Block,
 }
 
 /// An external, imported module.

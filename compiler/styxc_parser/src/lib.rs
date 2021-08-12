@@ -14,8 +14,8 @@ use pest::{
     Parser,
 };
 use styxc_ast::{
-    Assignment, BinOp, BinOpKind, Declaration, Expr, Ident, Literal, LiteralKind, Mutability, Span,
-    Stmt, StmtKind, AST,
+    Assignment, BinOp, BinOpKind, Block, Declaration, Expr, Ident, Literal, LiteralKind, Loop,
+    Mutability, Span, Stmt, StmtKind, AST,
 };
 
 #[derive(Parser)]
@@ -63,6 +63,7 @@ impl StyxParser {
                 kind: match inner.as_rule() {
                     Rule::declaration => StmtKind::Declaration(self.parse_declaration(inner)),
                     Rule::assignment => StmtKind::Assignment(self.parse_assignment(inner)),
+                    Rule::loop_block => StmtKind::Loop(self.parse_loop_block(inner)),
                     Rule::EOI => break,
                     _ => {
                         unreachable!("unexpected match: {:?}", inner.as_rule())
@@ -171,6 +172,25 @@ impl StyxParser {
             })
         };
         BIN_EXP_CLIMBER.climb(inner, primary, infix)
+    }
+
+    /// Parse a `loop {}` block.
+    fn parse_loop_block(&mut self, pair: Pair<Rule>) -> Loop {
+        Loop {
+            id: self.next_id(),
+            block: self.parse_block(pair.into_inner().next().unwrap()),
+        }
+    }
+
+    /// Parse a `{ /* ... */}`.
+    fn parse_block(&mut self, pair: Pair<Rule>) -> Block {
+        debug_assert!(pair.as_rule() == Rule::block);
+        let inner = pair.into_inner().next().unwrap().into_inner();
+        let stmts = self.parse_statements(inner);
+        Block {
+            id: self.next_id(),
+            stmts,
+        }
     }
 }
 
