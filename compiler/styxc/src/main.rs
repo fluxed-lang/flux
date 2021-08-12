@@ -4,8 +4,6 @@ extern crate log;
 use clap::{AppSettings, Clap};
 use log::{debug, error, LevelFilter};
 use std::env;
-use std::fs::File;
-use std::io::Read;
 use std::path::Path;
 use styxc_main::Mode;
 

@@ -99,8 +99,7 @@ impl IrTranslator {
     }
 }
 
-/// A collection of state used for translating from toy-language AST nodes
-/// into Cranelift IR.
+/// A translator for a single function. Wraps the Cranelift `FunctionBuilder` struct.
 struct FunctionTranslator<'a> {
     builder: FunctionBuilder<'a>,
     // variables: HashMap<String, Variable>,
@@ -108,6 +107,7 @@ struct FunctionTranslator<'a> {
 }
 
 impl<'a> FunctionTranslator<'a> {
+    /// Translate a statement into Cranelift IR.
     fn translate_statement(&mut self, stmt: Stmt) {
         match stmt.kind {
             StmtKind::Assignment(assign) => self.translate_assignment(assign),
@@ -123,7 +123,7 @@ impl<'a> FunctionTranslator<'a> {
 
     /// Translate a declaration.
     fn translate_declaration(&mut self, declaration: Declaration) -> Value {
-        todo!()       
+        todo!()
     }
 
     /// Translate an expression.
