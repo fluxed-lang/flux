@@ -128,8 +128,8 @@ bin_exp = { bin_exp_inner ~ (bin_op ~ bin_exp_inner)+ }
 
 expression = { bin_exp | literal | ident | block }
 
-assignment_operator = { "=" | "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" | "^=" }
-assignment = !{ (ident ~ ",")* ~ ident ~ assignment_operator ~ (expression ~ ",")* ~ expression }
+assignment_op = { "=" | "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" | "^=" }
+assignment = !{ (ident ~ ",")* ~ ident ~ assignment_op ~ (expression ~ ",")* ~ expression }
 
 declaration_type = { ":" ~ ident }
 declaration = !{ "let" ~ (ident ~ ",")* ~ ident ~ declaration_type? ~ "=" ~ (expression ~ ",")* ~ expression }
@@ -140,7 +140,7 @@ func_param = !{ ident ~ ":" ~ ident }
 func_params = !{ ("(" ~ (func_param ~ ",")* ~ func_param ~ ")") | func_param }
 func_decl = !{ ident ~ func_params? ~ "->" ~ block }
 
-func_call_params = !{ (expression ~ ",")* ~ expression }
+func_call_params = @{ (expression ~ ",")* ~ expression }
 func_call = !{ ident ~ func_call_params }
 
 while_block = !{ "while" ~ expression ~ block }

@@ -4,7 +4,7 @@ extern crate pest_derive;
 extern crate lazy_static;
 extern crate log;
 
-use std::{convert::TryInto, error::Error, panic::catch_unwind};
+use std::error::Error;
 
 use lazy_static::lazy_static;
 use log::debug;
@@ -13,10 +13,7 @@ use pest::{
     prec_climber::{Assoc, Operator, PrecClimber},
     Parser,
 };
-use styxc_ast::{
-    Assignment, BinOp, BinOpKind, Block, Declaration, Expr, Ident, Literal, LiteralKind, Loop,
-    Mutability, Span, Stmt, StmtKind, AST,
-};
+use styxc_ast::{AST, Assignment, AssignmentKind, BinOp, BinOpKind, Block, Declaration, Expr, Ident, Literal, LiteralKind, Loop, Mutability, Span, Stmt, StmtKind};
 
 #[derive(Parser)]
 #[grammar = "./grammar.pest"]
@@ -72,6 +69,7 @@ impl StyxParser {
                     }
                     Rule::assignment => StmtKind::Assignment(self.parse_assignment(inner)?),
                     Rule::loop_block => StmtKind::Loop(self.parse_loop_block(inner)?),
+                    Rule::func_call => todo!("function call"),
                     Rule::EOI => break,
                     _ => {
                         unreachable!("unexpected match: {:?}", inner.as_rule())
@@ -119,9 +117,9 @@ impl StyxParser {
             .into_iter()
             .map(|ident| {
                 let value = if single_expr {
-                    &exprs[index]
-                } else {
                     &exprs[0]
+                } else {
+                    &exprs[index]
                 };
                 index += 1;
                 Ok(Declaration {
@@ -147,12 +145,24 @@ impl StyxParser {
         let mut inner = pair.into_inner();
         let ident = inner.next().unwrap();
         // =
-        inner.next();
+        let op = inner.next().unwrap().as_str();
         let value = inner.next().unwrap();
 
         Ok(Assignment {
             ident: self.parse_identifier(ident)?,
             value: self.parse_expression(value)?,
+            kind: match op {
+                "=" => AssignmentKind::Assign,
+                "+=" => AssignmentKind::AddAssign,
+                "-=" => AssignmentKind::SubAssign,
+                "*=" => AssignmentKind::MulAssign,
+                "/=" => AssignmentKind::DivAssign,
+                "%=" => AssignmentKind::ModAssign,
+                "&=" => AssignmentKind::AndAssign,
+                "|=" => AssignmentKind::OrAssign,
+                "^=" => AssignmentKind::XorAssign,
+                _ => unreachable!()
+            }
         })
     }
 
@@ -291,7 +301,8 @@ mod tests {
                                 id: 0,
                                 name: "z".into(),
                                 span: Span(15, 16),
-                            })
+                            }),
+                            kind: AssignmentKind::Assign,
                         })
                     }
                 ]

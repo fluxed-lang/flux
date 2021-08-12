@@ -217,29 +217,7 @@ pub enum BinOpKind {
     /// The less-than-or-equal operator, `<=`.
     Le,
     /// The greater-than-or-equal operator, `>=`.
-    Ge,
-    /// The assignment operator, `=`.
-    Assign,
-    /// The bitwise left-shift assignment operator, `<<=`.
-    ShlAssign,
-    /// The bitwise right-shift assignment operator, `>>=`.
-    ShrAssign,
-    /// The bitwise AND assignment operator, `&=`.
-    AndAssign,
-    /// The bitwise OR assignment operator, `|=`.
-    OrAssign,
-    /// The bitwise XOR assignment operator, `^=`.
-    XorAssign,
-    /// The assignment by sum operator, `+=`.
-    AddAssign,
-    /// The assignment by difference operator, `-=`.
-    SubAssign,
-    /// The assignment by product operator, `*=`.
-    MulAssign,
-    /// The assignment by division operator, `/=`.
-    DivAssign,
-    /// The assignment by modulo operator, `%=`.
-    ModAssign,
+    Ge
 }
 
 impl FromStr for BinOpKind {
@@ -264,17 +242,6 @@ impl FromStr for BinOpKind {
             ">" => Ok(Gt),
             "<=" => Ok(Le),
             ">=" => Ok(Ge),
-            "=" => Ok(Assign),
-            "+=" => Ok(AddAssign),
-            "-=" => Ok(SubAssign),
-            "*=" => Ok(MulAssign),
-            "%=" => Ok(ModAssign),
-            "/=" => Ok(DivAssign),
-            "&=" => Ok(AndAssign),
-            "|=" => Ok(OrAssign),
-            "^=" => Ok(XorAssign),
-            "<<=" => Ok(ShlAssign),
-            ">>=" => Ok(ShrAssign),
             _ => Err("invalid binary operator".into()),
         }
     }
@@ -291,6 +258,32 @@ pub struct Declaration {
     pub value: Expr,
 }
 
+#[derive(Debug, PartialEq)]
+pub enum AssignmentKind {
+    /// The assignment operator, `=`.
+    Assign,
+    /// The bitwise left-shift assignment operator, `<<=`.
+    ShlAssign,
+    /// The bitwise right-shift assignment operator, `>>=`.
+    ShrAssign,
+    /// The bitwise AND assignment operator, `&=`.
+    AndAssign,
+    /// The bitwise OR assignment operator, `|=`.
+    OrAssign,
+    /// The bitwise XOR assignment operator, `^=`.
+    XorAssign,
+    /// The assignment by sum operator, `+=`.
+    AddAssign,
+    /// The assignment by difference operator, `-=`.
+    SubAssign,
+    /// The assignment by product operator, `*=`.
+    MulAssign,
+    /// The assignment by division operator, `/=`.
+    DivAssign,
+    /// The assignment by modulo operator, `%=`.
+    ModAssign
+}
+
 ///  A variable assignment.
 #[derive(Debug, PartialEq)]
 
@@ -299,6 +292,8 @@ pub struct Assignment {
     pub ident: Ident,
     /// The declared value.
     pub value: Expr,
+    /// The kind of assignment.
+    pub kind: AssignmentKind
 }
 
 impl BinOpKind {
@@ -314,27 +309,13 @@ impl BinOpKind {
             BinOpKind::Xor => 9,
             BinOpKind::Or => 10,
             BinOpKind::LogAnd => 11,
-            BinOpKind::LogOr => 12,
-            BinOpKind::Assign => 14,
-            // all other assignment operators have precedence 15.
-            _ => 15,
+            BinOpKind::LogOr => 12
         }
     }
 
     /// Fetch the associativity of this binary operator.
     pub const fn associativity(&self) -> Associativity {
         match self {
-            BinOpKind::Assign
-            | BinOpKind::AddAssign
-            | BinOpKind::SubAssign
-            | BinOpKind::MulAssign
-            | BinOpKind::DivAssign
-            | BinOpKind::ModAssign
-            | BinOpKind::ShlAssign
-            | BinOpKind::ShrAssign
-            | BinOpKind::AndAssign
-            | BinOpKind::XorAssign
-            | BinOpKind::OrAssign => Associativity::Rtl,
             _ => Associativity::Ltr,
         }
     }
