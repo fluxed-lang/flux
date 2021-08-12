@@ -13,7 +13,10 @@ use pest::{
     prec_climber::{Assoc, Operator, PrecClimber},
     Parser,
 };
-use styxc_ast::{AST, Assignment, AssignmentKind, BinOp, BinOpKind, Block, Declaration, Expr, Ident, Literal, LiteralKind, Loop, Mutability, Span, Stmt, StmtKind};
+use styxc_ast::{
+    Assignment, AssignmentKind, BinOp, BinOpKind, Block, Declaration, Expr, Ident, Literal,
+    LiteralKind, Loop, Mutability, Span, Stmt, StmtKind, AST,
+};
 
 #[derive(Parser)]
 #[grammar = "./grammar.pest"]
@@ -161,8 +164,8 @@ impl StyxParser {
                 "&=" => AssignmentKind::AndAssign,
                 "|=" => AssignmentKind::OrAssign,
                 "^=" => AssignmentKind::XorAssign,
-                _ => unreachable!()
-            }
+                _ => unreachable!(),
+            },
         })
     }
 

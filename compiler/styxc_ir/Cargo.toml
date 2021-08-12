@@ -9,5 +9,6 @@ edition = "2018"
 cranelift = "0.76"
 cranelift-module = "0.76"
 cranelift-jit = "0.76"
+cranelift-faerie = "0.66"
 
 styxc_ast = { path = "../styxc_ast" }

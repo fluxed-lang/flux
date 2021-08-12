@@ -217,7 +217,7 @@ pub enum BinOpKind {
     /// The less-than-or-equal operator, `<=`.
     Le,
     /// The greater-than-or-equal operator, `>=`.
-    Ge
+    Ge,
 }
 
 impl FromStr for BinOpKind {
@@ -281,7 +281,7 @@ pub enum AssignmentKind {
     /// The assignment by division operator, `/=`.
     DivAssign,
     /// The assignment by modulo operator, `%=`.
-    ModAssign
+    ModAssign,
 }
 
 ///  A variable assignment.
@@ -293,7 +293,7 @@ pub struct Assignment {
     /// The declared value.
     pub value: Expr,
     /// The kind of assignment.
-    pub kind: AssignmentKind
+    pub kind: AssignmentKind,
 }
 
 impl BinOpKind {
@@ -309,7 +309,7 @@ impl BinOpKind {
             BinOpKind::Xor => 9,
             BinOpKind::Or => 10,
             BinOpKind::LogAnd => 11,
-            BinOpKind::LogOr => 12
+            BinOpKind::LogOr => 12,
         }
     }
 
