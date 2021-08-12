@@ -1,8 +1,9 @@
-use std::error::Error;
+use std::{collections::HashMap, error::Error};
 
-use cranelift::{codegen, frontend::FunctionBuilderContext};
+use cranelift::{codegen::{self, ir::Function}, frontend::{FunctionBuilder, FunctionBuilderContext, Variable}, prelude::{EntityRef, InstBuilder, IntCC, Type, Value}};
 use cranelift_jit::{JITBuilder, JITModule};
-use cranelift_module::{DataContext, Module};
+use cranelift_module::{DataContext, Linkage, Module};
+use styxc_ast::{AST, Assignment, BinOp, BinOpKind, Block, Declaration, Expr, Literal, LiteralKind, Stmt, StmtKind};
 
 /// The basic JIT class.
 pub struct IrTranslator {
@@ -36,4 +37,135 @@ impl Default for IrTranslator {
     }
 }
 
-impl IrTranslator {}
+impl IrTranslator {
+    /// Translate an AST into LLVM IR.
+    pub fn translate(mut self, ast: AST) -> Result<*const u8, Box<dyn Error>> {
+        let mut builder = FunctionBuilder::new(&mut self.ctx.func, &mut self.builder_context);
+        let entry_block = builder.create_block();
+        builder.switch_to_block(entry_block);
+        builder.seal_block(entry_block);
+        
+        let mut trans = FunctionTranslator {
+            builder,
+            // variables,
+            module: &mut self.module,
+        };
+
+        for stmt in ast.stmts {
+            trans.translate_statement(stmt)
+        }
+
+        // emit return instruction
+        trans.builder.ins().return_(&[]);
+        trans.builder.finalize();
+
+        // declare main function
+        let id = self
+            .module
+            .declare_function("main", Linkage::Export, &self.ctx.func.signature)
+            .map_err(|e| e.to_string())?;
+
+        self.module
+            .define_function(
+                id,
+                &mut self.ctx,
+                &mut codegen::binemit::NullTrapSink {},
+                &mut codegen::binemit::NullStackMapSink {},
+            )
+            .map_err(|e| e.to_string())?;
+
+        // cleanup context and finalize definitions
+        self.module.clear_context(&mut self.ctx);
+        self.module.finalize_definitions();
+        
+        // return the address of the main function
+        Ok(self.module.get_finalized_function(id))
+    }
+}
+
+/// A collection of state used for translating from toy-language AST nodes
+/// into Cranelift IR.
+struct FunctionTranslator<'a> {
+    builder: FunctionBuilder<'a>,
+    // variables: HashMap<String, Variable>,
+    module: &'a mut JITModule,
+}
+
+impl<'a> FunctionTranslator<'a> {
+    fn translate_statement(&mut self, stmt: Stmt) {
+        match stmt.kind {
+            StmtKind::Assignment(assign) => self.translate_assignment(assign),
+            StmtKind::Declaration(decl) => self.translate_declaration(decl),
+            _ => todo!()
+        };
+    }
+
+        /// Translate an assignment.
+    fn translate_assignment(&mut self, assignment: Assignment) -> Value {
+        todo!()
+    }
+
+    /// Translate a declaration.
+    fn translate_declaration(&mut self, declaration: Declaration) -> Value {
+        todo!()
+    }
+
+    /// Translate an expression.
+    fn translate_expression(&mut self, expr: Expr) -> Value {
+        match expr {
+            Expr::Literal(literal) => self.translate_literal(literal),
+            Expr::BinOp(op) => self.translate_bin_op(op),
+            _ => todo!(),
+        }
+    }
+
+    /// Translate a block.
+    fn translate_block(&mut self, block: Block) -> Value {
+        let parent = self.builder.current_block().unwrap();
+        // create new block and switch to it
+        let ir_block = self.builder.create_block();
+        self.builder.switch_to_block(ir_block);
+        self.builder.seal_block(ir_block);
+
+        for stmt in block.stmts {
+            self.translate_statement(stmt)
+        };
+
+        self.builder.switch_to_block(parent);
+        self.builder.block_params(ir_block)[0]
+    }
+
+    /// Translate a literal.
+    fn translate_literal(&mut self, literal: Literal) -> Value {
+        match literal.kind {
+            LiteralKind::Int32(int) => self.builder.ins().iconst(Type::int(32).unwrap(), i64::from(int)),
+            _ => todo!()
+        }
+    }
+
+    // Translate a binary operation.
+    fn translate_bin_op(&mut self, bin_op: BinOp) -> Value {
+        let lhs = self.translate_expression(*bin_op.lhs);
+        let rhs = self.translate_expression(*bin_op.rhs);
+
+        match bin_op.kind {
+            BinOpKind::Eq => self.translate_icmp(IntCC::Equal, lhs, rhs),
+            BinOpKind::Ne => self.translate_icmp(IntCC::NotEqual, lhs, rhs),
+            BinOpKind::Lt => self.translate_icmp(IntCC::SignedLessThan, lhs, rhs),
+            BinOpKind::Gt => self.translate_icmp(IntCC::SignedGreaterThan, lhs, rhs),
+            BinOpKind::Le => self.translate_icmp(IntCC::SignedLessThanOrEqual, lhs, rhs),
+            BinOpKind::Ge => self.translate_icmp(IntCC::SignedGreaterThanOrEqual, lhs, rhs),
+            BinOpKind::Add => self.builder.ins().iadd(lhs, rhs),
+            BinOpKind::Sub => self.builder.ins().isub(lhs, rhs),
+            BinOpKind::Mul => self.builder.ins().imul(lhs, rhs),
+            BinOpKind::Div => self.builder.ins().udiv(lhs, rhs),
+            _ => todo!()
+        }
+    }
+
+    // Translate an integer comparison call.
+    fn translate_icmp(&mut self, cmp: IntCC, lhs: Value, rhs: Value) -> Value {
+        let c = self.builder.ins().icmp(cmp, lhs, rhs);
+        self.builder.ins().bint(Type::int(1).unwrap(), c)
+    }    
+}

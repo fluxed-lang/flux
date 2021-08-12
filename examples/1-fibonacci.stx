@@ -1,10 +1,10 @@
 # variable declaration
-mut x, y = 1
-mut z = 0
+let x = 1
+let y = 1
+let z = 0
 
 loop {
     z = x
     x += y
     y = z
-    print z
 }

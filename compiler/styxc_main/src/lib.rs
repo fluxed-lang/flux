@@ -1,4 +1,4 @@
-use std::{error::Error, fs::File, io::Read, path::Path};
+use std::{error::Error, fs::File, io::Read, path::Path, time::Instant};
 
 use log::{debug, error};
 
@@ -15,6 +15,8 @@ pub fn compile_to_mem(input: String) -> Result<fn() -> (), Box<dyn Error>> {
     // 1. Parse input source
     let mut parser = styxc_parser::StyxParser::default();
     let ast = parser.build(&input)?;
+    let ir = styxc_ir::IrTranslator::default();
+    let addr = ir.translate(ast)?;
 
     Ok(|| ())
 }
@@ -29,12 +31,13 @@ fn compile_and_execute(input: String) -> Result<(), Box<dyn Error>> {
 
 /// Compile the target input string into an executable binary.
 pub fn compile_to_binary<P: AsRef<Path>>(input: String, dest: P) -> Result<(), Box<dyn Error>> {
-    panic!("unsupported compiler mode");
+    todo!("unsupported compiler mode");
 }
 
 /// Compile the target file using the given compiler mode.
 pub fn compile<P: AsRef<Path>>(target: P, mode: Mode) -> Result<(), Box<dyn Error>> {
     debug!("Compiling {:?}", target.as_ref());
+    let time = Instant::now();
 
     let mut file = match File::open(target) {
         Ok(f) => f,
@@ -50,5 +53,10 @@ pub fn compile<P: AsRef<Path>>(target: P, mode: Mode) -> Result<(), Box<dyn Erro
     match mode {
         Mode::AOT(dest) => compile_to_binary(buf, dest),
         Mode::JIT => compile_and_execute(buf),
-    }
+    }?;
+
+    let elapsed = time.elapsed();
+    debug!("Compilation complete in {:?}", elapsed);
+
+    Ok(())
 }
