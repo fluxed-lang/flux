@@ -4,7 +4,7 @@ use crate::AST;
 
 /// AST pass that ensures symbols are valid and declared properly.
 pub fn validate_symbols(ast: &AST) -> Result<(), Box<dyn Error>> {
-    todo!()
+    Ok(())
 }
 
 /// AST pass that ensures types are correct and equivalent.

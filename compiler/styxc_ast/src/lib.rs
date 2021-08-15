@@ -1,6 +1,8 @@
 use std::error::Error;
 use std::str::FromStr;
 
+use styxc_types::Type;
+
 use crate::passes::{validate_symbols, validate_types};
 
 mod passes;
@@ -65,8 +67,6 @@ pub enum LiteralKind {
 /// A literal value.
 #[derive(Debug, PartialEq)]
 pub struct Literal {
-    /// The ID of this node in the AST.
-    pub id: usize,
     /// The kind of literal.
     pub kind: LiteralKind,
     /// The span containing the literal.
@@ -76,10 +76,10 @@ pub struct Literal {
 /// An argument to a function call.
 #[derive(Debug, PartialEq)]
 pub struct ParenArgument {
-    /// The ID of the AST node.
-    pub id: usize,
     /// The identifier representing the AST node.
     pub ident: usize,
+    /// The type of this argument.
+    pub ty: Type,
 }
 
 /// Enum representing operator associativity.
@@ -108,13 +108,10 @@ pub enum Associativity {
 #[derive(Debug, PartialEq)]
 pub enum UnOpKind {
     /// The suffix increment operator, `++`.
-    SuffixIncr,
+    Incr,
     /// The suffix decrement operator, `--`.
-    SuffixDecr,
+    Decr,
     /// The prefix increment operator, `++`.
-    PrefixIncr,
-    /// The prefix decrement operator, `--`.
-    PrefixDecr,
     /// The index operator, `[n]`
     Index(usize),
     /// The address-of operator, `&`.
@@ -148,8 +145,8 @@ impl FromStr for UnOpKind {
         }
 
         match s {
-            "++" => Err("cannot determine associativity of operator".into()),
-            "--" => Err("cannot determine associativity of operator".into()),
+            "++" =>Ok(Incr),
+            "--" =>Ok(Decr),
             "&" => Ok(Addr),
             "~" => Ok(Not),
             "!" => Ok(LogNot),
@@ -164,7 +161,7 @@ impl UnOpKind {
     pub const fn precedence(&self) -> usize {
         use UnOpKind::*;
         match self {
-            SuffixIncr | SuffixDecr | Index(_) => 1,
+            Incr | Decr | Index(_) => 1,
             _ => 2,
         }
     }
@@ -174,7 +171,7 @@ impl UnOpKind {
     pub const fn associativity(&self) -> Associativity {
         use UnOpKind::*;
         match self {
-            SuffixIncr | SuffixDecr | Index(_) => Associativity::Ltr,
+            Incr | Decr | Index(_) => Associativity::Ltr,
             _ => Associativity::Rtl,
         }
     }
@@ -324,8 +321,6 @@ impl BinOpKind {
 /// A binary expression.
 #[derive(Debug, PartialEq)]
 pub struct BinOp {
-    /// The ID of this node in the AST.
-    pub id: usize,
     /// The left hand side of the binary expression.
     pub lhs: Box<Expr>,
     /// The right hand side of the binary expression.
@@ -349,8 +344,6 @@ pub enum Mutability {
 /// An identifier.
 #[derive(Debug, PartialEq)]
 pub struct Ident {
-    /// The ID of this node in the AST.
-    pub id: usize,
     /// The name of this node.
     pub name: String,
     /// The span corresponding to this node.
@@ -406,15 +399,12 @@ pub struct Loop {
 
 /// An external, imported module.
 #[derive(Debug, PartialEq)]
-pub struct Module {
-    /// The ID of the identifier representing this module.
-    pub id: usize,
-}
+pub struct Module {}
 
 /// A declared variable in the current context.
 struct Var {
-    /// The ID of the identifier representing this variable.
-    pub ident: usize,
+    /// The identifier representing this variable in the current context.
+    pub ident: Ident,
     /// The mutability of this variable.
     pub mutability: Mutability,
 }
