@@ -1,15 +1,17 @@
 use std::error::Error;
 use std::str::FromStr;
 
+use log::debug;
 use styxc_types::Type;
 
 use crate::passes::{validate_symbols, validate_types};
 
 mod passes;
+mod scope;
 
 /// A struct represnting a span of a string. The first paramteter is the start index of the span,
 /// and the second parameter is the end index of the span (inclusive).
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Span(
     /// The start index of the span.
     pub usize,
@@ -145,8 +147,8 @@ impl FromStr for UnOpKind {
         }
 
         match s {
-            "++" =>Ok(Incr),
-            "--" =>Ok(Decr),
+            "++" => Ok(Incr),
+            "--" => Ok(Decr),
             "&" => Ok(Addr),
             "~" => Ok(Not),
             "!" => Ok(LogNot),
@@ -214,7 +216,7 @@ pub enum BinOpKind {
     /// The less-than-or-equal operator, `<=`.
     Le,
     /// The greater-than-or-equal operator, `>=`.
-    Ge
+    Ge,
 }
 
 impl FromStr for BinOpKind {
@@ -278,7 +280,7 @@ pub enum AssignmentKind {
     /// The assignment by division operator, `/=`.
     DivAssign,
     /// The assignment by modulo operator, `%=`.
-    ModAssign
+    ModAssign,
 }
 
 ///  A variable assignment.
@@ -290,7 +292,7 @@ pub struct Assignment {
     /// The declared value.
     pub value: Expr,
     /// The kind of assignment.
-    pub kind: AssignmentKind
+    pub kind: AssignmentKind,
 }
 
 impl BinOpKind {
@@ -306,7 +308,7 @@ impl BinOpKind {
             BinOpKind::Xor => 9,
             BinOpKind::Or => 10,
             BinOpKind::LogAnd => 11,
-            BinOpKind::LogOr => 12
+            BinOpKind::LogOr => 12,
         }
     }
 
@@ -342,7 +344,7 @@ pub enum Mutability {
 }
 
 /// An identifier.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Ident {
     /// The name of this node.
     pub name: String,
@@ -398,21 +400,16 @@ pub struct Loop {
 }
 
 /// An external, imported module.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Module {}
 
 /// A declared variable in the current context.
-struct Var {
+#[derive(Debug, PartialEq, Clone)]
+pub struct Var {
     /// The identifier representing this variable in the current context.
     pub ident: Ident,
     /// The mutability of this variable.
     pub mutability: Mutability,
-}
-
-/// An AST context, in which variables are defined.
-struct Context {
-    /// The list of variables defined in this context.
-    pub vars: Vec<Var>,
 }
 
 /// The root AST instance.
@@ -435,7 +432,8 @@ impl AST {
 }
 
 /// A tree-walker that descends through the AST to ensure it is valid.
-struct ASTValidator {
+pub struct ASTValidator {
+    /// The current context.
     /// A vector of passes the validator will perform.
     passes: Vec<fn(ast: &AST) -> Result<(), Box<dyn Error>>>,
 }
@@ -457,6 +455,7 @@ impl ASTValidator {
 
     /// Walk the AST with the specified parses.
     pub fn walk(self, ast: AST) -> Result<(), Box<dyn Error>> {
+        debug!("Running AST validation...");
         // iterate over passes
         for pass in self.passes {
             match pass(&ast) {

@@ -24,6 +24,8 @@ pub enum Type {
     Float64,
     /// Represents a boolean type.
     Bool,
+    /// Represents a tuple type.
+    Tuple(Vec<Type>),
     /// Represents an array type.
     Array(Box<Type>),
     /// Represents a map type.

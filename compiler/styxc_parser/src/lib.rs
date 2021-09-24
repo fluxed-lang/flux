@@ -7,13 +7,16 @@ extern crate log;
 use std::error::Error;
 
 use lazy_static::lazy_static;
-use log::debug;
+use log::{debug, trace};
 use pest::{
     iterators::{Pair, Pairs},
     prec_climber::{Assoc, Operator, PrecClimber},
     Parser,
 };
-use styxc_ast::{AST, Assignment, AssignmentKind, BinOp, BinOpKind, Block, Declaration, Expr, Ident, Literal, LiteralKind, Loop, Mutability, Span, Stmt, StmtKind};
+use styxc_ast::{
+    Assignment, AssignmentKind, BinOp, BinOpKind, Block, Declaration, Expr, Ident, Literal,
+    LiteralKind, Loop, Mutability, Span, Stmt, StmtKind, AST,
+};
 
 #[derive(Parser)]
 #[grammar = "./grammar.pest"]
@@ -26,14 +29,28 @@ lazy_static! {
     /// of operators cannot easily be inferred, we use the PrecClimber to ensure that the parser grammar will not left recurse.
     /// This has the added benefit of handling operator precedence and associativity properly.
     static ref BIN_EXP_CLIMBER: PrecClimber<Rule> = PrecClimber::new(vec![
-        Operator::new(Rule::bin_op_plus, Assoc::Left)
-            | Operator::new(Rule::bin_op_minus, Assoc::Left),
+        Operator::new(Rule::bin_op_log_or, Assoc::Right),
+        Operator::new(Rule::bin_op_log_and, Assoc::Right),
+        Operator::new(Rule::bin_op_or, Assoc::Right),
+        Operator::new(Rule::bin_op_xor, Assoc::Right),
+        Operator::new(Rule::bin_op_and, Assoc::Right),
+        Operator::new(Rule::bin_op_eq, Assoc::Right) |
+            Operator::new(Rule::bin_op_ne, Assoc::Right),
+        Operator::new(Rule::bin_op_lt, Assoc::Right) |
+            Operator::new(Rule::bin_op_gt, Assoc::Right) |
+            Operator::new(Rule::bin_op_le, Assoc::Right) |
+            Operator::new(Rule::bin_op_ge, Assoc::Right),
+        Operator::new(Rule::bin_op_lshift, Assoc::Right) |
+            Operator::new(Rule::bin_op_rshift, Assoc::Right),
+        Operator::new(Rule::bin_op_plus, Assoc::Right)
+            | Operator::new(Rule::bin_op_minus, Assoc::Right),
         Operator::new(Rule::bin_op_mul, Assoc::Right)
             | Operator::new(Rule::bin_op_div, Assoc::Right)
+            | Operator::new(Rule::bin_op_mod, Assoc::Right)
     ]);
 }
 
-impl StyxParser {
+impl<'a> StyxParser {
     /// Build the AST by parsing the source.
     pub fn build(&mut self, source: &String) -> Result<AST, Box<dyn Error>> {
         debug!("Building AST from source (len {})", source.len());
@@ -76,6 +93,7 @@ impl StyxParser {
                     }
                 },
             };
+            trace!("parsed STATEMENT (id: {})", stmt.id);
             stmts.push(stmt);
         }
         Ok(stmts)
@@ -86,7 +104,7 @@ impl StyxParser {
     /// The way this method achieves this is incredibly dumb and needs to be fixed at some point - there is far too much
     /// moving and suspicious data wrangling going on.
     fn parse_declaration(
-        &mut self,
+        &'a mut self,
         pair: Pair<Rule>,
         mutability: Mutability,
     ) -> Result<Vec<Declaration>, Box<dyn Error>> {
@@ -122,8 +140,9 @@ impl StyxParser {
                     &exprs[index]
                 };
                 index += 1;
+                let ident = self.parse_identifier(ident)?;
                 Ok(Declaration {
-                    ident: self.parse_identifier(ident)?,
+                    ident,
                     mutability,
                     value: self.parse_expression(value.clone())?,
                 })
@@ -161,8 +180,8 @@ impl StyxParser {
                 "&=" => AssignmentKind::AndAssign,
                 "|=" => AssignmentKind::OrAssign,
                 "^=" => AssignmentKind::XorAssign,
-                _ => unreachable!()
-            }
+                _ => unreachable!(),
+            },
         })
     }
 
@@ -175,7 +194,7 @@ impl StyxParser {
     }
 
     /// Parse an expression.
-    fn parse_expression(&mut self, pair: Pair<Rule>) -> Result<Expr, Box<dyn Error>> {
+    fn parse_expression(&mut self, pair: Pair<Rule>) -> Result<Expr, Box<(dyn Error + 'static)>> {
         let inner = pair.into_inner().next().unwrap();
         Ok(match inner.as_rule() {
             Rule::ident => Expr::Ident(self.parse_identifier(inner)?),
@@ -203,7 +222,7 @@ impl StyxParser {
     }
 
     /// Parse a binary expression.
-    fn parse_bin_exp(&mut self, pair: Pair<Rule>) -> Result<Expr, Box<dyn Error>> {
+    fn parse_bin_exp(&'a mut self, pair: Pair<Rule>) -> Result<Expr, Box<dyn Error>> {
         let inner = pair.into_inner();
         let primary = |pair: Pair<Rule>| match pair.as_rule() {
             Rule::ident => Expr::Ident(self.parse_identifier(pair).unwrap()),
@@ -285,7 +304,7 @@ mod tests {
                         }])
                     },
                     Stmt {
-                        id: 3,
+                        id: 2,
                         kind: StmtKind::Assignment(Assignment {
                             ident: Ident {
                                 name: "x".into(),
