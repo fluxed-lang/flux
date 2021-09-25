@@ -13,12 +13,14 @@ struct SymbolValidator {
 impl SymbolValidator {
     /// Test if a variable using the specified identifier exists.
     pub fn exists(&self, ident: &Ident) -> bool {
-        for var in &self.vars {
-            trace!("check ident eq - lhs: {:?} rhs: {:?}", ident, var.ident);
+		// iterate from end to start to correctly identify vars
+		for i in 0..self.vars.len() {
+			let var = &self.vars[self.vars.len() - i - 1];
+			trace!("check ident eq - lhs: {:?} rhs: {:?}", ident, var.ident);
             if var.ident.name == *ident.name {
                 return true;
             }
-        }
+		}
         false
     }
 
@@ -114,12 +116,16 @@ impl SymbolValidator {
 /// AST pass that ensures symbols are valid and declared properly.
 pub fn validate_symbols(ast: &AST) -> Result<(), Box<dyn Error>> {
     debug!("Validating symbol usage...");
-    SymbolValidator::default().check_stmts(&ast.stmts)
+    SymbolValidator::default().check_stmts(&ast.stmts)?;
+	trace!("Symbols are OK");
+	Ok(())
 }
 
 /// AST pass that ensures types are correct and equivalent.
 pub fn validate_types(ast: &AST) -> Result<(), Box<dyn Error>> {
     debug!("Validating types...");
+	trace!("Compiler pass is not yet implemented!");
+	debug!("Types are OK");
     Ok(())
     // todo!()
 }
