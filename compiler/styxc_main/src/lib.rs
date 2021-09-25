@@ -1,6 +1,10 @@
 use std::{error::Error, fs::File, io::Read, path::Path, time::Instant};
 
 use log::debug;
+<<<<<<< HEAD
+=======
+use styxc_ast::ASTValidator;
+>>>>>>> master
 
 /// Enum of possible compiler modes.
 pub enum Mode<'i> {
@@ -14,10 +18,12 @@ pub enum Mode<'i> {
 pub fn compile_to_mem(input: String) -> Result<fn() -> (), Box<dyn Error>> {
     // 1. Parse input source
     let mut parser = styxc_parser::StyxParser::default();
-    let ast = parser.build(&input)?;
+    let ast = parser.build(&input)?;	
+    // 2. Run AST validation on the AST
+    ASTValidator::default().walk(ast)?;
+	// 3. Run IR generation and compile the AST
     let ir = styxc_ir::IrTranslator::new()?;
     let addr = ir.translate(ast)?;
-
     Ok(|| ())
 }
 

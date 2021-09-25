@@ -1,10 +1,12 @@
 extern crate clap;
 extern crate log;
 
-use clap::{AppSettings, Clap};
-use log::{debug, error, LevelFilter};
 use std::env;
 use std::path::Path;
+
+use clap::{AppSettings, Clap};
+use log::{debug, error, LevelFilter};
+
 use styxc_main::Mode;
 
 /// Execute styx files using the Styx JIT compiler.
@@ -17,16 +19,17 @@ struct Opts {
     #[clap(short, long)]
     /// Enable verbose logging output.
     verbose: bool,
+    // Enable trace logging output.
+    #[clap(short, long)]
+    trace: bool,
     /// Print the version of styxc.
     #[clap(long)]
     version: bool,
-
     /// The output directory for the generated binary files. If this is set,
     /// the compiler is set to AOT mode. Defaults to the name of the target file
     /// without an extension.
     #[clap(short, long)]
     output: Option<String>,
-
     /// The compiler mode to use, defaults to JIT.
     #[clap(short, long, default_value = "jit")]
     mode: String,
@@ -35,21 +38,21 @@ struct Opts {
 fn main() {
     // initialize environment logger
     let opts = Opts::parse();
-    env_logger::builder()
-        // set filter level depending on verbosity
-        .filter_level(match opts.verbose {
-            true => LevelFilter::Debug,
-            false => LevelFilter::Info,
-        })
-        .init();
-
+    // print version and return if version flag was specified
+    println!("styxc version {}", env!("CARGO_PKG_VERSION"));
     if opts.version {
-        println!("styxc version {}", env::var("CARGO_PKG_VERSION").unwrap());
         return;
     }
-
-    debug!("styxc version {}", env::var("CARGO_PKG_VERSION").unwrap());
-
+    // initialize logger
+    let mut builder = env_logger::builder();
+    if opts.verbose {
+        builder.filter_level(LevelFilter::Debug);
+    }
+    if opts.trace {
+        builder.filter_level(LevelFilter::Trace);
+    }
+    builder.init();
+    // lookup input path
     let input = Path::new(&opts.input);
     // check if input doesn't exist
     debug!("Cheking if input path exists...");
@@ -57,7 +60,7 @@ fn main() {
         error!("Input file does not exist: {:?}", input);
         return;
     }
-
+    // fetch compiler mode
     match opts.mode.to_ascii_lowercase().as_str() {
         "jit" => {
             debug!("Compiling using JIT mode");
