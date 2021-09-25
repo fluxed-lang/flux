@@ -1,13 +1,17 @@
 use std::error::Error;
 use std::str::FromStr;
 
+use log::debug;
+use styxc_types::Type;
+
 use crate::passes::{validate_symbols, validate_types};
 
 mod passes;
+mod scope;
 
 /// A struct represnting a span of a string. The first paramteter is the start index of the span,
 /// and the second parameter is the end index of the span (inclusive).
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Span(
     /// The start index of the span.
     pub usize,
@@ -65,8 +69,6 @@ pub enum LiteralKind {
 /// A literal value.
 #[derive(Debug, PartialEq)]
 pub struct Literal {
-    /// The ID of this node in the AST.
-    pub id: usize,
     /// The kind of literal.
     pub kind: LiteralKind,
     /// The span containing the literal.
@@ -76,10 +78,10 @@ pub struct Literal {
 /// An argument to a function call.
 #[derive(Debug, PartialEq)]
 pub struct ParenArgument {
-    /// The ID of the AST node.
-    pub id: usize,
     /// The identifier representing the AST node.
     pub ident: usize,
+    /// The type of this argument.
+    pub ty: Type,
 }
 
 /// Enum representing operator associativity.
@@ -108,13 +110,10 @@ pub enum Associativity {
 #[derive(Debug, PartialEq)]
 pub enum UnOpKind {
     /// The suffix increment operator, `++`.
-    SuffixIncr,
+    Incr,
     /// The suffix decrement operator, `--`.
-    SuffixDecr,
+    Decr,
     /// The prefix increment operator, `++`.
-    PrefixIncr,
-    /// The prefix decrement operator, `--`.
-    PrefixDecr,
     /// The index operator, `[n]`
     Index(usize),
     /// The address-of operator, `&`.
@@ -148,8 +147,8 @@ impl FromStr for UnOpKind {
         }
 
         match s {
-            "++" => Err("cannot determine associativity of operator".into()),
-            "--" => Err("cannot determine associativity of operator".into()),
+            "++" => Ok(Incr),
+            "--" => Ok(Decr),
             "&" => Ok(Addr),
             "~" => Ok(Not),
             "!" => Ok(LogNot),
@@ -164,7 +163,7 @@ impl UnOpKind {
     pub const fn precedence(&self) -> usize {
         use UnOpKind::*;
         match self {
-            SuffixIncr | SuffixDecr | Index(_) => 1,
+            Incr | Decr | Index(_) => 1,
             _ => 2,
         }
     }
@@ -174,7 +173,7 @@ impl UnOpKind {
     pub const fn associativity(&self) -> Associativity {
         use UnOpKind::*;
         match self {
-            SuffixIncr | SuffixDecr | Index(_) => Associativity::Ltr,
+            Incr | Decr | Index(_) => Associativity::Ltr,
             _ => Associativity::Rtl,
         }
     }
@@ -217,7 +216,7 @@ pub enum BinOpKind {
     /// The less-than-or-equal operator, `<=`.
     Le,
     /// The greater-than-or-equal operator, `>=`.
-    Ge
+    Ge,
 }
 
 impl FromStr for BinOpKind {
@@ -281,7 +280,7 @@ pub enum AssignmentKind {
     /// The assignment by division operator, `/=`.
     DivAssign,
     /// The assignment by modulo operator, `%=`.
-    ModAssign
+    ModAssign,
 }
 
 ///  A variable assignment.
@@ -293,7 +292,7 @@ pub struct Assignment {
     /// The declared value.
     pub value: Expr,
     /// The kind of assignment.
-    pub kind: AssignmentKind
+    pub kind: AssignmentKind,
 }
 
 impl BinOpKind {
@@ -309,7 +308,7 @@ impl BinOpKind {
             BinOpKind::Xor => 9,
             BinOpKind::Or => 10,
             BinOpKind::LogAnd => 11,
-            BinOpKind::LogOr => 12
+            BinOpKind::LogOr => 12,
         }
     }
 
@@ -324,8 +323,6 @@ impl BinOpKind {
 /// A binary expression.
 #[derive(Debug, PartialEq)]
 pub struct BinOp {
-    /// The ID of this node in the AST.
-    pub id: usize,
     /// The left hand side of the binary expression.
     pub lhs: Box<Expr>,
     /// The right hand side of the binary expression.
@@ -347,10 +344,8 @@ pub enum Mutability {
 }
 
 /// An identifier.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Ident {
-    /// The ID of this node in the AST.
-    pub id: usize,
     /// The name of this node.
     pub name: String,
     /// The span corresponding to this node.
@@ -405,24 +400,16 @@ pub struct Loop {
 }
 
 /// An external, imported module.
-#[derive(Debug, PartialEq)]
-pub struct Module {
-    /// The ID of the identifier representing this module.
-    pub id: usize,
-}
+#[derive(Debug, PartialEq, Clone)]
+pub struct Module {}
 
 /// A declared variable in the current context.
-struct Var {
-    /// The ID of the identifier representing this variable.
-    pub ident: usize,
+#[derive(Debug, PartialEq, Clone)]
+pub struct Var {
+    /// The identifier representing this variable in the current context.
+    pub ident: Ident,
     /// The mutability of this variable.
     pub mutability: Mutability,
-}
-
-/// An AST context, in which variables are defined.
-struct Context {
-    /// The list of variables defined in this context.
-    pub vars: Vec<Var>,
 }
 
 /// The root AST instance.
@@ -445,7 +432,8 @@ impl AST {
 }
 
 /// A tree-walker that descends through the AST to ensure it is valid.
-struct ASTValidator {
+pub struct ASTValidator {
+    /// The current context.
     /// A vector of passes the validator will perform.
     passes: Vec<fn(ast: &AST) -> Result<(), Box<dyn Error>>>,
 }
@@ -467,6 +455,7 @@ impl ASTValidator {
 
     /// Walk the AST with the specified parses.
     pub fn walk(self, ast: AST) -> Result<(), Box<dyn Error>> {
+        debug!("Running AST validation...");
         // iterate over passes
         for pass in self.passes {
             match pass(&ast) {

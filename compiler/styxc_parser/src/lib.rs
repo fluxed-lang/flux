@@ -7,13 +7,16 @@ extern crate log;
 use std::error::Error;
 
 use lazy_static::lazy_static;
-use log::debug;
+use log::{debug, trace};
 use pest::{
     iterators::{Pair, Pairs},
     prec_climber::{Assoc, Operator, PrecClimber},
     Parser,
 };
-use styxc_ast::{AST, Assignment, AssignmentKind, BinOp, BinOpKind, Block, Declaration, Expr, Ident, Literal, LiteralKind, Loop, Mutability, Span, Stmt, StmtKind};
+use styxc_ast::{
+    Assignment, AssignmentKind, BinOp, BinOpKind, Block, Declaration, Expr, Ident, Literal,
+    LiteralKind, Loop, Mutability, Span, Stmt, StmtKind, AST,
+};
 
 #[derive(Parser)]
 #[grammar = "./grammar.pest"]
@@ -26,14 +29,28 @@ lazy_static! {
     /// of operators cannot easily be inferred, we use the PrecClimber to ensure that the parser grammar will not left recurse.
     /// This has the added benefit of handling operator precedence and associativity properly.
     static ref BIN_EXP_CLIMBER: PrecClimber<Rule> = PrecClimber::new(vec![
-        Operator::new(Rule::bin_op_plus, Assoc::Left)
-            | Operator::new(Rule::bin_op_minus, Assoc::Left),
+        Operator::new(Rule::bin_op_log_or, Assoc::Right),
+        Operator::new(Rule::bin_op_log_and, Assoc::Right),
+        Operator::new(Rule::bin_op_or, Assoc::Right),
+        Operator::new(Rule::bin_op_xor, Assoc::Right),
+        Operator::new(Rule::bin_op_and, Assoc::Right),
+        Operator::new(Rule::bin_op_eq, Assoc::Right) |
+            Operator::new(Rule::bin_op_ne, Assoc::Right),
+        Operator::new(Rule::bin_op_lt, Assoc::Right) |
+            Operator::new(Rule::bin_op_gt, Assoc::Right) |
+            Operator::new(Rule::bin_op_le, Assoc::Right) |
+            Operator::new(Rule::bin_op_ge, Assoc::Right),
+        Operator::new(Rule::bin_op_lshift, Assoc::Right) |
+            Operator::new(Rule::bin_op_rshift, Assoc::Right),
+        Operator::new(Rule::bin_op_plus, Assoc::Right)
+            | Operator::new(Rule::bin_op_minus, Assoc::Right),
         Operator::new(Rule::bin_op_mul, Assoc::Right)
             | Operator::new(Rule::bin_op_div, Assoc::Right)
+            | Operator::new(Rule::bin_op_mod, Assoc::Right)
     ]);
 }
 
-impl StyxParser {
+impl<'a> StyxParser {
     /// Build the AST by parsing the source.
     pub fn build(&mut self, source: &String) -> Result<AST, Box<dyn Error>> {
         debug!("Building AST from source (len {})", source.len());
@@ -76,6 +93,7 @@ impl StyxParser {
                     }
                 },
             };
+            trace!("parsed STATEMENT (id: {})", stmt.id);
             stmts.push(stmt);
         }
         Ok(stmts)
@@ -86,7 +104,7 @@ impl StyxParser {
     /// The way this method achieves this is incredibly dumb and needs to be fixed at some point - there is far too much
     /// moving and suspicious data wrangling going on.
     fn parse_declaration(
-        &mut self,
+        &'a mut self,
         pair: Pair<Rule>,
         mutability: Mutability,
     ) -> Result<Vec<Declaration>, Box<dyn Error>> {
@@ -122,8 +140,9 @@ impl StyxParser {
                     &exprs[index]
                 };
                 index += 1;
+                let ident = self.parse_identifier(ident)?;
                 Ok(Declaration {
-                    ident: self.parse_identifier(ident)?,
+                    ident,
                     mutability,
                     value: self.parse_expression(value.clone())?,
                 })
@@ -161,22 +180,21 @@ impl StyxParser {
                 "&=" => AssignmentKind::AndAssign,
                 "|=" => AssignmentKind::OrAssign,
                 "^=" => AssignmentKind::XorAssign,
-                _ => unreachable!()
-            }
+                _ => unreachable!(),
+            },
         })
     }
 
     /// Parse an identifier.
     fn parse_identifier(&mut self, pair: Pair<Rule>) -> Result<Ident, Box<dyn Error>> {
         Ok(Ident {
-            id: 0,
             name: pair.as_str().into(),
             span: Span(pair.as_span().start(), pair.as_span().end()),
         })
     }
 
     /// Parse an expression.
-    fn parse_expression(&mut self, pair: Pair<Rule>) -> Result<Expr, Box<dyn Error>> {
+    fn parse_expression(&mut self, pair: Pair<Rule>) -> Result<Expr, Box<(dyn Error + 'static)>> {
         let inner = pair.into_inner().next().unwrap();
         Ok(match inner.as_rule() {
             Rule::ident => Expr::Ident(self.parse_identifier(inner)?),
@@ -198,14 +216,13 @@ impl StyxParser {
     /// Parse an integer literal.
     fn parse_int_literal(&mut self, pair: Pair<Rule>) -> Result<Literal, Box<dyn Error>> {
         Ok(Literal {
-            id: self.next_id(),
             kind: LiteralKind::Int(pair.as_str().parse()?),
             span: Span(pair.as_span().start(), pair.as_span().end()),
         })
     }
 
     /// Parse a binary expression.
-    fn parse_bin_exp(&mut self, pair: Pair<Rule>) -> Result<Expr, Box<dyn Error>> {
+    fn parse_bin_exp(&'a mut self, pair: Pair<Rule>) -> Result<Expr, Box<dyn Error>> {
         let inner = pair.into_inner();
         let primary = |pair: Pair<Rule>| match pair.as_rule() {
             Rule::ident => Expr::Ident(self.parse_identifier(pair).unwrap()),
@@ -215,7 +232,6 @@ impl StyxParser {
         };
         let infix = |lhs: Expr, op: Pair<Rule>, rhs: Expr| {
             Expr::BinOp(BinOp {
-                id: 0,
                 kind: match op.as_rule() {
                     Rule::bin_op_plus => BinOpKind::Add,
                     Rule::bin_op_minus => BinOpKind::Sub,
@@ -277,28 +293,24 @@ mod tests {
                         id: 1,
                         kind: StmtKind::Declaration(vec![Declaration {
                             ident: Ident {
-                                id: 0,
                                 name: "x".into(),
                                 span: Span(4, 5),
                             },
                             mutability: Mutability::Immutable,
                             value: Expr::Literal(Literal {
-                                id: 2,
                                 kind: LiteralKind::Int(1),
                                 span: Span(8, 9),
                             })
                         }])
                     },
                     Stmt {
-                        id: 3,
+                        id: 2,
                         kind: StmtKind::Assignment(Assignment {
                             ident: Ident {
-                                id: 0,
                                 name: "x".into(),
                                 span: Span(11, 12),
                             },
                             value: Expr::Ident(Ident {
-                                id: 0,
                                 name: "z".into(),
                                 span: Span(15, 16),
                             }),
@@ -322,22 +334,18 @@ mod tests {
                     id: 1,
                     kind: StmtKind::Declaration(vec![Declaration {
                         ident: Ident {
-                            id: 0,
                             name: "x".into(),
                             span: Span(4, 5),
                         },
                         mutability: Mutability::Immutable,
                         value: Expr::BinOp(BinOp {
-                            id: 0,
                             kind: BinOpKind::Add,
                             lhs: Expr::Literal(Literal {
-                                id: 2,
                                 kind: LiteralKind::Int(1),
                                 span: Span(8, 9),
                             })
                             .into(),
                             rhs: Expr::Literal(Literal {
-                                id: 3,
                                 kind: LiteralKind::Int(2),
                                 span: Span(12, 13),
                             })
@@ -361,40 +369,32 @@ mod tests {
                     id: 1,
                     kind: StmtKind::Declaration(vec![Declaration {
                         ident: Ident {
-                            id: 0,
                             name: "x".into(),
                             span: Span(4, 5),
                         },
                         mutability: Mutability::Immutable,
                         value: Expr::BinOp(BinOp {
-                            id: 0,
                             kind: BinOpKind::Add,
                             lhs: Expr::Literal(Literal {
-                                id: 2,
                                 kind: LiteralKind::Int(1),
                                 span: Span(8, 9),
                             })
                             .into(),
                             rhs: Expr::BinOp(BinOp {
-                                id: 0,
                                 kind: BinOpKind::Mul,
                                 lhs: Expr::Literal(Literal {
-                                    id: 3,
                                     kind: LiteralKind::Int(2),
                                     span: Span(12, 13),
                                 })
                                 .into(),
                                 rhs: Expr::BinOp(BinOp {
-                                    id: 0,
                                     kind: BinOpKind::Div,
                                     lhs: Expr::Literal(Literal {
-                                        id: 4,
                                         kind: LiteralKind::Int(3),
                                         span: Span(16, 17),
                                     })
                                     .into(),
                                     rhs: Expr::Literal(Literal {
-                                        id: 5,
                                         kind: LiteralKind::Int(4),
                                         span: Span(20, 21),
                                     })
