@@ -2,7 +2,7 @@ use std::error::Error;
 
 use log::{debug, trace};
 
-use crate::{Declaration, Expr, Ident, Stmt, StmtKind, Var, AST};
+use crate::{AST, Declaration, Expr, Ident, Mutability, Stmt, StmtKind, Var};
 
 /// A structure holding information about available variables.
 #[derive(Default)]
@@ -11,17 +11,21 @@ struct SymbolValidator {
 }
 
 impl SymbolValidator {
-    /// Test if a variable using the specified identifier exists.
-    pub fn exists(&self, ident: &Ident) -> bool {
-		// iterate from end to start to correctly identify vars
+	/// Find a variable identified with the given identifier.
+	pub fn find(&self, ident: &Ident) -> Option<&Var> {
 		for i in 0..self.vars.len() {
 			let var = &self.vars[self.vars.len() - i - 1];
 			trace!("check ident eq - lhs: {:?} rhs: {:?}", ident, var.ident);
-            if var.ident.name == *ident.name {
-                return true;
-            }
+			if var.ident.name == *ident.name {
+				return Some(var);
+			}
 		}
-        false
+		None
+	}
+
+    /// Test if a variable using the specified identifier exists.
+    pub fn exists(&self, ident: &Ident) -> bool {
+		self.find(ident).is_some()
     }
 
     /// Declare a new variable using the specified declaration node and push it onto the stack.
@@ -91,6 +95,14 @@ impl SymbolValidator {
                     )
                     .into());
                 }
+
+				if self.find(&assign.ident).unwrap().mutability != Mutability::Mutable {
+					return Err(format!(
+						"variable {} is not mutable",
+						assign.ident.name
+					).into());
+				}
+
                 self.check_expr(&assign.value)?;
                 Ok(())
             }

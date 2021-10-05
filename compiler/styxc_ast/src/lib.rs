@@ -66,9 +66,24 @@ pub enum LiteralKind {
     Bool(bool),
 }
 
+
+impl From<LiteralKind> for Type {
+    fn from(kind: LiteralKind) -> Self {
+        match kind {
+			LiteralKind::Int(_) => Type::Int,
+			LiteralKind::Float(_) => Type::Float,
+			LiteralKind::String(_) => Type::Array(Type::Char.into()),
+			LiteralKind::Char(_) => Type::Char,
+			LiteralKind::Bool(_) => Type::Bool
+		}
+    }
+}
+
 /// A literal value.
 #[derive(Debug, PartialEq)]
 pub struct Literal {
+	/// The type of this literal.
+	pub ty: Type,
     /// The kind of literal.
     pub kind: LiteralKind,
     /// The span containing the literal.
@@ -249,6 +264,8 @@ impl FromStr for BinOpKind {
 /// A declaration of a variable.
 #[derive(Debug, PartialEq)]
 pub struct Declaration {
+	/// The explicit type of this declaration, if it exists.
+	pub ty: Option<Type>,
     /// The identifier being declared.
     pub ident: Ident,
     /// The mutability of the declared identifier.

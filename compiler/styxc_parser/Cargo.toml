@@ -11,3 +11,4 @@ pest = { version = "2.1" }
 pest_derive = "2.1"
 
 styxc_ast = { path =  "../styxc_ast" }
+styxc_types = { path = "../styxc_types" }

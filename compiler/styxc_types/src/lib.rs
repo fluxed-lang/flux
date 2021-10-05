@@ -3,27 +3,13 @@ use std::error::Error;
 #[derive(Debug, Clone)]
 pub enum Type {
     /// Represents a 64-bit integer type.
-    Int64,
-    /// Represents a 32-bit integer type.
-    Int32,
-    /// Represents a 16-bit integer type.
-    Int16,
-    /// Represents an 8-bit integer type.
-    Int8,
-    /// Represents an unsigned 64-bit integer type.
-    UInt64,
-    /// Represents an unsigned 32-bit integer type.
-    UInt32,
-    /// Represents an unsigned 16-bit integer type.
-    UInt16,
-    /// Represents an unsigned 8-bit integer type.
-    UInt8,
-    /// Represents a 128-bit floating point type.
-    Float128,
+    Int,
     /// Represents a 64-bit floating point type.
-    Float64,
+    Float,
     /// Represents a boolean type.
     Bool,
+	/// Represents a character type.
+	Char,
     /// Represents a tuple type.
     Tuple(Vec<Type>),
     /// Represents an array type.
@@ -40,6 +26,10 @@ pub enum Type {
     Intersection(Vec<Type>),
     /// Represents a type already referred to.
     Circular(Box<Type>),
+	/// Represents a unit type.
+	Unit,
+	/// Represents a type that has yet to be inferred.
+	Unresolved,
     /// Represents a type that can never occur.
     Never,
 }
@@ -107,17 +97,7 @@ pub fn equate_types(a: &Type, b: &Type) -> bool {
 pub fn is_primitive(t: &Type) -> bool {
     use Type::*;
     match t {
-        Int64 => true,
-        Int32 => true,
-        Int16 => true,
-        Int8 => true,
-        UInt64 => true,
-        UInt32 => true,
-        UInt16 => true,
-        UInt8 => true,
-        Float128 => true,
-        Float64 => true,
-        Bool => true,
+		Int | Float | Bool => true,
         _ => false,
     }
 }
@@ -126,16 +106,8 @@ pub fn is_primitive(t: &Type) -> bool {
 pub fn equate_primitives(a: &Type, b: &Type) -> bool {
     use Type::*;
     match (a, b) {
-        (Int64, Int64) => true,
-        (Int32, Int32) => true,
-        (Int16, Int16) => true,
-        (Int8, Int8) => true,
-        (UInt64, UInt64) => true,
-        (UInt32, UInt32) => true,
-        (UInt16, UInt16) => true,
-        (UInt8, UInt8) => true,
-        (Float128, Float128) => true,
-        (Float64, Float64) => true,
+        (Int, Int) => true,
+        (Float, Float) => true,
         (Bool, Bool) => true,
         _ => false,
     }
@@ -174,28 +146,14 @@ mod tests {
 
     #[test]
     fn type_equality() {
-        assert!(equate_types(&Type::Int64, &Type::Int64));
+        assert!(equate_types(&Type::Int, &Type::Int));
     }
 
     #[test]
     fn union_inclusion() {
         assert!(is_subtype(
-            &Type::Int64,
-            &Type::Union(vec![Type::Int64, Type::Int32])
+            &Type::Int,
+            &Type::Union(vec![Type::Int, Type::Float])
         ));
-    }
-
-    #[test]
-    fn test_intersection() {
-        let a = Type::Union(vec![Type::Int64, Type::Int32]);
-        let b = Type::Union(vec![Type::Int32, Type::Int16]);
-        assert!(equate_types(&Type::Int32, &Type::Intersection(vec![a, b])))
-    }
-
-    #[test]
-    fn test_validate_intersection() {
-        let a = Type::Union(vec![Type::Int64, Type::Int32]);
-        let b = Type::Union(vec![Type::Int32, Type::Int16]);
-        assert!(validate_intersection(&Type::Intersection(vec![a, b])).is_ok())
     }
 }

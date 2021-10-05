@@ -17,6 +17,7 @@ use styxc_ast::{
     Assignment, AssignmentKind, BinOp, BinOpKind, Block, Declaration, Expr, Ident, Literal,
     LiteralKind, Loop, Mutability, Span, Stmt, StmtKind, AST,
 };
+use styxc_types::Type;
 
 #[derive(Parser)]
 #[grammar = "./grammar.pest"]
@@ -142,6 +143,7 @@ impl<'a> StyxParser {
                 index += 1;
                 let ident = self.parse_identifier(ident)?;
                 Ok(Declaration {
+					ty: None,
                     ident,
                     mutability,
                     value: self.parse_expression(value.clone())?,
@@ -216,6 +218,7 @@ impl<'a> StyxParser {
     /// Parse an integer literal.
     fn parse_int_literal(&mut self, pair: Pair<Rule>) -> Result<Literal, Box<dyn Error>> {
         Ok(Literal {
+			ty: Type::Int,
             kind: LiteralKind::Int(pair.as_str().parse()?),
             span: Span(pair.as_span().start(), pair.as_span().end()),
         })
