@@ -2,7 +2,7 @@ use std::error::Error;
 
 use log::{debug, trace};
 
-use crate::{AST, Declaration, Expr, Ident, Mutability, Stmt, StmtKind, Var};
+use crate::{Declaration, Expr, Ident, Mutability, Stmt, StmtKind, Var, AST};
 
 /// A structure holding information about available variables.
 #[derive(Default)]
@@ -11,21 +11,21 @@ struct SymbolValidator {
 }
 
 impl SymbolValidator {
-	/// Find a variable identified with the given identifier.
-	pub fn find(&self, ident: &Ident) -> Option<&Var> {
-		for i in 0..self.vars.len() {
-			let var = &self.vars[self.vars.len() - i - 1];
-			trace!("check ident eq - lhs: {:?} rhs: {:?}", ident, var.ident);
-			if var.ident.name == *ident.name {
-				return Some(var);
-			}
-		}
-		None
-	}
+    /// Find a variable identified with the given identifier.
+    pub fn find(&self, ident: &Ident) -> Option<&Var> {
+        for i in 0..self.vars.len() {
+            let var = &self.vars[self.vars.len() - i - 1];
+            trace!("check ident eq - lhs: {:?} rhs: {:?}", ident, var.ident);
+            if var.ident.name == *ident.name {
+                return Some(var);
+            }
+        }
+        None
+    }
 
     /// Test if a variable using the specified identifier exists.
     pub fn exists(&self, ident: &Ident) -> bool {
-		self.find(ident).is_some()
+        self.find(ident).is_some()
     }
 
     /// Declare a new variable using the specified declaration node and push it onto the stack.
@@ -96,12 +96,9 @@ impl SymbolValidator {
                     .into());
                 }
 
-				if self.find(&assign.ident).unwrap().mutability != Mutability::Mutable {
-					return Err(format!(
-						"variable {} is not mutable",
-						assign.ident.name
-					).into());
-				}
+                if self.find(&assign.ident).unwrap().mutability != Mutability::Mutable {
+                    return Err(format!("variable {} is not mutable", assign.ident.name).into());
+                }
 
                 self.check_expr(&assign.value)?;
                 Ok(())
@@ -129,15 +126,15 @@ impl SymbolValidator {
 pub fn validate_symbols(ast: &AST) -> Result<(), Box<dyn Error>> {
     debug!("Validating symbol usage...");
     SymbolValidator::default().check_stmts(&ast.stmts)?;
-	trace!("Symbols are OK");
-	Ok(())
+    trace!("Symbols are OK");
+    Ok(())
 }
 
 /// AST pass that ensures types are correct and equivalent.
 pub fn validate_types(ast: &AST) -> Result<(), Box<dyn Error>> {
     debug!("Validating types...");
-	trace!("Compiler pass is not yet implemented!");
-	debug!("Types are OK");
+    trace!("Compiler pass is not yet implemented!");
+    debug!("Types are OK");
     Ok(())
     // todo!()
 }

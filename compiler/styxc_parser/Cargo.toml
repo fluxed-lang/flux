@@ -7,8 +7,9 @@ edition = "2018"
 [dependencies]
 lazy_static = "1"
 log = "0.4"
-pest = { version = "2.1" } 
-pest_derive = "2.1"
+pest = { version = "2" } 
+pest_derive = "2"
+thiserror = "1"
 
 styxc_ast = { path =  "../styxc_ast" }
 styxc_types = { path = "../styxc_types" }

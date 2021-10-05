@@ -1,4 +1,4 @@
-use std::{error::Error, fs::File, io::Read, path::Path};
+use std::{error::Error, fs::File, io::Read, mem, path::Path, time::Instant};
 
 use log::debug;
 use styxc_ast::ASTValidator;
@@ -17,14 +17,24 @@ pub fn compile_to_mem(input: String) -> Result<fn() -> (), Box<dyn Error>> {
     let mut parser = styxc_parser::StyxParser::default();
     let ast = parser.build(&input)?;
     // 2. Run AST validation on the AST
-    ASTValidator::default().walk(ast)?;
-    Ok(|| ())
+    ASTValidator::default().walk(&ast)?;
+    // 3. Generate IR
+    let pointer = styxc_ir::IrTranslator::default().build(ast)?;
+    let code_fn;
+    unsafe {
+        code_fn = mem::transmute::<_, fn() -> ()>(pointer);
+    }
+    Ok(code_fn)
 }
 
 /// Compile the target input string into memory and execute it immediately.
 fn compile_and_execute(input: String) -> Result<(), Box<dyn Error>> {
+	let now = Instant::now();
     match compile_to_mem(input) {
-        Ok(mem) => Ok(mem()),
+        Ok(mem) => { 
+			debug!("Compiled in {}ms", now.elapsed().as_millis());
+			Ok(mem()) 
+		},
         Err(e) => Err(e),
     }
 }

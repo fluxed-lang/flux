@@ -128,7 +128,7 @@ impl<'a> StyxParser {
         // panic if mismatching number of exprs and idents
         let single_expr = exprs.len() == 1;
         if !single_expr && exprs.len() != idents.len() {
-            panic!();
+            return Err("mismatching declaration statement".into());
         }
         // iterate over idents and set
         let mut index = 0;
@@ -142,11 +142,26 @@ impl<'a> StyxParser {
                 };
                 index += 1;
                 let ident = self.parse_identifier(ident)?;
+                let value = self.parse_expression(value.clone())?;
+                // infer type of declared variable
+                let ty;
+                if let Expr::Literal(literal) = &value {
+                    ty = match literal.kind {
+                        LiteralKind::Int(_) => Some(Type::Int),
+                        LiteralKind::Float(_) => Some(Type::Float),
+                        LiteralKind::Bool(_) => Some(Type::Bool),
+                        LiteralKind::Char(_) => Some(Type::Char),
+                        LiteralKind::String(_) => todo!("support for strings is not implemented"),
+                    }
+                } else {
+                    ty = None;
+                }
+
                 Ok(Declaration {
-					ty: None,
+                    ty,
                     ident,
                     mutability,
-                    value: self.parse_expression(value.clone())?,
+                    value,
                 })
             })
             .collect();
@@ -218,7 +233,7 @@ impl<'a> StyxParser {
     /// Parse an integer literal.
     fn parse_int_literal(&mut self, pair: Pair<Rule>) -> Result<Literal, Box<dyn Error>> {
         Ok(Literal {
-			ty: Type::Int,
+            ty: Type::Int,
             kind: LiteralKind::Int(pair.as_str().parse()?),
             span: Span(pair.as_span().start(), pair.as_span().end()),
         })
@@ -299,8 +314,10 @@ mod tests {
                                 name: "x".into(),
                                 span: Span(4, 5),
                             },
+                            ty: Some(Type::Int),
                             mutability: Mutability::Immutable,
                             value: Expr::Literal(Literal {
+                                ty: Type::Int,
                                 kind: LiteralKind::Int(1),
                                 span: Span(8, 9),
                             })
@@ -336,6 +353,7 @@ mod tests {
                 stmts: vec![Stmt {
                     id: 1,
                     kind: StmtKind::Declaration(vec![Declaration {
+                        ty: Some(Type::Int),
                         ident: Ident {
                             name: "x".into(),
                             span: Span(4, 5),
@@ -344,11 +362,13 @@ mod tests {
                         value: Expr::BinOp(BinOp {
                             kind: BinOpKind::Add,
                             lhs: Expr::Literal(Literal {
+                                ty: Type::Int,
                                 kind: LiteralKind::Int(1),
                                 span: Span(8, 9),
                             })
                             .into(),
                             rhs: Expr::Literal(Literal {
+                                ty: Type::Int,
                                 kind: LiteralKind::Int(2),
                                 span: Span(12, 13),
                             })
@@ -371,6 +391,7 @@ mod tests {
                 stmts: vec![Stmt {
                     id: 1,
                     kind: StmtKind::Declaration(vec![Declaration {
+                        ty: Some(Type::Int),
                         ident: Ident {
                             name: "x".into(),
                             span: Span(4, 5),
@@ -379,6 +400,7 @@ mod tests {
                         value: Expr::BinOp(BinOp {
                             kind: BinOpKind::Add,
                             lhs: Expr::Literal(Literal {
+                                ty: Type::Int,
                                 kind: LiteralKind::Int(1),
                                 span: Span(8, 9),
                             })
@@ -386,6 +408,7 @@ mod tests {
                             rhs: Expr::BinOp(BinOp {
                                 kind: BinOpKind::Mul,
                                 lhs: Expr::Literal(Literal {
+                                    ty: Type::Int,
                                     kind: LiteralKind::Int(2),
                                     span: Span(12, 13),
                                 })
@@ -393,11 +416,13 @@ mod tests {
                                 rhs: Expr::BinOp(BinOp {
                                     kind: BinOpKind::Div,
                                     lhs: Expr::Literal(Literal {
+                                        ty: Type::Int,
                                         kind: LiteralKind::Int(3),
                                         span: Span(16, 17),
                                     })
                                     .into(),
                                     rhs: Expr::Literal(Literal {
+                                        ty: Type::Int,
                                         kind: LiteralKind::Int(4),
                                         span: Span(20, 21),
                                     })

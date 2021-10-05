@@ -8,8 +8,8 @@ pub enum Type {
     Float,
     /// Represents a boolean type.
     Bool,
-	/// Represents a character type.
-	Char,
+    /// Represents a character type.
+    Char,
     /// Represents a tuple type.
     Tuple(Vec<Type>),
     /// Represents an array type.
@@ -26,10 +26,10 @@ pub enum Type {
     Intersection(Vec<Type>),
     /// Represents a type already referred to.
     Circular(Box<Type>),
-	/// Represents a unit type.
-	Unit,
-	/// Represents a type that has yet to be inferred.
-	Unresolved,
+    /// Represents a unit type.
+    Unit,
+    /// Represents a type that has yet to be inferred.
+    Unresolved,
     /// Represents a type that can never occur.
     Never,
 }
@@ -97,7 +97,7 @@ pub fn equate_types(a: &Type, b: &Type) -> bool {
 pub fn is_primitive(t: &Type) -> bool {
     use Type::*;
     match t {
-		Int | Float | Bool => true,
+        Int | Float | Bool => true,
         _ => false,
     }
 }
