@@ -38,11 +38,6 @@ struct Opts {
 fn main() {
     // initialize environment logger
     let opts = Opts::parse();
-    // print version and return if version flag was specified
-    println!("styxc version {}", env!("CARGO_PKG_VERSION"));
-    if opts.version {
-        return;
-    }
     // initialize logger
     let mut builder = env_logger::builder();
     if opts.verbose {
@@ -52,6 +47,8 @@ fn main() {
         builder.filter_level(LevelFilter::Trace);
     }
     builder.init();
+    // print splash
+    debug!("styxc version {}", env!("CARGO_PKG_VERSION"));
     // lookup input path
     let input = Path::new(&opts.input);
     // check if input doesn't exist

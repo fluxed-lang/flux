@@ -3,6 +3,7 @@ members = [
     "styxc_ast",
     "styxc_ir",
     "styxc_parser",
+	"styxc_tests",
     "styxc_types",
     "styxc"
 ]

@@ -146,15 +146,15 @@ impl<'a> StyxParser {
                 // infer type of declared variable
                 let ty;
                 if let Expr::Literal(literal) = &value {
-                    ty = match literal.kind {
-                        LiteralKind::Int(_) => Some(Type::Int),
-                        LiteralKind::Float(_) => Some(Type::Float),
-                        LiteralKind::Bool(_) => Some(Type::Bool),
-                        LiteralKind::Char(_) => Some(Type::Char),
-                        LiteralKind::String(_) => todo!("support for strings is not implemented"),
-                    }
-                } else {
-                    ty = None;
+                    ty = Some(match literal.kind {
+                        LiteralKind::Int(_) => Type::Int,
+                        LiteralKind::Float(_) => Type::Float,
+                        LiteralKind::Bool(_) => Type::Bool,
+                        LiteralKind::Char(_) => Type::Char,
+                        LiteralKind::String(_) => Type::String,
+                    })
+            	} else {
+                    ty = Some(Type::Int);
                 }
 
                 Ok(Declaration {
@@ -226,6 +226,7 @@ impl<'a> StyxParser {
         let inner = pair.into_inner().next().unwrap();
         Ok(match inner.as_rule() {
             Rule::int => self.parse_int_literal(inner)?,
+            Rule::string => self.parse_string_literal(inner)?,
             _ => unreachable!(),
         })
     }
@@ -235,6 +236,16 @@ impl<'a> StyxParser {
         Ok(Literal {
             ty: Type::Int,
             kind: LiteralKind::Int(pair.as_str().parse()?),
+            span: Span(pair.as_span().start(), pair.as_span().end()),
+        })
+    }
+
+    /// Parse a string literal.
+    fn parse_string_literal(&mut self, pair: Pair<Rule>) -> Result<Literal, Box<dyn Error>> {
+        let inner = pair.clone().into_inner().next().unwrap().to_string();
+        Ok(Literal {
+            ty: Type::String,
+            kind: LiteralKind::String(inner),
             span: Span(pair.as_span().start(), pair.as_span().end()),
         })
     }

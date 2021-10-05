@@ -8,9 +8,7 @@ use cranelift::{
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataContext, Linkage, Module};
 use log::{debug, trace};
-use styxc_ast::{
-    Assignment, Declaration, Expr, Literal, LiteralKind, Loop, Stmt, StmtKind, Var, AST,
-};
+use styxc_ast::{AST, Assignment, AssignmentKind, BinOp, BinOpKind, Declaration, Expr, Ident, Literal, LiteralKind, Loop, Stmt, StmtKind, Var};
 
 /// Represents a variable in the current stack.
 struct IrVar(Var, Variable);
@@ -58,7 +56,7 @@ impl Default for IrTranslator {
 
 impl IrTranslator {
     /// Build the AST into runnable code.
-    pub fn build(&mut self, ast: AST) -> Result<*const u8, Box<dyn Error>> {
+    pub fn build(&mut self, ast: AST) -> Result<(*const u8, Option<String>), Box<dyn Error>> {
         debug!("Building IR from AST...");
         // translate statements
         trace!("Creating builder and entry block...");
@@ -71,9 +69,10 @@ impl IrTranslator {
         trace!("Instantiating function builder...");
         let mut trans = FunctionTranslator::new(builder, &mut self.module);
         trans.translate_stmts(ast.stmts);
-		trace!("Finalizing builder...");
-		trans.builder.ins().return_(&vec![]);
+        trace!("Finalizing builder...");
+        trans.builder.ins().return_(&vec![]);
         trans.builder.finalize();
+        let display = Some(trans.builder.func.display(None).to_string());
         // declare the main function
         trace!("Declaring main function...");
         let id = self
@@ -94,7 +93,7 @@ impl IrTranslator {
         self.module.finalize_definitions();
         // return address of function
         let code = self.module.get_finalized_function(id);
-        Ok(code)
+        Ok((code, display))
     }
 
     /// Create a zero-initialized data section.
@@ -104,7 +103,6 @@ impl IrTranslator {
             .module
             .declare_data(name, Linkage::Export, true, false)
             .map_err(|e| e.to_string())?;
-
         self.module
             .define_data(id, &self.data_ctx)
             .map_err(|e| e.to_string())?;
@@ -122,6 +120,7 @@ fn type_to_ir_type(ty: styxc_types::Type) -> Type {
         Float => types::F64,
         Bool => types::B1,
         Char => types::I32,
+        String => todo!("string type not supported"),
         Tuple(_) => todo!(),
         Array(_) => todo!(),
         Map(_, _) => todo!(),
@@ -155,6 +154,13 @@ impl<'a> FunctionTranslator<'a> {
         }
     }
 
+    fn resolve_var(&mut self, ident: &Ident) -> Option<Value> {
+        match self.variables.get(&ident.name) {
+            Some(var) => Some(self.builder.use_var(*var)),
+            None => None,
+        }
+    }
+
     /// Translate and build statements.
     fn translate_stmts(&mut self, stmts: Vec<Stmt>) {
         for stmt in stmts {
@@ -164,7 +170,7 @@ impl<'a> FunctionTranslator<'a> {
 
     /// Translate and build a statement.
     fn translate_stmt(&mut self, stmt: Stmt) {
-		trace!("TRANSLATE Stmt");
+        trace!("TRANSLATE Stmt");
         use StmtKind::*;
         match stmt.kind {
             Declaration(decl) => decl
@@ -177,20 +183,20 @@ impl<'a> FunctionTranslator<'a> {
 
     /// Translate an expression block.
     fn translate_expr(&mut self, expr: Expr) -> Value {
-		trace!("TRANSLATE Expr");
+        trace!("TRANSLATE Expr");
         use Expr::*;
         match expr {
             Literal(literal) => self.translate_literal(literal),
             Ident(ident) => self
                 .builder
                 .use_var(*self.variables.get(&ident.name).unwrap()),
-            BinOp(bin_op) => todo!(),
+            BinOp(bin_op) => self.translate_bin_op(bin_op),
             Block(block) => todo!(),
         }
     }
 
     fn translate_literal(&mut self, literal: Literal) -> Value {
-		trace!("TRANSLATE Literal");
+        trace!("TRANSLATE Literal");
         use LiteralKind::*;
         match literal.kind {
             Int(val) => self
@@ -206,7 +212,7 @@ impl<'a> FunctionTranslator<'a> {
 
     /// Translate a declaration statement.
     fn translate_declaration(&mut self, decl: Declaration) {
-		trace!("TRANSLATE Declaration");
+        trace!("TRANSLATE Declaration");
         let var = Variable::new(self.index);
         self.index += 1;
         self.variables.insert(decl.ident.name, var);
@@ -218,22 +224,71 @@ impl<'a> FunctionTranslator<'a> {
 
     /// Translate an assignment statement.
     fn translate_assignment(&mut self, assign: Assignment) {
-		trace!("TRANSLATE Assignment");
-        let new_value = self.translate_expr(assign.value);
+        trace!("TRANSLATE Assignment");
+
+        use AssignmentKind::*;
+        let new_value = match assign.kind {
+            Assign => self.translate_expr(assign.value),
+            ShlAssign => todo!(),
+            ShrAssign => todo!(),
+            AndAssign => todo!(),
+            OrAssign => todo!(),
+            XorAssign => todo!(),
+            AddAssign => {
+                let val = self.resolve_var(&assign.ident).unwrap();
+                let to_add = self.translate_expr(assign.value);
+                self.builder.ins().iadd(val, to_add)
+            }
+            SubAssign => todo!(),
+            MulAssign => todo!(),
+            DivAssign => todo!(),
+            ModAssign => todo!(),
+        };
         let variable = self.variables.get(&assign.ident.name).unwrap();
         self.builder.def_var(*variable, new_value);
     }
 
     /// Translate a loop statement.
     fn translate_loop(&mut self, loop_node: Loop) {
-        todo!()
+        trace!("TRANSLATE Loop");
+        let body_block = self.builder.create_block();
+        let exit_block = self.builder.create_block();
+        // create jump instruction and jump to block.
+        self.builder.ins().jump(body_block, &[]);
+        self.builder.switch_to_block(body_block);
+		// translate loop statements
+        self.translate_stmts(loop_node.block.stmts);
+        self.builder.ins().jump(body_block, &[]);
+		// seal and switch to exit block
+        self.builder.switch_to_block(exit_block);
+        self.builder.seal_block(body_block);
+        self.builder.seal_block(exit_block);
     }
 
-    // /// Translate a integer comparison.
-    // fn translate_icmp(&mut self, cmp: IntCC, lhs: Expr, rhs: Expr) -> Value {
-    //     let lhs = self.translate_expr(lhs);
-    //     let rhs = self.translate_expr(rhs);
-    //     let c = self.builder.ins().icmp(cmp, lhs, rhs);
-    //     self.builder.ins().bint(self.int, c)
-    // }
+	// Translate a binary operation.
+    fn translate_bin_op(&mut self, bin_op: BinOp) -> Value {
+        use BinOpKind::*;
+		let lhs = self.translate_expr(*bin_op.lhs);
+		let rhs = self.translate_expr(*bin_op.rhs);
+        match bin_op.kind {
+            Add => self.builder.ins().iadd(lhs, rhs),
+            Sub => self.builder.ins().isub(lhs, rhs),
+            Mul => self.builder.ins().imul(lhs, rhs),
+            Div => self.builder.ins().udiv(lhs, rhs),
+            Mod => self.builder.ins().srem(lhs, rhs),
+            And => self.builder.ins().band(lhs, rhs),
+            Or => self.builder.ins().bor(lhs, rhs),
+            Xor => self.builder.ins().bxor(lhs, rhs),
+            LogAnd => todo!(),
+            LogOr => todo!(),
+            Shl => self.builder.ins().ishl(lhs, rhs),
+            Shr => self.builder.ins().sshr(lhs, rhs),
+            Eq => todo!(),
+            Ne => todo!(),
+            Lt => todo!(),
+            Gt => todo!(),
+            Le => todo!(),
+            Ge => todo!(),
+        }
+    }
 }

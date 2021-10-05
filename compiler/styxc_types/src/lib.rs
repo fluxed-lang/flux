@@ -10,6 +10,8 @@ pub enum Type {
     Bool,
     /// Represents a character type.
     Char,
+    /// Represents a string type.
+    String,
     /// Represents a tuple type.
     Tuple(Vec<Type>),
     /// Represents an array type.
