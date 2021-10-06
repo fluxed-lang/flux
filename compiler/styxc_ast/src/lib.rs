@@ -7,7 +7,6 @@ use styxc_types::Type;
 use crate::passes::{validate_symbols, validate_types};
 
 mod passes;
-mod scope;
 
 /// A struct represnting a span of a string. The first paramteter is the start index of the span,
 /// and the second parameter is the end index of the span (inclusive).
@@ -347,6 +346,25 @@ pub struct BinOp {
     pub kind: BinOpKind,
 }
 
+/// An if statement.
+pub struct If {
+	/// The expression this if statement will validate.
+	pub expr: Expr,
+	pub block: Block
+}
+
+/// An else statement.
+pub struct Else {
+	/// The block this else statement will execute.
+	pub block: Block
+}
+
+/// A match expression.
+pub struct Match {
+	/// The expression being matched.
+	pub expr: Box<Expr>
+}
+
 /// An enum representing variable mutability.
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Mutability {
@@ -422,7 +440,9 @@ pub struct Module {}
 /// A declared variable in the current context.
 #[derive(Debug, PartialEq, Clone)]
 pub struct Var {
-    /// The identifier representing this variable in the current context.
+	/// The type of this variable.
+    pub ty: Type,
+	/// The identifier representing this variable in the current context.
     pub ident: Ident,
     /// The mutability of this variable.
     pub mutability: Mutability,

@@ -22,9 +22,6 @@ struct Opts {
     // Enable trace logging output.
     #[clap(short, long)]
     trace: bool,
-    /// Print the version of styxc.
-    #[clap(long)]
-    version: bool,
     /// The output directory for the generated binary files. If this is set,
     /// the compiler is set to AOT mode. Defaults to the name of the target file
     /// without an extension.

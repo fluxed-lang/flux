@@ -31,7 +31,7 @@ pub enum Type {
     /// Represents a unit type.
     Unit,
     /// Represents a type that has yet to be inferred.
-    Unresolved,
+    Infer,
     /// Represents a type that can never occur.
     Never,
 }
