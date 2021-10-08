@@ -15,9 +15,9 @@ pub enum Mode<'i> {
 pub fn compile_to_mem(input: String) -> Result<fn() -> u32, Box<dyn Error>> {
     // 1. Parse input source
     let mut parser = styxc_parser::StyxParser::default();
-    let ast = parser.build(&input)?;
+    let mut ast = parser.build(&input)?;
     // 2. Run AST validation on the AST
-    ASTValidator::default().walk(&ast)?;
+    ASTValidator::default().walk(&mut ast)?;
     // 3. Generate IR
     let (pointer, _) = styxc_ir::IrTranslator::default().build(ast)?;
     let code_fn;

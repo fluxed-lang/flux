@@ -263,7 +263,7 @@ impl FromStr for BinOpKind {
 #[derive(Debug, PartialEq)]
 pub struct Declaration {
     /// The explicit type of this declaration, if it exists.
-    pub ty: Option<Type>,
+    pub ty: Type,
     /// The identifier being declared.
     pub ident: Ident,
     /// The mutability of the declared identifier.
@@ -471,7 +471,7 @@ impl AST {
 pub struct ASTValidator {
     /// The current context.
     /// A vector of passes the validator will perform.
-    passes: Vec<fn(ast: &AST) -> Result<(), Box<dyn Error>>>,
+    passes: Vec<fn(ast: &mut AST) -> Result<(), Box<dyn Error>>>,
 }
 
 impl Default for ASTValidator {
@@ -484,13 +484,13 @@ impl Default for ASTValidator {
 
 impl ASTValidator {
     /// Add a pass to the AST validator.
-    pub fn add_pass(mut self, pass: fn(ast: &AST) -> Result<(), Box<dyn Error>>) -> Self {
+    pub fn add_pass(mut self, pass: fn(ast: &mut AST) -> Result<(), Box<dyn Error>>) -> Self {
         self.passes.push(pass);
         self
     }
 
     /// Walk the AST with the specified parses.
-    pub fn walk(self, ast: &AST) -> Result<(), Box<dyn Error>> {
+    pub fn walk(self, ast: &mut AST) -> Result<(), Box<dyn Error>> {
         debug!("Running AST validation...");
         // iterate over passes
         for pass in self.passes {

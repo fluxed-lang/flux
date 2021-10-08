@@ -125,7 +125,7 @@ impl SymbolValidator {
 }
 
 /// AST pass that ensures symbols are valid and declared properly.
-pub fn validate_symbols(ast: &AST) -> Result<(), Box<dyn Error>> {
+pub fn validate_symbols(ast: &mut AST) -> Result<(), Box<dyn Error>> {
     debug!("Validating symbol usage...");
     SymbolValidator::default().check_stmts(&ast.stmts)?;
     trace!("Symbols are OK");
@@ -157,7 +157,10 @@ impl TypeValidator {
     }
 
     /// Declare a new variable using the specified declaration node and push it onto the stack.
-    pub fn declare(&mut self, decl: &Declaration) {
+    pub fn declare(&mut self, decl: &mut Declaration) {
+		trace!("declare variable: {:?}", decl);
+		let ty = self.get_expr_type(&decl.value);
+		decl.ty = ty;
         let var = Var {
 			ty: self.get_expr_type(&decl.value),
             ident: decl.ident.clone(),
@@ -168,6 +171,7 @@ impl TypeValidator {
 
     /// Push a variable onto the stack.
     pub fn push(&mut self, var: Var) {
+		trace!("push to stack: {:?}", var);
         self.vars.push(var)
     }
 
@@ -182,6 +186,7 @@ impl TypeValidator {
 
 	/// Compute the type of an expression.
 	fn get_expr_type(&self, expr: &Expr) -> Type {
+		trace!("get expression type: {:?}", expr);
 		use Expr::*;
 		match expr {
 			Literal(literal) => self.get_literal_type(literal),
@@ -194,6 +199,7 @@ impl TypeValidator {
 
 	/// Fetch the type of a literal.
 	fn get_literal_type(&self, literal: &Literal) -> Type {
+		trace!("get literal type: {:?}", literal);
 		use LiteralKind::*;
 		match literal.kind {
    			Int(_) => Type::Int,
@@ -206,6 +212,7 @@ impl TypeValidator {
 
 	/// Fetch the type of a binary operation.
 	fn get_bin_op_type(&self, bin_op: &BinOp) -> Type {
+		trace!("get bin op type: {:?}", bin_op);
 		let lhs = self.get_expr_type(&bin_op.lhs);
 		let rhs = self.get_expr_type(&bin_op.rhs);
 		if !equate_types(&lhs, &rhs) {
@@ -215,13 +222,13 @@ impl TypeValidator {
 	}
 
 	/// Check a statement for symbol resolution errors.
-    fn check_stmt(&mut self, stmt: &Stmt) -> Result<(), Box<dyn Error>> {
+    fn check_stmt(&mut self, stmt: &mut Stmt) -> Result<(), Box<dyn Error>> {
         trace!("check stmt: {:?}", stmt);
-        match &stmt.kind {
+        match &mut stmt.kind {
             StmtKind::Declaration(decls) => {
-                for decl in decls {
-                    self.declare(decl);
-                }
+				for i in 0..decls.len() {
+					self.declare(decls.get_mut(i).unwrap())
+				}
                 Ok(())
             }
             StmtKind::Assignment(assign) => {
@@ -242,11 +249,11 @@ impl TypeValidator {
 
     /// Check a vector of statements for symbol resolution errors. Once all statements are checked,
     /// any declared variables are popped from the stack.
-    pub fn check_stmts(&mut self, stmts: &Vec<Stmt>) -> Result<(), Box<dyn Error>> {
+    pub fn check_stmts(&mut self, stmts: &mut Vec<Stmt>) -> Result<(), Box<dyn Error>> {
         let initial_vars = self.vars.len();
-        for stmt in stmts {
-            self.check_stmt(stmt)?;
-        }
+		for i in 0..stmts.len() {
+			self.check_stmt(stmts.get_mut(i).unwrap())?;
+		}
         // pop vars from the stack as they go out of scope.
         for _ in 0..initial_vars {
             self.pop().unwrap();
@@ -256,9 +263,9 @@ impl TypeValidator {
 }
 
 /// AST pass that ensures types are correct and equivalent.
-pub fn validate_types(ast: &AST) -> Result<(), Box<dyn Error>> {
+pub fn validate_types(ast: &mut AST) -> Result<(), Box<dyn Error>> {
     debug!("Validating types...");
-	TypeValidator::default().check_stmts(&ast.stmts)?;
+	TypeValidator::default().check_stmts(&mut ast.stmts)?;
     debug!("Types are OK");
     Ok(())
     // todo!()

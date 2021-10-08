@@ -130,7 +130,7 @@ fn type_to_ir_type(ty: styxc_types::Type) -> Type {
         Intersection(_) => todo!(),
         Circular(_) => todo!(),
         Unit => todo!(),
-        Unresolved => todo!(),
+        Infer => panic!("failed to infer type"),
         Never => todo!(),
     }
 }
@@ -218,7 +218,7 @@ impl<'a> FunctionTranslator<'a> {
         self.variables.insert(decl.ident.name, var);
         let val = self.translate_expr(decl.value);
         self.builder
-            .declare_var(var, type_to_ir_type(decl.ty.unwrap()));
+            .declare_var(var, type_to_ir_type(decl.ty));
         self.builder.def_var(var, val)
     }
 
