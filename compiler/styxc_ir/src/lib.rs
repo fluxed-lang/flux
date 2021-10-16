@@ -230,22 +230,22 @@ impl<'a> FunctionTranslator<'a> {
         trace!("TRANSLATE Assignment");
 
         use AssignmentKind::*;
+
+		let val = self.resolve_var(&assign.ident).unwrap();
+		let rhs = self.translate_expr(assign.value);
+
         let new_value = match assign.kind {
-            Assign => self.translate_expr(assign.value),
-            ShlAssign => todo!(),
-            ShrAssign => todo!(),
-            AndAssign => todo!(),
-            OrAssign => todo!(),
-            XorAssign => todo!(),
-            AddAssign => {
-                let val = self.resolve_var(&assign.ident).unwrap();
-                let to_add = self.translate_expr(assign.value);
-                self.builder.ins().iadd(val, to_add)
-            }
-            SubAssign => todo!(),
-            MulAssign => todo!(),
-            DivAssign => todo!(),
-            ModAssign => todo!(),
+            Assign => rhs,
+            ShlAssign => self.builder.ins().rotr(val, rhs),
+            ShrAssign => self.builder.ins().rotl(val, rhs),
+            AndAssign => self.builder.ins().band(val, rhs),
+            OrAssign => self.builder.ins().bor(val, rhs),
+            XorAssign => self.builder.ins().bxor(val, rhs),
+            AddAssign => self.builder.ins().iadd(val, rhs),
+            SubAssign => self.builder.ins().isub(val, rhs),
+            MulAssign => self.builder.ins().imul(val, rhs),
+            DivAssign => self.builder.ins().sdiv(val, rhs),
+            ModAssign => self.builder.ins().srem(val, rhs),
         };
         let variable = self.variables.get(&assign.ident.name).unwrap();
         self.builder.def_var(*variable, new_value);
