@@ -14,7 +14,7 @@ use pest::{
     Parser,
 };
 use styxc_ast::{
-    Assignment, AssignmentKind, BinOp, BinOpKind, Block, Declaration, Expr, Ident, Literal,
+    Assignment, AssignmentKind, BinOp, BinOpKind, Block, Declaration, Expr, Ident, If, Literal,
     LiteralKind, Loop, Mutability, Span, Stmt, StmtKind, AST,
 };
 use styxc_types::Type;
@@ -87,6 +87,7 @@ impl<'a> StyxParser {
                     }
                     Rule::assignment => StmtKind::Assignment(self.parse_assignment(inner)?),
                     Rule::loop_block => StmtKind::Loop(self.parse_loop_block(inner)?),
+                    Rule::if_block => StmtKind::If(self.parse_if_statement(inner)?),
                     Rule::func_call => todo!("function call"),
                     Rule::EOI => break,
                     _ => {
@@ -252,6 +253,18 @@ impl<'a> StyxParser {
                     Rule::bin_op_minus => BinOpKind::Sub,
                     Rule::bin_op_mul => BinOpKind::Mul,
                     Rule::bin_op_div => BinOpKind::Div,
+                    Rule::bin_op_mod => BinOpKind::Mod,
+                    Rule::bin_op_and => BinOpKind::And,
+                    Rule::bin_op_or => BinOpKind::Or,
+                    Rule::bin_op_xor => BinOpKind::Xor,
+                    Rule::bin_op_eq => BinOpKind::Eq,
+                    Rule::bin_op_ne => BinOpKind::Ne,
+                    Rule::bin_op_lt => BinOpKind::Lt,
+                    Rule::bin_op_le => BinOpKind::Le,
+                    Rule::bin_op_gt => BinOpKind::Gt,
+                    Rule::bin_op_ge => BinOpKind::Ge,
+                    Rule::bin_op_log_and => BinOpKind::LogAnd,
+                    Rule::bin_op_log_or => BinOpKind::LogOr,
                     _ => unreachable!(),
                 },
                 lhs: lhs.into(),
@@ -272,12 +285,22 @@ impl<'a> StyxParser {
     /// Parse a `{ /* ... */}`.
     fn parse_block(&mut self, pair: Pair<Rule>) -> Result<Block, Box<dyn Error>> {
         debug_assert!(pair.as_rule() == Rule::block);
-        let inner = pair.into_inner().next().unwrap().into_inner();
-        let stmts = self.parse_statements(inner)?;
+        let stmts = match pair.into_inner().next() {
+            Some(stmts) => self.parse_statements(stmts.into_inner())?,
+            None => vec![],
+        };
         Ok(Block {
             id: self.next_id(),
             stmts,
         })
+    }
+
+    /// Parse a `if {}` block.
+    fn parse_if_statement(&mut self, pair: Pair<Rule>) -> Result<If, Box<dyn Error>> {
+        let mut inner = pair.into_inner();
+        let expr = self.parse_expression(inner.next().unwrap())?;
+        let block = self.parse_block(inner.next().unwrap())?;
+        Ok(If { expr, block })
     }
 }
 

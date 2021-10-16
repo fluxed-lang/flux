@@ -347,22 +347,24 @@ pub struct BinOp {
 }
 
 /// An if statement.
+#[derive(Debug, PartialEq)]
 pub struct If {
-	/// The expression this if statement will validate.
-	pub expr: Expr,
-	pub block: Block
+    /// The expression this if statement will validate.
+    pub expr: Expr,
+    /// The block of code to execute if the expression is true.
+    pub block: Block,
 }
 
 /// An else statement.
 pub struct Else {
-	/// The block this else statement will execute.
-	pub block: Block
+    /// The block this else statement will execute.
+    pub block: Block,
 }
 
 /// A match expression.
 pub struct Match {
-	/// The expression being matched.
-	pub expr: Box<Expr>
+    /// The expression being matched.
+    pub expr: Box<Expr>,
 }
 
 /// An enum representing variable mutability.
@@ -395,6 +397,8 @@ pub enum StmtKind {
     Assignment(Assignment),
     // A loop block.
     Loop(Loop),
+    /// An if statement.
+    If(If),
 }
 
 #[derive(Debug, PartialEq)]
@@ -440,9 +444,9 @@ pub struct Module {}
 /// A declared variable in the current context.
 #[derive(Debug, PartialEq, Clone)]
 pub struct Var {
-	/// The type of this variable.
+    /// The type of this variable.
     pub ty: Type,
-	/// The identifier representing this variable in the current context.
+    /// The identifier representing this variable in the current context.
     pub ident: Ident,
     /// The mutability of this variable.
     pub mutability: Mutability,

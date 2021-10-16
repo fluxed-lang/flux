@@ -3,12 +3,15 @@ use std::{collections::HashMap, error::Error, slice::from_raw_parts};
 use cranelift::{
     codegen,
     frontend::{FunctionBuilder, FunctionBuilderContext, Variable},
-    prelude::{settings, types, Configurable, EntityRef, InstBuilder, Type, Value},
+    prelude::{settings, types, Configurable, EntityRef, InstBuilder, IntCC, Type, Value},
 };
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataContext, Linkage, Module};
 use log::{debug, trace};
-use styxc_ast::{AST, Assignment, AssignmentKind, BinOp, BinOpKind, Declaration, Expr, Ident, Literal, LiteralKind, Loop, Stmt, StmtKind, Var};
+use styxc_ast::{
+    Assignment, AssignmentKind, BinOp, BinOpKind, Declaration, Expr, Ident, If, Literal,
+    LiteralKind, Loop, Stmt, StmtKind, Var, AST,
+};
 
 /// Represents a variable in the current stack.
 struct IrVar(Var, Variable);
@@ -42,7 +45,6 @@ impl Default for IrTranslator {
         });
         let isa = isa_builder.finish(settings::Flags::new(flag_builder));
         let builder = JITBuilder::with_isa(isa, cranelift_module::default_libcall_names());
-
         // declare builder and module
         let module = JITModule::new(builder);
         Self {
@@ -91,6 +93,7 @@ impl IrTranslator {
         trace!("Clear context and finalize definitions...");
         self.module.clear_context(&mut self.ctx);
         self.module.finalize_definitions();
+
         // return address of function
         let code = self.module.get_finalized_function(id);
         Ok((code, display))
@@ -178,6 +181,7 @@ impl<'a> FunctionTranslator<'a> {
                 .for_each(|decl| self.translate_declaration(decl)),
             Assignment(assign) => self.translate_assignment(assign),
             Loop(loop_node) => self.translate_loop(loop_node),
+            If(if_stmt) => self.translate_if(if_stmt),
         }
     }
 
@@ -204,7 +208,7 @@ impl<'a> FunctionTranslator<'a> {
                 .ins()
                 .iconst(self.module.target_config().pointer_type(), val),
             Float(val) => self.builder.ins().f64const(val),
-            String(_) => todo!(),
+            String(_) => todo!("no"),
             Char(val) => self.builder.ins().iconst(types::I32, val as i64),
             Bool(val) => self.builder.ins().bconst(types::B1, val),
         }
@@ -217,8 +221,7 @@ impl<'a> FunctionTranslator<'a> {
         self.index += 1;
         self.variables.insert(decl.ident.name, var);
         let val = self.translate_expr(decl.value);
-        self.builder
-            .declare_var(var, type_to_ir_type(decl.ty));
+        self.builder.declare_var(var, type_to_ir_type(decl.ty));
         self.builder.def_var(var, val)
     }
 
@@ -256,20 +259,20 @@ impl<'a> FunctionTranslator<'a> {
         // create jump instruction and jump to block.
         self.builder.ins().jump(body_block, &[]);
         self.builder.switch_to_block(body_block);
-		// translate loop statements
+        // translate loop statements
         self.translate_stmts(loop_node.block.stmts);
         self.builder.ins().jump(body_block, &[]);
-		// seal and switch to exit block
+        // seal and switch to exit block
         self.builder.switch_to_block(exit_block);
         self.builder.seal_block(body_block);
         self.builder.seal_block(exit_block);
     }
 
-	// Translate a binary operation.
+    // Translate a binary operation.
     fn translate_bin_op(&mut self, bin_op: BinOp) -> Value {
+        let lhs = self.translate_expr(*bin_op.lhs);
+        let rhs = self.translate_expr(*bin_op.rhs);
         use BinOpKind::*;
-		let lhs = self.translate_expr(*bin_op.lhs);
-		let rhs = self.translate_expr(*bin_op.rhs);
         match bin_op.kind {
             Add => self.builder.ins().iadd(lhs, rhs),
             Sub => self.builder.ins().isub(lhs, rhs),
@@ -283,12 +286,47 @@ impl<'a> FunctionTranslator<'a> {
             LogOr => todo!(),
             Shl => self.builder.ins().ishl(lhs, rhs),
             Shr => self.builder.ins().sshr(lhs, rhs),
-            Eq => todo!(),
-            Ne => todo!(),
-            Lt => todo!(),
-            Gt => todo!(),
-            Le => todo!(),
-            Ge => todo!(),
+            Eq | Ne | Lt | Gt | Le | Ge => self.translate_icmp(bin_op.kind, lhs, rhs),
         }
+    }
+
+    /// Translate an icmp comparison code.
+    fn translate_icmp(&mut self, op: BinOpKind, lhs: Value, rhs: Value) -> Value {
+        use BinOpKind::*;
+        match op {
+            Eq => self.builder.ins().icmp(IntCC::Equal, lhs, rhs),
+            Ne => self.builder.ins().icmp(IntCC::NotEqual, lhs, rhs),
+            Lt => self.builder.ins().icmp(IntCC::SignedLessThan, lhs, rhs),
+            Gt => self.builder.ins().icmp(IntCC::SignedGreaterThan, lhs, rhs),
+            Le => self
+                .builder
+                .ins()
+                .icmp(IntCC::SignedLessThanOrEqual, lhs, rhs),
+            Ge => self
+                .builder
+                .ins()
+                .icmp(IntCC::SignedGreaterThanOrEqual, lhs, rhs),
+            _ => panic!("bad icmp type"),
+        }
+    }
+
+    /// Translate an if statement in to code.
+    fn translate_if(&mut self, if_stmt: If) {
+        let condition_value = self.translate_expr(if_stmt.expr);
+        let then_block = self.builder.create_block();
+        let merge_block = self.builder.create_block();
+        // test if condition and conditionally branch
+        self.builder.ins().brz(condition_value, merge_block, &[]);
+        // go to then block if condition is true
+        self.builder.ins().jump(then_block, &[]);
+        self.builder.switch_to_block(then_block);
+        self.builder.seal_block(then_block);
+        // output statements into block.
+        self.translate_stmts(if_stmt.block.stmts);
+        // jump back to merging block
+        self.builder.ins().jump(merge_block, &[]);
+        // switch to the merge block for subsequent statements.
+        self.builder.switch_to_block(merge_block);
+        self.builder.seal_block(merge_block);
     }
 }
