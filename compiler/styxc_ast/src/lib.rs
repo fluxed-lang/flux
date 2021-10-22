@@ -2,10 +2,11 @@ use std::error::Error;
 use std::str::FromStr;
 
 use log::debug;
-use styxc_types::Type;
+use styxc_types::{FuncType, Type};
 
 use crate::passes::{validate_symbols, validate_types};
 
+pub mod types;
 mod passes;
 
 /// A struct represnting a span of a string. The first paramteter is the start index of the span,
@@ -27,6 +28,21 @@ impl Span {
     /// Returns true if this span overlaps with another.
     pub const fn overlaps(&self, other: &Span) -> bool {
         self.0 <= other.1 && self.1 >= other.0
+    }
+}
+
+/// Represents a spanned AST node.
+struct Spanned<T> {
+    /// The inner value held by this spanned.
+    pub inner: T,
+    /// The section of source code this value covers.
+    pub span: Span,
+}
+
+impl<T> Spanned<T> {
+    /// Wrap the specified valie in a span.`
+    pub fn new(inner: T, span: Span) -> Self {
+        Self { inner, span }
     }
 }
 
@@ -92,9 +108,82 @@ pub struct Literal {
 #[derive(Debug, PartialEq)]
 pub struct ParenArgument {
     /// The identifier representing the AST node.
-    pub ident: usize,
+    pub ident: Ident,
     /// The type of this argument.
     pub ty: Type,
+	/// The identifier representing the type of this argument.
+	pub ty_ident: Ident
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ExternFunc {
+    /// The identifier representing the external function.
+    pub ident: Ident,
+    /// The type of this function.
+    pub ty: Type,
+    /// The arguments this function requires.
+    pub args: Vec<ParenArgument>,
+    /// The span containing the function.
+    pub span: Span,
+    /// The identifier representing the return type of the function, if there is one.
+    pub ret_ty_ident: Option<Ident>,
+}
+
+impl FuncType for ExternFunc {
+    fn as_ty(&self) -> Type {
+        self.ty.clone()
+    }
+    fn argument_types(&self) -> Vec<Type> {
+        self.args.iter().map(|arg| arg.ty.clone()).collect()
+    }
+    fn ret_ty(&self) -> Type {
+        if let Type::Func(_, ret_ty) = &self.ty {
+			*ret_ty.clone()
+		}
+		else { panic!() }
+    }
+}
+
+/// A function declaration.
+#[derive(Debug, PartialEq)]
+pub struct FuncDecl {
+    /// The identifier representing the function.
+    pub ident: Ident,
+    /// The type of this function.
+    pub ty: Type,
+    /// The arguments this function requires.
+    pub args: Vec<ParenArgument>,
+    /// The span containing the function.
+    pub span: Span,
+    /// The return type of the function.
+    pub return_ty: Type,
+    /// The body of the function.
+    pub body: Block,
+}
+
+impl FuncType for FuncDecl {
+    fn as_ty(&self) -> Type {
+        self.ty.clone()
+    }
+    fn argument_types(&self) -> Vec<Type> {
+        self.args.iter().map(|arg| arg.ty.clone()).collect()
+    }
+    fn ret_ty(&self) -> Type {
+        self.return_ty.clone()
+    }
+}
+
+/// A function call.
+#[derive(Debug, PartialEq)]
+pub struct FuncCall {
+    /// The identifier of the function
+    pub ident: Ident,
+    /// Arguments being passed to the function.
+    pub args: Vec<Expr>,
+    /// The inferred return type of this function call.
+    pub return_ty: Type,
+    /// The span containing the function.
+    pub span: Span,
 }
 
 /// Enum representing operator associativity.
@@ -262,8 +351,10 @@ impl FromStr for BinOpKind {
 /// A declaration of a variable.
 #[derive(Debug, PartialEq)]
 pub struct Declaration {
-    /// The explicit type of this declaration, if it exists.
+    /// The type of this declaration.
     pub ty: Type,
+	/// The explicit type identifier of this declaration, if it exists.
+	pub ty_ident: Option<Ident>,
     /// The identifier being declared.
     pub ident: Ident,
     /// The mutability of the declared identifier.
@@ -399,6 +490,14 @@ pub enum StmtKind {
     Loop(Loop),
     /// An if statement.
     If(If),
+    /// A function declaration.
+    FuncDecl(FuncDecl),
+    /// An external function declaration.
+    ExternFunc(ExternFunc),
+    /// A function call.
+    FuncCall(FuncCall),
+    /// A function return statement.
+    Return(Expr),
 }
 
 #[derive(Debug, PartialEq)]

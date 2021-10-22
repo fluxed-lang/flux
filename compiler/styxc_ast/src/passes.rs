@@ -1,11 +1,9 @@
 use std::error::Error;
 
 use log::{debug, trace};
-use styxc_types::{equate_types, Type};
+use styxc_types::{Type, equate_types};
 
-use crate::{
-    BinOp, Declaration, Expr, Ident, Literal, LiteralKind, Mutability, Stmt, StmtKind, Var, AST,
-};
+use crate::{AST, BinOp, Declaration, Expr, ExternFunc, FuncDecl, Ident, Literal, LiteralKind, Mutability, ParenArgument, Stmt, StmtKind, Var};
 
 /// A structure holding information about available variables.
 #[derive(Default)]
@@ -41,6 +39,35 @@ impl SymbolValidator {
         };
         self.push(var);
     }
+
+	pub fn declare_paren_arg(&mut self, paren_arg: &ParenArgument) {
+		trace!("declare paren arg: {:?}", paren_arg);
+		let var = Var {
+			ty: Type::Infer,
+			ident: paren_arg.ident.clone(),
+			mutability: Mutability::Mutable,
+		};
+		self.push(var)
+	}
+
+	pub fn declare_func(&mut self, func_decl: FuncDecl) {
+		trace!("declare func: {:?}", func_decl);
+		let var = Var {
+			ty: Type::Infer,
+			ident: func_decl.ident.clone(),
+			mutability: Mutability::Immutable,
+		};
+		self.push(var)
+	}
+
+	pub fn declare_extern_func(&mut self, extern_func: &ExternFunc) {
+		trace!("declare extern_func: {:?}", extern_func);
+		let var = Var {
+			ty: Type::Infer,
+			ident: extern_func.ident.clone(),
+			mutability: Mutability::Immutable,
+		};
+	}
 
     /// Push a variable onto the stack.
     pub fn push(&mut self, var: Var) {
@@ -83,15 +110,16 @@ impl SymbolValidator {
     /// Check a statement for symbol resolution errors.
     fn check_stmt(&mut self, stmt: &Stmt) -> Result<(), Box<dyn Error>> {
         trace!("check stmt: {:?}", stmt);
+        use StmtKind::*;
         match &stmt.kind {
-            StmtKind::Declaration(decls) => {
+            Declaration(decls) => {
                 for decl in decls {
                     self.check_expr(&decl.value)?;
                     self.declare(decl);
                 }
                 Ok(())
             }
-            StmtKind::Assignment(assign) => {
+            Assignment(assign) => {
                 if !self.exists(&assign.ident) {
                     return Err(format!(
                         "variable {} is used before declaration",
@@ -107,12 +135,25 @@ impl SymbolValidator {
                 self.check_expr(&assign.value)?;
                 Ok(())
             }
-            StmtKind::Loop(loop_block) => self.check_stmts(&loop_block.block.stmts),
-            StmtKind::If(if_stmt) => {
+            Loop(loop_block) => self.check_stmts(&loop_block.block.stmts),
+            If(if_stmt) => {
                 self.check_expr(&if_stmt.expr)?;
                 self.check_stmts(&if_stmt.block.stmts)?;
                 Ok(())
             }
+            FuncCall(_) => Ok(()),
+            FuncDecl(decl) => {
+				for paren_arg in &decl.args {
+					self.declare_paren_arg(paren_arg);
+				}
+                self.check_stmts(&decl.body.stmts)?;
+                Ok(())
+            }
+            ExternFunc(extern_func) => { 
+				self.declare_extern_func(extern_func);
+				Ok(())
+			},
+            Return(ret) => self.check_expr(ret),
         }
     }
 
@@ -146,7 +187,7 @@ pub fn validate_symbols(ast: &mut AST) -> Result<(), Box<dyn Error>> {
 /// Stores state for type validation.
 #[derive(Default)]
 struct TypeValidator {
-    vars: Vec<Var>,
+    vars: Vec<Var>
 }
 
 impl TypeValidator {
@@ -272,6 +313,28 @@ impl TypeValidator {
                 self.check_stmts(&mut if_block.block.stmts)?;
                 Ok(())
             }
+			StmtKind::FuncDecl(func_decl) => {
+				self.check_stmts(&mut func_decl.body.stmts)?;
+				Ok(())
+			}
+			StmtKind::FuncCall(func_call) => {
+				Ok(())
+			},
+			StmtKind::ExternFunc(extern_func) => {
+				let arg_types: Vec<Type> = extern_func.args.iter_mut().map(|arg| { 
+					arg.ty = arg.ty_ident.name.clone().into();
+					arg.ty.clone()
+				}).collect();
+				// check if there is a return type
+				let mut ret_ty = Type::Unit;
+				if let Some(ret_ty_ident) = &extern_func.ret_ty_ident {
+					ret_ty = ret_ty_ident.name.clone().into();
+				}
+
+				extern_func.ty = Type::Func(arg_types, ret_ty.into());
+
+				Ok(())
+			}
             _ => Ok(()),
         }
     }

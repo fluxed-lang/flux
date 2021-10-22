@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::{error::Error, fmt::Debug};
 
 #[derive(Debug, Clone)]
 pub enum Type {
@@ -28,12 +28,29 @@ pub enum Type {
     Intersection(Vec<Type>),
     /// Represents a type already referred to.
     Circular(Box<Type>),
+    /// Represents a function type.
+    Func(Vec<Type>, Box<Type>),
     /// Represents a unit type.
     Unit,
     /// Represents a type that has yet to be inferred.
     Infer,
     /// Represents a type that can never occur.
     Never,
+}
+
+impl From<String> for Type {
+	fn from(s: String) -> Self {
+		use Type::*;
+		match s.as_str() {
+			"()" => Unit,
+			"bool" => Bool,
+			"char" => Char,
+			"float" => Float,
+			"int" => Int,
+			"str" => String,
+			_ => panic!("cannot convert non-primitive string representation of a type to a type")
+		}
+	}
 }
 
 impl PartialEq for Type {
@@ -51,6 +68,16 @@ impl Type {
 
         Type::Never
     }
+}
+
+/// A trait implementable by function objects.
+pub trait FuncType: Debug {
+    /// Fetch the type of this function.
+    fn as_ty(&self) -> Type;
+    /// Fetch the argument types of this function.
+    fn argument_types(&self) -> Vec<Type>;
+    // /Fetch the return type of this function.
+    fn ret_ty(&self) -> Type;
 }
 
 /// Test if an intersection type is valid.

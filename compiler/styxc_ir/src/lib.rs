@@ -3,14 +3,17 @@ use std::{collections::HashMap, error::Error, slice::from_raw_parts};
 use cranelift::{
     codegen,
     frontend::{FunctionBuilder, FunctionBuilderContext, Variable},
-    prelude::{settings, types, Configurable, EntityRef, InstBuilder, IntCC, Type, Value},
+    prelude::{
+        settings, types, AbiParam, Configurable, EntityRef, InstBuilder, IntCC, Signature, Type,
+        Value,
+    },
 };
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataContext, Linkage, Module};
 use log::{debug, trace};
 use styxc_ast::{
-    Assignment, AssignmentKind, BinOp, BinOpKind, Declaration, Expr, Ident, If, Literal,
-    LiteralKind, Loop, Stmt, StmtKind, Var, AST,
+    Assignment, AssignmentKind, BinOp, BinOpKind, Declaration, Expr, FuncCall, Ident, If, Literal,
+    LiteralKind, Loop, Stmt, StmtKind, AST,
 };
 
 /// Root-level IR translator.
@@ -113,9 +116,13 @@ impl IrTranslator {
     }
 }
 
-fn type_to_ir_type(module: &dyn Module, ty: styxc_types::Type) -> Type {
+fn type_to_ir_type(module: &dyn Module, ty: styxc_types::Type) -> Option<Type> {
     use styxc_types::Type::*;
-    match ty {
+	// return none if unit type
+	if matches!(ty, styxc_types::Type::Unit) {
+		return None;
+	}
+    Some(match ty {
         Int => types::I64,
         Float => types::F64,
         Bool => types::B1,
@@ -126,13 +133,14 @@ fn type_to_ir_type(module: &dyn Module, ty: styxc_types::Type) -> Type {
         Map(_, _) => todo!(),
         Set(_) => todo!(),
         Optional(_) => todo!(),
-        Union(_) => todo!(),
+        Union(_) => unreachable!(),
         Intersection(_) => todo!(),
         Circular(_) => todo!(),
         Unit => todo!(),
         Infer => panic!("failed to infer type"),
         Never => todo!(),
-    }
+        Func(_, _) => todo!(),
+    })
 }
 
 /// Utility struct for generating functions.
@@ -140,17 +148,21 @@ struct FunctionTranslator<'a> {
     builder: FunctionBuilder<'a>,
     variables: HashMap<String, Variable>,
     module: &'a mut JITModule,
-	data_ctx: &'a mut DataContext,
+    data_ctx: &'a mut DataContext,
     index: usize,
 }
 
 impl<'a> FunctionTranslator<'a> {
     /// Create a new function translator using the specified Cranelift function builder and JIT module.
-    pub fn new(builder: FunctionBuilder<'a>, module: &'a mut JITModule, data_ctx: &'a mut DataContext) -> Self {
+    pub fn new(
+        builder: FunctionBuilder<'a>,
+        module: &'a mut JITModule,
+        data_ctx: &'a mut DataContext,
+    ) -> Self {
         Self {
             builder,
             module,
-			data_ctx,
+            data_ctx,
             variables: HashMap::new(),
             index: 0,
         }
@@ -181,6 +193,37 @@ impl<'a> FunctionTranslator<'a> {
             Assignment(assign) => self.translate_assignment(assign),
             Loop(loop_node) => self.translate_loop(loop_node),
             If(if_stmt) => self.translate_if(if_stmt),
+            FuncCall(call) => { self.translate_func_call(call); },
+            ExternFunc(extern_func) => {
+                // create function signature
+                let mut sig = Signature::new(self.module.target_config().default_call_conv);
+                // declare parameter types
+                extern_func
+                    .args
+                    .into_iter()
+                    .map(|arg| type_to_ir_type(self.module, arg.ty).unwrap())
+                    .map(|ty| AbiParam::new(ty))
+                    .for_each(|param| sig.params.push(param));
+                // declare return type
+				let ret_ty = type_to_ir_type(self.module, match extern_func.ty {
+						styxc_types::Type::Func(_, ret_ty) => *ret_ty,
+						_ => panic!("ExternFunc should have a function type"),
+					});
+				// declare the return type if it exists
+				if let Some(ret_ty) = ret_ty {
+					sig.returns.push(AbiParam::new(ret_ty));
+				}
+                // declare function
+                self.module
+                    .declare_function(&extern_func.ident.name, Linkage::Import, &sig)
+                    .unwrap();
+            }
+            FuncDecl(_) => todo!(),
+            Return(expr) => {
+				// translate the expression and return
+                let val = self.translate_expr(expr);
+                self.builder.ins().return_(&vec![val]);
+            }
         }
     }
 
@@ -207,19 +250,19 @@ impl<'a> FunctionTranslator<'a> {
                 .ins()
                 .iconst(self.module.target_config().pointer_type(), val),
             Float(val) => self.builder.ins().f64const(val),
-            String(contents) => { 
-				// define the data in the context
-				self.data_ctx.define(contents.as_bytes().into());
-				let data = self.module.declare_anonymous_data(false,false).unwrap();
-				// define and declare the data to the module
-				self.module.define_data(data, self.data_ctx).unwrap();
-				self.data_ctx.clear();
-				self.module.finalize_definitions();
-				// get the address of the data and return it
-				let (addr, _) = self.module.get_finalized_data(data);
-				let pointer = self.module.target_config().pointer_type();
-				self.builder.ins().iconst(pointer, addr as i64)
-			},
+            String(contents) => {
+                // define the data in the context
+                self.data_ctx.define(contents.as_bytes().into());
+                let data = self.module.declare_anonymous_data(false, false).unwrap();
+                // define and declare the data to the module
+                self.module.define_data(data, self.data_ctx).unwrap();
+                self.data_ctx.clear();
+                self.module.finalize_definitions();
+                // get the address of the data and return it
+                let (addr, _) = self.module.get_finalized_data(data);
+                let pointer = self.module.target_config().pointer_type();
+                self.builder.ins().iconst(pointer, addr as i64)
+            }
             Char(val) => self.builder.ins().iconst(types::I32, val as i64),
             Bool(val) => self.builder.ins().bconst(types::B1, val),
         }
@@ -232,7 +275,8 @@ impl<'a> FunctionTranslator<'a> {
         self.index += 1;
         self.variables.insert(decl.ident.name, var);
         let val = self.translate_expr(decl.value);
-        self.builder.declare_var(var, type_to_ir_type(self.module, decl.ty));
+        self.builder
+            .declare_var(var, type_to_ir_type(self.module, decl.ty).unwrap());
         self.builder.def_var(var, val)
     }
 
@@ -340,4 +384,32 @@ impl<'a> FunctionTranslator<'a> {
         self.builder.switch_to_block(merge_block);
         self.builder.seal_block(merge_block);
     }
+
+    fn translate_func_call(&mut self, call: FuncCall) -> Value {
+		let mut sig = self.module.make_signature();
+
+        // Add a parameter for each argument.
+        for _arg in &call.args {
+            sig.params.push(expr);
+        }
+
+        // For simplicity for now, just make all calls return a single I64.
+        sig.returns.push(AbiParam::new(self.int));
+
+        // TODO: Streamline the API here?
+        let callee = self
+            .module
+            .declare_function(&call.ident.name, Linkage::Import, &sig)
+            .expect("problem declaring function");
+        let local_callee = self
+            .module
+            .declare_func_in_func(callee, &mut self.builder.func);
+
+        let mut arg_values = Vec::new();
+        for arg in call.args {
+            arg_values.push(self.translate_expr(arg))
+        }
+        let call = self.builder.ins().call(local_callee, &arg_values);
+        self.builder.inst_results(call)[0]
+	}
 }

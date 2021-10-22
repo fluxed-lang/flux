@@ -80,6 +80,28 @@ literal = {
 }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+
+// types
+builtin_type = @{ tuple_type | "int" | "float" | "str" | "bool" | "()" }
+tuple_type = !{ "(" ~ (type_ident ~ ",")* ~ type_ident ~ ")" }
+type_ident = { builtin_type | ident }
+referenced_type = {
+	"&" ~ type_ident
+}
+
+type_bin_op_union = { "|" }
+type_bin_op_intersect = { "&" }
+type_bin_op = {
+	type_bin_op_intersect |
+    type_bin_op_union
+}
+
+type_bin_exp_inner = _{ ("(" ~ type_exp ~ ")") | type_ident }
+type_bin_exp = { type_bin_exp_inner ~ (type_bin_op ~ type_bin_exp_inner)+ }
+type_exp = { type_bin_exp | type_ident }
+
+type_decl = !{ "type" ~ ident ~ "=" ~ type_exp }
+
 block = { "{" ~ stmts? ~ "}" }
 
 bin_exp_inner = _{ ("(" ~ expression ~ ")") | literal | ident }
@@ -131,17 +153,19 @@ expression = { bin_exp | literal | ident | block }
 assignment_op = { "=" | "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" | "^=" }
 assignment = !{ (ident ~ ",")* ~ ident ~ assignment_op ~ (expression ~ ",")* ~ expression }
 
-declaration_type = { ":" ~ ident }
+declaration_type = { ":" ~ type_ident }
 declaration = !{ "let" ~ (ident ~ ",")* ~ ident ~ declaration_type? ~ "=" ~ (expression ~ ",")* ~ expression }
 mut_declaration = !{ "mut" ~ (ident ~ ",")* ~ ident ~ declaration_type? ~ "=" ~ (expression ~ ",")* ~ expression }
 
 func_return = !{ "return" ~ expression }
-func_param = !{ ident ~ ":" ~ ident }
+func_param = !{ ident ~ ":" ~ type_ident }
 func_params = !{ ("(" ~ (func_param ~ ",")* ~ func_param ~ ")") | func_param }
 func_decl = !{ ident ~ func_params? ~ "->" ~ block }
 
-func_call_params = @{ (expression ~ ",")* ~ expression }
-func_call = !{ ident ~ func_call_params }
+func_call_params = ${ (expression ~ ",")* ~ expression }
+func_call = !{ ident ~ func_call_params | ident ~ "()" }
+
+extern_func = !{ "extern" ~ ident ~ func_params? ~ "->" ~ type_ident }
 
 while_block = !{ "while" ~ expression ~ block }
 loop_block = !{ "loop" ~ block }
@@ -155,6 +179,9 @@ statement = _{
     if_else_block |
 	if_block |
     func_decl |
+    extern_func |
+	func_return |
+    type_decl |
     assignment |
     declaration |
     mut_declaration |

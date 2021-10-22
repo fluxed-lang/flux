@@ -13,10 +13,7 @@ use pest::{
     prec_climber::{Assoc, Operator, PrecClimber},
     Parser,
 };
-use styxc_ast::{
-    Assignment, AssignmentKind, BinOp, BinOpKind, Block, Declaration, Expr, Ident, If, Literal,
-    LiteralKind, Loop, Mutability, Span, Stmt, StmtKind, AST,
-};
+use styxc_ast::{AST, Assignment, AssignmentKind, BinOp, BinOpKind, Block, Declaration, Expr, ExternFunc, FuncCall, FuncDecl, Ident, If, Literal, LiteralKind, Loop, Mutability, ParenArgument, Span, Stmt, StmtKind};
 use styxc_types::Type;
 
 #[derive(Parser)]
@@ -60,6 +57,7 @@ impl<'a> StyxParser {
         let stmts = root.next().unwrap().into_inner();
         let stmts = self.parse_statements(stmts)?;
         debug!("Produced {} top-level AST statements", stmts.len());
+		trace!("{:#?}", stmts);
         Ok(AST {
             modules: vec![],
             stmts,
@@ -88,7 +86,8 @@ impl<'a> StyxParser {
                     Rule::assignment => StmtKind::Assignment(self.parse_assignment(inner)?),
                     Rule::loop_block => StmtKind::Loop(self.parse_loop_block(inner)?),
                     Rule::if_block => StmtKind::If(self.parse_if_statement(inner)?),
-                    Rule::func_call => todo!("function call"),
+                    Rule::func_call => StmtKind::FuncCall(self.parse_func_call(inner)?),
+					Rule::extern_func => StmtKind::ExternFunc(self.parse_extern_func(inner)?),
                     Rule::EOI => break,
                     _ => {
                         unreachable!("unexpected match: {:?}", inner.as_rule())
@@ -111,7 +110,7 @@ impl<'a> StyxParser {
         mutability: Mutability,
     ) -> Result<Vec<Declaration>, Box<dyn Error>> {
         let mut inner = pair.into_inner();
-        let mut idents = vec![];
+        let mut idents: Vec<(Ident, Option<Ident>)> = vec![];
         let mut exprs = vec![];
         // concatenate all idents
         loop {
@@ -120,7 +119,13 @@ impl<'a> StyxParser {
                 exprs.push(next);
                 break;
             }
-            idents.push(next);
+			let ident = self.parse_identifier(next)?;
+			if matches!(inner.peek().map(|r| r.as_rule()), Some(Rule::declaration_type)) {
+				let type_ident = self.parse_type_ident(inner.next().unwrap())?;
+				idents.push((ident, Some(type_ident)))
+			} else {
+				idents.push((ident, None));
+			}
         }
         // concatenate all exprs
         while let Some(expr) = inner.next() {
@@ -135,17 +140,17 @@ impl<'a> StyxParser {
         let mut index = 0;
         let results: Vec<Result<Declaration, Box<dyn Error>>> = idents
             .into_iter()
-            .map(|ident| {
+            .map(|(ident, ty_ident)| {
                 let value = if single_expr {
                     &exprs[0]
                 } else {
                     &exprs[index]
                 };
                 index += 1;
-                let ident = self.parse_identifier(ident)?;
                 let value = self.parse_expression(value.clone())?;
                 Ok(Declaration {
                     ty: Type::Infer,
+					ty_ident,
                     ident,
                     mutability,
                     value,
@@ -302,6 +307,85 @@ impl<'a> StyxParser {
         let block = self.parse_block(inner.next().unwrap())?;
         Ok(If { expr, block })
     }
+
+	/// Parse an external function declaration statement.
+	fn parse_extern_func(&mut self, pair: Pair<Rule>) -> Result<ExternFunc, Box<dyn Error>> {
+		let span = pair.as_span();
+		let mut inner = pair.into_inner();
+		let ident = self.parse_identifier(inner.next().unwrap())?;
+		let args = self.parse_paren_arguments(inner.next().unwrap())?;
+		// get the return type of the function if there is one
+		let ret_ty_ident = match inner.next() {
+			Some(type_ident) => Some(self.parse_type_ident(type_ident)?),
+			None => None
+		};
+		Ok(ExternFunc {
+			ident,
+			args,
+			ret_ty_ident,
+			ty: Type::Infer,
+			span: Span(span.start(), span.end()),
+		})
+	}
+
+	/// Parse function parameters.
+	fn parse_paren_arguments(&mut self, pair: Pair<Rule>) -> Result<Vec<ParenArgument>, Box<dyn Error>> {
+		let mut inner = pair.into_inner();
+		let mut params = vec![];
+		while let Some(param) = inner.next() {
+			params.push(self.parse_paren_argument(param)?);
+		}
+		Ok(params)
+	}
+
+	/// Parse a function parameter.
+	fn parse_paren_argument(&mut self, pair: Pair<Rule>) -> Result<ParenArgument, Box<dyn Error>> {
+		let mut inner = pair.into_inner();
+		let ident = self.parse_identifier(inner.next().unwrap())?;
+		let ty_ident = self.parse_type_ident(inner.next().unwrap())?;
+		Ok(ParenArgument {
+			ty: Type::Infer,
+			ident,
+			ty_ident
+		})
+	}
+
+	/// Parse a type identifier.
+	fn parse_type_ident(&mut self, pair: Pair<Rule>) -> Result<Ident, Box<dyn Error>> {
+		let inner = pair.into_inner().next().unwrap();
+		if let Rule::builtin_type = inner.as_rule() {
+			Ok(Ident {
+				name: inner.as_str().to_string(),
+				span: Span(inner.as_span().start(), inner.as_span().end()),
+			})
+		} else {
+			Ok(self.parse_identifier(inner)?)
+		}
+	}
+
+	/// Parse a function call.
+	fn parse_func_call(&mut self, pair: Pair<Rule>) -> Result<FuncCall, Box<dyn Error>> {
+		let span = pair.as_span();
+		let mut inner = pair.into_inner();
+		let ident = self.parse_identifier(inner.next().unwrap())?;
+		let args = self.parse_func_call_params(inner.next().unwrap())?;
+		Ok(FuncCall {
+			ident,
+			args,
+			return_ty: Type::Infer,
+			span: Span(span.start(), span.end()),
+		})
+	}
+
+	/// Parse function call parameters
+	fn parse_func_call_params(&mut self, pair: Pair<Rule>) -> Result<Vec<Expr>, Box<dyn Error>> {
+		let mut inner = pair.into_inner();
+		let mut params = vec![];
+		while let Some(param) = inner.next() {
+			params.push(self.parse_expression(param)?);
+		}
+		Ok(params)
+	}
 }
 
 impl Default for StyxParser {
@@ -313,150 +397,8 @@ impl Default for StyxParser {
 #[cfg(test)]
 mod tests {
     use pest::Span;
-    use styxc_ast::*;
 
     use super::*;
-
-    #[test]
-    fn test_parse() {
-        let source: String = "let x = 1; x = z;".into();
-        let ast = StyxParser::default().build(&source).unwrap();
-
-        assert_eq!(
-            ast,
-            AST {
-                modules: vec![],
-                stmts: vec![
-                    Stmt {
-                        id: 1,
-                        kind: StmtKind::Declaration(vec![Declaration {
-                            ident: Ident {
-                                name: "x".into(),
-                                span: Span(4, 5),
-                            },
-                            ty: Type::Infer,
-                            mutability: Mutability::Immutable,
-                            value: Expr::Literal(Literal {
-                                ty: Type::Infer,
-                                kind: LiteralKind::Int(1),
-                                span: Span(8, 9),
-                            })
-                        }])
-                    },
-                    Stmt {
-                        id: 2,
-                        kind: StmtKind::Assignment(Assignment {
-                            ident: Ident {
-                                name: "x".into(),
-                                span: Span(11, 12),
-                            },
-                            value: Expr::Ident(Ident {
-                                name: "z".into(),
-                                span: Span(15, 16),
-                            }),
-                            kind: AssignmentKind::Assign,
-                        })
-                    }
-                ]
-            }
-        )
-    }
-
-    #[test]
-    fn test_bin_op() {
-        let source: String = "let x = 1 + 2".into();
-        let ast = StyxParser::default().build(&source).unwrap();
-        assert_eq!(
-            ast,
-            AST {
-                modules: vec![],
-                stmts: vec![Stmt {
-                    id: 1,
-                    kind: StmtKind::Declaration(vec![Declaration {
-                        ty: Type::Infer,
-                        ident: Ident {
-                            name: "x".into(),
-                            span: Span(4, 5),
-                        },
-                        mutability: Mutability::Immutable,
-                        value: Expr::BinOp(BinOp {
-                            kind: BinOpKind::Add,
-                            lhs: Expr::Literal(Literal {
-                                ty: Type::Infer,
-                                kind: LiteralKind::Int(1),
-                                span: Span(8, 9),
-                            })
-                            .into(),
-                            rhs: Expr::Literal(Literal {
-                                ty: Type::Infer,
-                                kind: LiteralKind::Int(2),
-                                span: Span(12, 13),
-                            })
-                            .into(),
-                        })
-                    }])
-                }]
-            }
-        )
-    }
-
-    #[test]
-    fn test_bin_op_the_second() {
-        let source: String = "let x = 1 + 2 * 3 / 4".into();
-        let ast = StyxParser::default().build(&source).unwrap();
-        assert_eq!(
-            ast,
-            AST {
-                modules: vec![],
-                stmts: vec![Stmt {
-                    id: 1,
-                    kind: StmtKind::Declaration(vec![Declaration {
-                        ty: Type::Infer,
-                        ident: Ident {
-                            name: "x".into(),
-                            span: Span(4, 5),
-                        },
-                        mutability: Mutability::Immutable,
-                        value: Expr::BinOp(BinOp {
-                            kind: BinOpKind::Add,
-                            lhs: Expr::Literal(Literal {
-                                ty: Type::Infer,
-                                kind: LiteralKind::Int(1),
-                                span: Span(8, 9),
-                            })
-                            .into(),
-                            rhs: Expr::BinOp(BinOp {
-                                kind: BinOpKind::Mul,
-                                lhs: Expr::Literal(Literal {
-                                    ty: Type::Infer,
-                                    kind: LiteralKind::Int(2),
-                                    span: Span(12, 13),
-                                })
-                                .into(),
-                                rhs: Expr::BinOp(BinOp {
-                                    kind: BinOpKind::Div,
-                                    lhs: Expr::Literal(Literal {
-                                        ty: Type::Infer,
-                                        kind: LiteralKind::Int(3),
-                                        span: Span(16, 17),
-                                    })
-                                    .into(),
-                                    rhs: Expr::Literal(Literal {
-                                        ty: Type::Infer,
-                                        kind: LiteralKind::Int(4),
-                                        span: Span(20, 21),
-                                    })
-                                    .into(),
-                                })
-                                .into()
-                            })
-                            .into()
-                        })
-                    }])
-                }]
-            }
-        )
-    }
 
     #[test]
     fn test_ident() {

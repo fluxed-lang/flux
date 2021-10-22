@@ -1,1 +1,2 @@
-print "hello, world!"
+extern puts x: str -> ()
+puts "hello world!"
