@@ -13,9 +13,6 @@ use styxc_ast::{
     LiteralKind, Loop, Stmt, StmtKind, Var, AST,
 };
 
-/// Represents a variable in the current stack.
-struct IrVar(Var, Variable);
-
 /// Root-level IR translator.
 pub struct IrTranslator {
     /// The function builder context, which is reused across multiple
@@ -231,8 +228,8 @@ impl<'a> FunctionTranslator<'a> {
 
         use AssignmentKind::*;
 
-		let val = self.resolve_var(&assign.ident).unwrap();
-		let rhs = self.translate_expr(assign.value);
+        let val = self.resolve_var(&assign.ident).unwrap();
+        let rhs = self.translate_expr(assign.value);
 
         let new_value = match assign.kind {
             Assign => rhs,
