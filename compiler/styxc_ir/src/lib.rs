@@ -113,14 +113,14 @@ impl IrTranslator {
     }
 }
 
-fn type_to_ir_type(ty: styxc_types::Type) -> Type {
+fn type_to_ir_type(module: &dyn Module, ty: styxc_types::Type) -> Type {
     use styxc_types::Type::*;
     match ty {
         Int => types::I64,
         Float => types::F64,
         Bool => types::B1,
         Char => types::I32,
-        String => todo!("string type not supported"),
+        String => module.target_config().pointer_type(),
         Tuple(_) => todo!(),
         Array(_) => todo!(),
         Map(_, _) => todo!(),
@@ -232,7 +232,7 @@ impl<'a> FunctionTranslator<'a> {
         self.index += 1;
         self.variables.insert(decl.ident.name, var);
         let val = self.translate_expr(decl.value);
-        self.builder.declare_var(var, type_to_ir_type(decl.ty));
+        self.builder.declare_var(var, type_to_ir_type(self.module, decl.ty));
         self.builder.def_var(var, val)
     }
 
