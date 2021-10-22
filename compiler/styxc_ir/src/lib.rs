@@ -66,7 +66,7 @@ impl IrTranslator {
         builder.seal_block(entry_block);
         // instantiate function builder and build.
         trace!("Instantiating function builder...");
-        let mut trans = FunctionTranslator::new(builder, &mut self.module);
+        let mut trans = FunctionTranslator::new(builder, &mut self.module, &mut self.data_ctx);
         trans.translate_stmts(ast.stmts);
         trace!("Finalizing builder...");
         trans.builder.ins().return_(&vec![]);
@@ -140,15 +140,17 @@ struct FunctionTranslator<'a> {
     builder: FunctionBuilder<'a>,
     variables: HashMap<String, Variable>,
     module: &'a mut JITModule,
+	data_ctx: &'a mut DataContext,
     index: usize,
 }
 
 impl<'a> FunctionTranslator<'a> {
     /// Create a new function translator using the specified Cranelift function builder and JIT module.
-    pub fn new(builder: FunctionBuilder<'a>, module: &'a mut JITModule) -> Self {
+    pub fn new(builder: FunctionBuilder<'a>, module: &'a mut JITModule, data_ctx: &'a mut DataContext) -> Self {
         Self {
             builder,
             module,
+			data_ctx,
             variables: HashMap::new(),
             index: 0,
         }
@@ -205,7 +207,19 @@ impl<'a> FunctionTranslator<'a> {
                 .ins()
                 .iconst(self.module.target_config().pointer_type(), val),
             Float(val) => self.builder.ins().f64const(val),
-            String(_) => todo!("no"),
+            String(contents) => { 
+				// define the data in the context
+				self.data_ctx.define(contents.as_bytes().into());
+				let data = self.module.declare_anonymous_data(false,false).unwrap();
+				// define and declare the data to the module
+				self.module.define_data(data, self.data_ctx).unwrap();
+				self.data_ctx.clear();
+				self.module.finalize_definitions();
+				// get the address of the data and return it
+				let (addr, _) = self.module.get_finalized_data(data);
+				let pointer = self.module.target_config().pointer_type();
+				self.builder.ins().iconst(pointer, addr as i64)
+			},
             Char(val) => self.builder.ins().iconst(types::I32, val as i64),
             Bool(val) => self.builder.ins().bconst(types::B1, val),
         }
