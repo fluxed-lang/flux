@@ -4,11 +4,11 @@ use styxc_ast::{func::ParenArgument, AST};
 use styxc_types::Type;
 
 /// Represents a callable function.
-struct Function<'a> {
+struct Function {
     /// The name of the function.
     name: String,
     /// The arguments of the function.
-    args: Vec<ParenArgument<'a>>,
+    args: Vec<ParenArgument>,
     /// The type of the function.
     ty: Type,
     /// The linkage type of this function.
@@ -34,10 +34,10 @@ struct TypeVariable {
 }
 
 /// An AST tree walker.
-struct TreeWalker<'a> {
-    ast: AST<'a>,
+struct TreeWalker {
+    ast: AST,
     /// A vector of functions available for calling in the current scope.
-    funcs: Vec<Function<'a>>,
+    funcs: Vec<Function>,
     /// A stack of variables available to reference in the current scope.
     vars: Stack<Variable>,
     /// A stack of type variables to reference in the current scope.

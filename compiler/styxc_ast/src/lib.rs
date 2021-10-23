@@ -1,27 +1,29 @@
-use pest::Span;
 use styxc_types::Type;
 
 use crate::control::{If, Loop};
 use crate::func::{ExternFunc, FuncCall, FuncDecl};
 use crate::operations::{Assignment, BinOp};
+use crate::span::Span;
 
 pub mod control;
 pub mod func;
 pub mod operations;
 pub mod passes;
+pub mod span;
 
 #[derive(Debug, PartialEq)]
-pub struct Node<'a, T> {
+pub struct Node<T> {
     /// The ID of this node in the AST.
     pub id: usize,
     /// The span of the source code that this node represents.
-    pub span: Span<'a>,
+    pub span: Span,
+    /// The inner value held by this AST node.
     pub value: T,
 }
 
-impl<'a, T> Node<'a, T> {
+impl<T> Node<T> {
     /// Create a new node.
-    pub fn new(id: usize, span: Span<'a>, value: T) -> Self {
+    pub fn new(id: usize, span: Span, value: T) -> Self {
         Self { id, span, value }
     }
 }
@@ -64,17 +66,17 @@ pub struct Literal {
 
 /// A declaration of a variable.
 #[derive(Debug, PartialEq)]
-pub struct Declaration<'a> {
+pub struct Declaration {
     /// The type of this declaration.
     pub ty: Type,
     /// The explicit type identifier of this declaration, if it exists.
-    pub ty_ident: Option<Node<'a, Ident>>,
+    pub ty_ident: Option<Node<Ident>>,
     /// The identifier being declared.
-    pub ident: Node<'a, Ident>,
+    pub ident: Node<Ident>,
     /// The mutability of the declared identifier.
     pub mutability: Mutability,
     /// The declared value.
-    pub value: Node<'a, Expr<'a>>,
+    pub value: Node<Expr>,
 }
 
 /// An enum representing variable mutability.
@@ -98,41 +100,41 @@ pub struct Ident {
 
 /// Enum of possible statement kinds.
 #[derive(Debug, PartialEq)]
-pub enum Stmt<'a> {
+pub enum Stmt {
     /// A declaration.
-    Declaration(Vec<Node<'a, Declaration<'a>>>),
+    Declaration(Vec<Node<Declaration>>),
     /// An assignment.
-    Assignment(Node<'a, Assignment<'a>>),
+    Assignment(Node<Assignment>),
     // A loop block.
-    Loop(Node<'a, Loop<'a>>),
+    Loop(Node<Loop>),
     /// An if statement.
-    If(Node<'a, If<'a>>),
+    If(Node<If>),
     /// A function declaration.
-    FuncDecl(Node<'a, FuncDecl<'a>>),
+    FuncDecl(Node<FuncDecl>),
     /// An external function declaration.
-    ExternFunc(Node<'a, ExternFunc<'a>>),
+    ExternFunc(Node<ExternFunc>),
     /// A function call.
-    FuncCall(Node<'a, FuncCall<'a>>),
+    FuncCall(Node<FuncCall>),
     /// A function return statement.
-    Return(Node<'a, Expr<'a>>),
+    Return(Node<Expr>),
 }
 
 #[derive(Debug, PartialEq)]
-pub enum Expr<'a> {
+pub enum Expr {
     /// A literal expression.
-    Literal(Node<'a, Literal>),
+    Literal(Node<Literal>),
     /// An identifier expression.
-    Ident(Node<'a, Ident>),
+    Ident(Node<Ident>),
     /// A binary operation expression.
-    BinOp(Node<'a, BinOp<'a>>),
+    BinOp(Node<BinOp>),
     /// A block (e.g. `{ /* ... */ }`).
-    Block(Box<Block<'a>>),
+    Block(Node<Block>),
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Block<'a> {
+pub struct Block {
     /// The list of statements in the block.
-    pub stmts: Vec<Node<'a, Stmt<'a>>>,
+    pub stmts: Vec<Node<Stmt>>,
 }
 
 /// An external, imported module.
@@ -141,16 +143,16 @@ pub struct Module {}
 
 /// The root AST instance.
 #[derive(Debug, PartialEq)]
-pub struct AST<'a> {
+pub struct AST {
     /// The list of top-level statements in the AST.
-    pub stmts: Vec<Node<'a, Stmt<'a>>>,
+    pub stmts: Vec<Node<Stmt>>,
     /// The list of external modules imported into this file.
     pub modules: Vec<Module>,
 }
 
-impl<'a> AST<'a> {
+impl AST {
     /// Create a new AST instance.
-    pub fn new() -> AST<'a> {
+    pub fn new() -> AST {
         AST {
             stmts: vec![],
             modules: vec![],

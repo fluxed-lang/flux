@@ -189,11 +189,11 @@ impl BinOpKind {
 
 /// A binary expression.
 #[derive(Debug, PartialEq)]
-pub struct BinOp<'a> {
+pub struct BinOp {
     /// The left hand side of the binary expression.
-    pub lhs: Box<Node<'a, Expr<'a>>>,
+    pub lhs: Box<Node<Expr>>,
     /// The right hand side of the binary expression.
-    pub rhs: Box<Node<'a, Expr<'a>>>,
+    pub rhs: Box<Node<Expr>>,
     /// The kind of binary expression.
     pub kind: BinOpKind,
 }
@@ -227,11 +227,11 @@ pub enum AssignmentKind {
 ///  A variable assignment.
 #[derive(Debug, PartialEq)]
 
-pub struct Assignment<'a> {
+pub struct Assignment {
     /// The identifier being assigned to.
-    pub ident: Node<'a, Ident>,
+    pub ident: Node<Ident>,
     /// The declared value.
-    pub value: Node<'a, Expr<'a>>,
+    pub value: Node<Expr>,
     /// The kind of assignment.
     pub kind: AssignmentKind,
 }

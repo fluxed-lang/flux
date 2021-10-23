@@ -2,27 +2,27 @@ use crate::{Block, Expr, Node};
 
 /// An if statement.
 #[derive(Debug, PartialEq)]
-pub struct If<'a> {
+pub struct If {
     /// The expression this if statement will validate.
-    pub expr: Node<'a, Expr<'a>>,
+    pub expr: Node<Expr>,
     /// The block of code to execute if the expression is true.
-    pub block: Node<'a, Block<'a>>,
+    pub block: Node<Block>,
 }
 
 /// An else statement.
-pub struct Else<'a> {
+pub struct Else {
     /// The block this else statement will execute.
-    pub block: Node<'a, Block<'a>>,
+    pub block: Node<Block>,
 }
 
 /// A match expression.
-pub struct Match<'a> {
+pub struct Match {
     /// The expression being matched.
-    pub expr: Box<Node<'a, Expr<'a>>>,
+    pub expr: Box<Node<Expr>>,
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Loop<'a> {
+pub struct Loop {
     /// The block owned by this loop.
-    pub block: Node<'a, Block<'a>>,
+    pub block: Node<Block>,
 }

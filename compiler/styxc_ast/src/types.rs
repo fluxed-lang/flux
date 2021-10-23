@@ -1,3 +1,4 @@
+/// A trait implementable by typed objects allowing them
 pub trait Typed {
 	fn ty(&self) -> Type;
 }
