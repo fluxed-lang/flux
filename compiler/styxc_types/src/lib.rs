@@ -39,18 +39,18 @@ pub enum Type {
 }
 
 impl From<String> for Type {
-	fn from(s: String) -> Self {
-		use Type::*;
-		match s.as_str() {
-			"()" => Unit,
-			"bool" => Bool,
-			"char" => Char,
-			"float" => Float,
-			"int" => Int,
-			"str" => String,
-			_ => panic!("cannot convert non-primitive string representation of a type to a type")
-		}
-	}
+    fn from(s: String) -> Self {
+        use Type::*;
+        match s.as_str() {
+            "()" => Unit,
+            "bool" => Bool,
+            "char" => Char,
+            "float" => Float,
+            "int" => Int,
+            "str" => String,
+            _ => panic!("cannot convert non-primitive string representation of a type to a type"),
+        }
+    }
 }
 
 impl PartialEq for Type {

@@ -12,9 +12,12 @@ use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataContext, Linkage, Module};
 use log::{debug, trace};
 use styxc_ast::{
-    Assignment, AssignmentKind, BinOp, BinOpKind, Declaration, Expr, FuncCall, Ident, If, Literal,
-    LiteralKind, Loop, Stmt, StmtKind, AST,
+    control::{If, Loop},
+    operations::{Assignment, AssignmentKind, BinOp, BinOpKind},
+    Declaration, Expr, Ident, Literal, LiteralKind, Node, Stmt, AST,
 };
+
+mod ast;
 
 /// Root-level IR translator.
 pub struct IrTranslator {
@@ -118,10 +121,10 @@ impl IrTranslator {
 
 fn type_to_ir_type(module: &dyn Module, ty: styxc_types::Type) -> Option<Type> {
     use styxc_types::Type::*;
-	// return none if unit type
-	if matches!(ty, styxc_types::Type::Unit) {
-		return None;
-	}
+    // return none if unit type
+    if matches!(ty, styxc_types::Type::Unit) {
+        return None;
+    }
     Some(match ty {
         Int => types::I64,
         Float => types::F64,
@@ -176,54 +179,59 @@ impl<'a> FunctionTranslator<'a> {
     }
 
     /// Translate and build statements.
-    fn translate_stmts(&mut self, stmts: Vec<Stmt>) {
+    fn translate_stmts(&mut self, stmts: Vec<Node<Stmt>>) {
         for stmt in stmts {
-            self.translate_stmt(stmt);
+            self.translate_stmt(stmt.value);
         }
     }
 
     /// Translate and build a statement.
     fn translate_stmt(&mut self, stmt: Stmt) {
         trace!("TRANSLATE Stmt");
-        use StmtKind::*;
-        match stmt.kind {
+        use Stmt::*;
+        match stmt {
             Declaration(decl) => decl
                 .into_iter()
-                .for_each(|decl| self.translate_declaration(decl)),
-            Assignment(assign) => self.translate_assignment(assign),
-            Loop(loop_node) => self.translate_loop(loop_node),
-            If(if_stmt) => self.translate_if(if_stmt),
-            FuncCall(call) => { self.translate_func_call(call); },
+                .for_each(|decl| self.translate_declaration(decl.value)),
+            Assignment(assign) => self.translate_assignment(assign.value),
+            Loop(loop_node) => self.translate_loop(loop_node.value),
+            If(if_stmt) => self.translate_if(if_stmt.value),
+            // FuncCall(call) => { self.translate_func_call(call.value); },
             ExternFunc(extern_func) => {
                 // create function signature
                 let mut sig = Signature::new(self.module.target_config().default_call_conv);
                 // declare parameter types
                 extern_func
+                    .value
                     .args
                     .into_iter()
-                    .map(|arg| type_to_ir_type(self.module, arg.ty).unwrap())
+                    .map(|arg| type_to_ir_type(self.module, arg.value.ty).unwrap())
                     .map(|ty| AbiParam::new(ty))
                     .for_each(|param| sig.params.push(param));
                 // declare return type
-				let ret_ty = type_to_ir_type(self.module, match extern_func.ty {
-						styxc_types::Type::Func(_, ret_ty) => *ret_ty,
-						_ => panic!("ExternFunc should have a function type"),
-					});
-				// declare the return type if it exists
-				if let Some(ret_ty) = ret_ty {
-					sig.returns.push(AbiParam::new(ret_ty));
-				}
+                let ret_ty = type_to_ir_type(
+                    self.module,
+                    match extern_func.value.ty {
+                        styxc_types::Type::Func(_, ret_ty) => *ret_ty,
+                        _ => panic!("ExternFunc should have a function type"),
+                    },
+                );
+                // declare the return type if it exists
+                if let Some(ret_ty) = ret_ty {
+                    sig.returns.push(AbiParam::new(ret_ty));
+                }
                 // declare function
                 self.module
-                    .declare_function(&extern_func.ident.name, Linkage::Import, &sig)
+                    .declare_function(&extern_func.value.ident.value.name, Linkage::Import, &sig)
                     .unwrap();
             }
             FuncDecl(_) => todo!(),
             Return(expr) => {
-				// translate the expression and return
-                let val = self.translate_expr(expr);
+                // translate the expression and return
+                let val = self.translate_expr(expr.value);
                 self.builder.ins().return_(&vec![val]);
             }
+            _ => todo!(),
         }
     }
 
@@ -232,11 +240,11 @@ impl<'a> FunctionTranslator<'a> {
         trace!("TRANSLATE Expr");
         use Expr::*;
         match expr {
-            Literal(literal) => self.translate_literal(literal),
+            Literal(literal) => self.translate_literal(literal.value),
             Ident(ident) => self
                 .builder
-                .use_var(*self.variables.get(&ident.name).unwrap()),
-            BinOp(bin_op) => self.translate_bin_op(bin_op),
+                .use_var(*self.variables.get(&ident.value.name).unwrap()),
+            BinOp(bin_op) => self.translate_bin_op(bin_op.value),
             Block(block) => todo!(),
         }
     }
@@ -273,8 +281,8 @@ impl<'a> FunctionTranslator<'a> {
         trace!("TRANSLATE Declaration");
         let var = Variable::new(self.index);
         self.index += 1;
-        self.variables.insert(decl.ident.name, var);
-        let val = self.translate_expr(decl.value);
+        self.variables.insert(decl.ident.value.name, var);
+        let val = self.translate_expr(decl.value.value);
         self.builder
             .declare_var(var, type_to_ir_type(self.module, decl.ty).unwrap());
         self.builder.def_var(var, val)
@@ -286,8 +294,8 @@ impl<'a> FunctionTranslator<'a> {
 
         use AssignmentKind::*;
 
-        let val = self.resolve_var(&assign.ident).unwrap();
-        let rhs = self.translate_expr(assign.value);
+        let val = self.resolve_var(&assign.ident.value).unwrap();
+        let rhs = self.translate_expr(assign.value.value);
 
         let new_value = match assign.kind {
             Assign => rhs,
@@ -302,7 +310,7 @@ impl<'a> FunctionTranslator<'a> {
             DivAssign => self.builder.ins().sdiv(val, rhs),
             ModAssign => self.builder.ins().srem(val, rhs),
         };
-        let variable = self.variables.get(&assign.ident.name).unwrap();
+        let variable = self.variables.get(&assign.ident.value.name).unwrap();
         self.builder.def_var(*variable, new_value);
     }
 
@@ -315,7 +323,7 @@ impl<'a> FunctionTranslator<'a> {
         self.builder.ins().jump(body_block, &[]);
         self.builder.switch_to_block(body_block);
         // translate loop statements
-        self.translate_stmts(loop_node.block.stmts);
+        self.translate_stmts(loop_node.block.value.stmts);
         self.builder.ins().jump(body_block, &[]);
         // seal and switch to exit block
         self.builder.switch_to_block(exit_block);
@@ -325,8 +333,8 @@ impl<'a> FunctionTranslator<'a> {
 
     // Translate a binary operation.
     fn translate_bin_op(&mut self, bin_op: BinOp) -> Value {
-        let lhs = self.translate_expr(*bin_op.lhs);
-        let rhs = self.translate_expr(*bin_op.rhs);
+        let lhs = self.translate_expr(bin_op.lhs.value);
+        let rhs = self.translate_expr(bin_op.rhs.value);
         use BinOpKind::*;
         match bin_op.kind {
             Add => self.builder.ins().iadd(lhs, rhs),
@@ -367,7 +375,7 @@ impl<'a> FunctionTranslator<'a> {
 
     /// Translate an if statement in to code.
     fn translate_if(&mut self, if_stmt: If) {
-        let condition_value = self.translate_expr(if_stmt.expr);
+        let condition_value = self.translate_expr(if_stmt.expr.value);
         let then_block = self.builder.create_block();
         let merge_block = self.builder.create_block();
         // test if condition and conditionally branch
@@ -377,7 +385,7 @@ impl<'a> FunctionTranslator<'a> {
         self.builder.switch_to_block(then_block);
         self.builder.seal_block(then_block);
         // output statements into block.
-        self.translate_stmts(if_stmt.block.stmts);
+        self.translate_stmts(if_stmt.block.value.stmts);
         // jump back to merging block
         self.builder.ins().jump(merge_block, &[]);
         // switch to the merge block for subsequent statements.
@@ -385,31 +393,31 @@ impl<'a> FunctionTranslator<'a> {
         self.builder.seal_block(merge_block);
     }
 
-    fn translate_func_call(&mut self, call: FuncCall) -> Value {
-		let mut sig = self.module.make_signature();
+    // fn translate_func_call(&mut self, call: FuncCall) -> Value {
+    // 	let mut sig = self.module.make_signature();
 
-        // Add a parameter for each argument.
-        for _arg in &call.args {
-            sig.params.push(expr);
-        }
+    //     // Add a parameter for each argument.
+    //     for _arg in &call.args {
+    //         sig.params.push(styxc_ast::);
+    //     }
 
-        // For simplicity for now, just make all calls return a single I64.
-        sig.returns.push(AbiParam::new(self.int));
+    //     // For simplicity for now, just make all calls return a single I64.
+    //     sig.returns.push(AbiParam::new(self.int));
 
-        // TODO: Streamline the API here?
-        let callee = self
-            .module
-            .declare_function(&call.ident.name, Linkage::Import, &sig)
-            .expect("problem declaring function");
-        let local_callee = self
-            .module
-            .declare_func_in_func(callee, &mut self.builder.func);
+    //     // TODO: Streamline the API here?
+    //     let callee = self
+    //         .module
+    //         .declare_function(&call.ident.name, Linkage::Import, &sig)
+    //         .expect("problem declaring function");
+    //     let local_callee = self
+    //         .module
+    //         .declare_func_in_func(callee, &mut self.builder.func);
 
-        let mut arg_values = Vec::new();
-        for arg in call.args {
-            arg_values.push(self.translate_expr(arg))
-        }
-        let call = self.builder.ins().call(local_callee, &arg_values);
-        self.builder.inst_results(call)[0]
-	}
+    //     let mut arg_values = Vec::new();
+    //     for arg in call.args {
+    //         arg_values.push(self.translate_expr(arg))
+    //     }
+    //     let call = self.builder.ins().call(local_callee, &arg_values);
+    //     self.builder.inst_results(call)[0]
+    // }
 }

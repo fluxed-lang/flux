@@ -1,68 +1,28 @@
-use std::error::Error;
-use std::str::FromStr;
+use pest::Span;
+use styxc_types::Type;
 
-use log::debug;
-use styxc_types::{FuncType, Type};
+use crate::control::{If, Loop};
+use crate::func::{ExternFunc, FuncCall, FuncDecl};
+use crate::operations::{Assignment, BinOp};
 
-use crate::passes::{validate_symbols, validate_types};
+pub mod control;
+pub mod func;
+pub mod operations;
+pub mod passes;
 
-pub mod types;
-mod passes;
-
-/// A struct represnting a span of a string. The first paramteter is the start index of the span,
-/// and the second parameter is the end index of the span (inclusive).
-#[derive(Debug, PartialEq, Clone)]
-pub struct Span(
-    /// The start index of the span.
-    pub usize,
-    /// The end index of the span.
-    pub usize,
-);
-
-impl Span {
-    /// Returns true if this span includes another.
-    pub const fn includes(&self, other: &Span) -> bool {
-        self.0 < other.0 && self.1 > other.1
-    }
-
-    /// Returns true if this span overlaps with another.
-    pub const fn overlaps(&self, other: &Span) -> bool {
-        self.0 <= other.1 && self.1 >= other.0
-    }
+#[derive(Debug, PartialEq)]
+pub struct Node<'a, T> {
+    /// The ID of this node in the AST.
+    pub id: usize,
+    /// The span of the source code that this node represents.
+    pub span: Span<'a>,
+    pub value: T,
 }
 
-/// Represents a spanned AST node.
-struct Spanned<T> {
-    /// The inner value held by this spanned.
-    pub inner: T,
-    /// The section of source code this value covers.
-    pub span: Span,
-}
-
-impl<T> Spanned<T> {
-    /// Wrap the specified valie in a span.`
-    pub fn new(inner: T, span: Span) -> Self {
-        Self { inner, span }
-    }
-}
-
-#[cfg(test)]
-mod span_test {
-    use super::Span;
-    #[test]
-    fn span_test() {
-        // a contains b, but does not contain c
-        // a overlaps with both b and c.
-        // c does not overlap with b.
-        let a = Span(0, 10);
-        let b = Span(3, 5);
-        let c = Span(6, 11);
-
-        assert!(a.includes(&b));
-        assert!(!a.includes(&c));
-        assert!(a.overlaps(&b));
-        assert!(a.overlaps(&c));
-        assert!(!b.overlaps(&c));
+impl<'a, T> Node<'a, T> {
+    /// Create a new node.
+    pub fn new(id: usize, span: Span<'a>, value: T) -> Self {
+        Self { id, span, value }
     }
 }
 
@@ -100,362 +60,21 @@ pub struct Literal {
     pub ty: Type,
     /// The kind of literal.
     pub kind: LiteralKind,
-    /// The span containing the literal.
-    pub span: Span,
-}
-
-/// An argument to a function call.
-#[derive(Debug, PartialEq)]
-pub struct ParenArgument {
-    /// The identifier representing the AST node.
-    pub ident: Ident,
-    /// The type of this argument.
-    pub ty: Type,
-	/// The identifier representing the type of this argument.
-	pub ty_ident: Ident
-}
-
-#[derive(Debug, PartialEq)]
-pub struct ExternFunc {
-    /// The identifier representing the external function.
-    pub ident: Ident,
-    /// The type of this function.
-    pub ty: Type,
-    /// The arguments this function requires.
-    pub args: Vec<ParenArgument>,
-    /// The span containing the function.
-    pub span: Span,
-    /// The identifier representing the return type of the function, if there is one.
-    pub ret_ty_ident: Option<Ident>,
-}
-
-impl FuncType for ExternFunc {
-    fn as_ty(&self) -> Type {
-        self.ty.clone()
-    }
-    fn argument_types(&self) -> Vec<Type> {
-        self.args.iter().map(|arg| arg.ty.clone()).collect()
-    }
-    fn ret_ty(&self) -> Type {
-        if let Type::Func(_, ret_ty) = &self.ty {
-			*ret_ty.clone()
-		}
-		else { panic!() }
-    }
-}
-
-/// A function declaration.
-#[derive(Debug, PartialEq)]
-pub struct FuncDecl {
-    /// The identifier representing the function.
-    pub ident: Ident,
-    /// The type of this function.
-    pub ty: Type,
-    /// The arguments this function requires.
-    pub args: Vec<ParenArgument>,
-    /// The span containing the function.
-    pub span: Span,
-    /// The return type of the function.
-    pub return_ty: Type,
-    /// The body of the function.
-    pub body: Block,
-}
-
-impl FuncType for FuncDecl {
-    fn as_ty(&self) -> Type {
-        self.ty.clone()
-    }
-    fn argument_types(&self) -> Vec<Type> {
-        self.args.iter().map(|arg| arg.ty.clone()).collect()
-    }
-    fn ret_ty(&self) -> Type {
-        self.return_ty.clone()
-    }
-}
-
-/// A function call.
-#[derive(Debug, PartialEq)]
-pub struct FuncCall {
-    /// The identifier of the function
-    pub ident: Ident,
-    /// Arguments being passed to the function.
-    pub args: Vec<Expr>,
-    /// The inferred return type of this function call.
-    pub return_ty: Type,
-    /// The span containing the function.
-    pub span: Span,
-}
-
-/// Enum representing operator associativity.
-///
-/// Some operators are evaluated from left-to-right, while others are evaluated from right-to-left.
-/// This property is known as an operator's associativity. In order for the compiler to correctly
-/// generate machine code that performs as expected, the associativity of each operator must be defined
-/// in the language specification.
-///
-/// This enum contains two values:
-/// - `Associativity::Left`: The left-to-right associativity.
-/// - `Associativity::Right`: The right-to-left associativity.
-///
-/// Each operator is then matched to either one of these options, and compiled as such.
-#[derive(Debug, PartialEq)]
-pub enum Associativity {
-    /// Left-to-right associativity.
-    Ltr,
-    /// Right-to-left associativity.
-    Rtl,
-}
-
-/// Enum representing unary operator types.
-///
-/// Unary operators are operators that act on a single argument, such as `x++`, or `!x`.
-#[derive(Debug, PartialEq)]
-pub enum UnOpKind {
-    /// The suffix increment operator, `++`.
-    Incr,
-    /// The suffix decrement operator, `--`.
-    Decr,
-    /// The prefix increment operator, `++`.
-    /// The index operator, `[n]`
-    Index(usize),
-    /// The address-of operator, `&`.
-    Addr,
-    /// The bitwise not operator, `~`.
-    Not,
-    /// The logical not operator, `!`.
-    LogNot,
-    /// The de-reference operator, `*`.
-    Deref,
-    /// The call operator, `()`.
-    Call(Vec<ParenArgument>),
-    /// The negation operator.
-    Neg,
-}
-
-impl FromStr for UnOpKind {
-    type Err = Box<dyn Error>;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use UnOpKind::*;
-
-        // match index operator
-        if s.starts_with("[") && s.ends_with("]") {
-            let mut chars = s.chars();
-            chars.next();
-            chars.next_back();
-            let inner: String = chars.collect();
-            let index: usize = inner.parse::<usize>().unwrap_or(0);
-            return Ok(Index(index));
-        }
-
-        match s {
-            "++" => Ok(Incr),
-            "--" => Ok(Decr),
-            "&" => Ok(Addr),
-            "~" => Ok(Not),
-            "!" => Ok(LogNot),
-            "*" => Ok(Deref),
-            _ => Err("invalid unary operator".into()),
-        }
-    }
-}
-
-impl UnOpKind {
-    /// Fetch the precedence of this unary operator.
-    pub const fn precedence(&self) -> usize {
-        use UnOpKind::*;
-        match self {
-            Incr | Decr | Index(_) => 1,
-            _ => 2,
-        }
-    }
-
-    /// Fetch the associativity of this unary operator.
-
-    pub const fn associativity(&self) -> Associativity {
-        use UnOpKind::*;
-        match self {
-            Incr | Decr | Index(_) => Associativity::Ltr,
-            _ => Associativity::Rtl,
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub enum BinOpKind {
-    /// The addition operator, `+`.
-    Add,
-    /// The subtraction operator, `-`.
-    Sub,
-    /// The multiplication operator, `*`.
-    Mul,
-    /// The division operator, `/`.
-    Div,
-    /// The modulo operator, `%`.
-    Mod,
-    /// The bitwise AND operator, `&`.
-    And,
-    /// The bitwise OR operator, `|`.
-    Or,
-    /// The bitwise XOR operator, `^`.
-    Xor,
-    /// The logical AND operator, `&&`.
-    LogAnd,
-    /// The logical OR operator, `||`.
-    LogOr,
-    /// The bitwise left shift operator, `<<`.
-    Shl,
-    /// The bitwise right shift operator, `>>`.
-    Shr,
-    /// The equality operator, `==`.
-    Eq,
-    /// The inequality operator, `!=`.
-    Ne,
-    /// The less-than operator, `<`.
-    Lt,
-    /// The greater-than operator, `>`.
-    Gt,
-    /// The less-than-or-equal operator, `<=`.
-    Le,
-    /// The greater-than-or-equal operator, `>=`.
-    Ge,
-}
-
-impl FromStr for BinOpKind {
-    type Err = Box<dyn Error>;
-
-    fn from_str(s: &str) -> Result<BinOpKind, Self::Err> {
-        use BinOpKind::*;
-        match s {
-            "+" => Ok(Add),
-            "-" => Ok(Sub),
-            "*" => Ok(Mul),
-            "/" => Ok(Div),
-            "%" => Ok(Mod),
-            "&" => Ok(And),
-            "|" => Ok(Or),
-            "^" => Ok(Xor),
-            "<<" => Ok(Shl),
-            ">>" => Ok(Shr),
-            "==" => Ok(Eq),
-            "!=" => Ok(Ne),
-            "<" => Ok(Lt),
-            ">" => Ok(Gt),
-            "<=" => Ok(Le),
-            ">=" => Ok(Ge),
-            _ => Err("invalid binary operator".into()),
-        }
-    }
 }
 
 /// A declaration of a variable.
 #[derive(Debug, PartialEq)]
-pub struct Declaration {
+pub struct Declaration<'a> {
     /// The type of this declaration.
     pub ty: Type,
-	/// The explicit type identifier of this declaration, if it exists.
-	pub ty_ident: Option<Ident>,
+    /// The explicit type identifier of this declaration, if it exists.
+    pub ty_ident: Option<Node<'a, Ident>>,
     /// The identifier being declared.
-    pub ident: Ident,
+    pub ident: Node<'a, Ident>,
     /// The mutability of the declared identifier.
     pub mutability: Mutability,
     /// The declared value.
-    pub value: Expr,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum AssignmentKind {
-    /// The assignment operator, `=`.
-    Assign,
-    /// The bitwise left-shift assignment operator, `<<=`.
-    ShlAssign,
-    /// The bitwise right-shift assignment operator, `>>=`.
-    ShrAssign,
-    /// The bitwise AND assignment operator, `&=`.
-    AndAssign,
-    /// The bitwise OR assignment operator, `|=`.
-    OrAssign,
-    /// The bitwise XOR assignment operator, `^=`.
-    XorAssign,
-    /// The assignment by sum operator, `+=`.
-    AddAssign,
-    /// The assignment by difference operator, `-=`.
-    SubAssign,
-    /// The assignment by product operator, `*=`.
-    MulAssign,
-    /// The assignment by division operator, `/=`.
-    DivAssign,
-    /// The assignment by modulo operator, `%=`.
-    ModAssign,
-}
-
-///  A variable assignment.
-#[derive(Debug, PartialEq)]
-
-pub struct Assignment {
-    /// The identifier being assigned to.
-    pub ident: Ident,
-    /// The declared value.
-    pub value: Expr,
-    /// The kind of assignment.
-    pub kind: AssignmentKind,
-}
-
-impl BinOpKind {
-    /// Fetch the precedence of this binary operator.
-    pub const fn precedence(&self) -> usize {
-        match self {
-            BinOpKind::Mul | BinOpKind::Div | BinOpKind::Mod => 3,
-            BinOpKind::Add | BinOpKind::Sub => 4,
-            BinOpKind::Shl | BinOpKind::Shr => 5,
-            BinOpKind::Lt | BinOpKind::Gt | BinOpKind::Le | BinOpKind::Ge => 6,
-            BinOpKind::Eq | BinOpKind::Ne => 7,
-            BinOpKind::And => 8,
-            BinOpKind::Xor => 9,
-            BinOpKind::Or => 10,
-            BinOpKind::LogAnd => 11,
-            BinOpKind::LogOr => 12,
-        }
-    }
-
-    /// Fetch the associativity of this binary operator.
-    pub const fn associativity(&self) -> Associativity {
-        match self {
-            _ => Associativity::Ltr,
-        }
-    }
-}
-
-/// A binary expression.
-#[derive(Debug, PartialEq)]
-pub struct BinOp {
-    /// The left hand side of the binary expression.
-    pub lhs: Box<Expr>,
-    /// The right hand side of the binary expression.
-    pub rhs: Box<Expr>,
-    /// The kind of binary expression.
-    pub kind: BinOpKind,
-}
-
-/// An if statement.
-#[derive(Debug, PartialEq)]
-pub struct If {
-    /// The expression this if statement will validate.
-    pub expr: Expr,
-    /// The block of code to execute if the expression is true.
-    pub block: Block,
-}
-
-/// An else statement.
-pub struct Else {
-    /// The block this else statement will execute.
-    pub block: Block,
-}
-
-/// A match expression.
-pub struct Match {
-    /// The expression being matched.
-    pub expr: Box<Expr>,
+    pub value: Node<'a, Expr<'a>>,
 }
 
 /// An enum representing variable mutability.
@@ -475,133 +94,66 @@ pub enum Mutability {
 pub struct Ident {
     /// The name of this node.
     pub name: String,
-    /// The span corresponding to this node.
-    pub span: Span,
 }
 
 /// Enum of possible statement kinds.
 #[derive(Debug, PartialEq)]
-pub enum StmtKind {
+pub enum Stmt<'a> {
     /// A declaration.
-    Declaration(Vec<Declaration>),
+    Declaration(Vec<Node<'a, Declaration<'a>>>),
     /// An assignment.
-    Assignment(Assignment),
+    Assignment(Node<'a, Assignment<'a>>),
     // A loop block.
-    Loop(Loop),
+    Loop(Node<'a, Loop<'a>>),
     /// An if statement.
-    If(If),
+    If(Node<'a, If<'a>>),
     /// A function declaration.
-    FuncDecl(FuncDecl),
+    FuncDecl(Node<'a, FuncDecl<'a>>),
     /// An external function declaration.
-    ExternFunc(ExternFunc),
+    ExternFunc(Node<'a, ExternFunc<'a>>),
     /// A function call.
-    FuncCall(FuncCall),
+    FuncCall(Node<'a, FuncCall<'a>>),
     /// A function return statement.
-    Return(Expr),
+    Return(Node<'a, Expr<'a>>),
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Stmt {
-    /// The ID of this node in the AST.
-    pub id: usize,
-    /// The kind of statement.
-    pub kind: StmtKind,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum Expr {
+pub enum Expr<'a> {
     /// A literal expression.
-    Literal(Literal),
+    Literal(Node<'a, Literal>),
     /// An identifier expression.
-    Ident(Ident),
+    Ident(Node<'a, Ident>),
     /// A binary operation expression.
-    BinOp(BinOp),
+    BinOp(Node<'a, BinOp<'a>>),
     /// A block (e.g. `{ /* ... */ }`).
-    Block(Box<Block>),
+    Block(Box<Block<'a>>),
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Block {
+pub struct Block<'a> {
     /// The list of statements in the block.
-    pub stmts: Vec<Stmt>,
-    /// The ID of this node in the AST.
-    pub id: usize,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct Loop {
-    /// The ID of this node in the AST.
-    pub id: usize,
-    /// The block owned by this loop.
-    pub block: Block,
+    pub stmts: Vec<Node<'a, Stmt<'a>>>,
 }
 
 /// An external, imported module.
 #[derive(Debug, PartialEq, Clone)]
 pub struct Module {}
 
-/// A declared variable in the current context.
-#[derive(Debug, PartialEq, Clone)]
-pub struct Var {
-    /// The type of this variable.
-    pub ty: Type,
-    /// The identifier representing this variable in the current context.
-    pub ident: Ident,
-    /// The mutability of this variable.
-    pub mutability: Mutability,
-}
-
 /// The root AST instance.
 #[derive(Debug, PartialEq)]
-pub struct AST {
+pub struct AST<'a> {
     /// The list of top-level statements in the AST.
-    pub stmts: Vec<Stmt>,
+    pub stmts: Vec<Node<'a, Stmt<'a>>>,
     /// The list of external modules imported into this file.
     pub modules: Vec<Module>,
 }
 
-impl AST {
+impl<'a> AST<'a> {
     /// Create a new AST instance.
-    pub fn new() -> AST {
+    pub fn new() -> AST<'a> {
         AST {
             stmts: vec![],
             modules: vec![],
         }
-    }
-}
-
-/// A tree-walker that descends through the AST to ensure it is valid.
-pub struct ASTValidator {
-    /// The current context.
-    /// A vector of passes the validator will perform.
-    passes: Vec<fn(ast: &mut AST) -> Result<(), Box<dyn Error>>>,
-}
-
-impl Default for ASTValidator {
-    fn default() -> ASTValidator {
-        ASTValidator {
-            passes: vec![validate_symbols, validate_types],
-        }
-    }
-}
-
-impl ASTValidator {
-    /// Add a pass to the AST validator.
-    pub fn add_pass(mut self, pass: fn(ast: &mut AST) -> Result<(), Box<dyn Error>>) -> Self {
-        self.passes.push(pass);
-        self
-    }
-
-    /// Walk the AST with the specified parses.
-    pub fn walk(self, ast: &mut AST) -> Result<(), Box<dyn Error>> {
-        debug!("Running AST validation...");
-        // iterate over passes
-        for pass in self.passes {
-            match pass(ast) {
-                Ok(()) => {}
-                Err(err) => return Err(err),
-            }
-        }
-        Ok(())
     }
 }
