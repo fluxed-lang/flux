@@ -1,9 +1,11 @@
 [workspace]
 members = [
+    "styxc",
     "styxc_ast",
     "styxc_ir",
     "styxc_parser",
+	"styxc_passes",
 	"styxc_tests",
     "styxc_types",
-    "styxc"
+	"styxc_walker"
 ]

@@ -61,8 +61,8 @@ impl StyxParser {
         // know that the first rule will be a `statements` rule.
         let stmts = root.next().unwrap().into_inner();
         let mut stmts = self.parse_statements(stmts)?;
-		debug!("Walking the tree to find AST node IDs...");
-		self.correct_ids(&mut stmts);
+        debug!("Walking the tree to find AST node IDs...");
+        self.correct_ids(&mut stmts);
         debug!("Produced {} top-level AST statements", stmts.len());
         trace!("{:#?}", stmts);
         Ok(AST {
@@ -180,7 +180,7 @@ impl StyxParser {
 
     /// Parse an assignment.
     fn parse_assignment(&mut self, pair: Pair<Rule>) -> Result<Node<Assignment>, Box<dyn Error>> {
-		let span = pair.as_span().into();
+        let span = pair.as_span().into();
         let mut inner = pair.into_inner();
         let ident = inner.next().unwrap();
         // =
@@ -282,16 +282,8 @@ impl StyxParser {
         let span = pair.as_span().into();
         let inner = pair.into_inner();
         let primary = |pair: Pair<Rule>| match pair.as_rule() {
-            Rule::ident => Node::new(
-                0,
-                span,
-                Expr::Ident(self.parse_identifier(pair).unwrap()),
-            ),
-            Rule::literal => Node::new(
-                0,
-                span,
-                Expr::Literal(self.parse_literal(pair).unwrap()),
-            ),
+            Rule::ident => Node::new(0, span, Expr::Ident(self.parse_identifier(pair).unwrap())),
+            Rule::literal => Node::new(0, span, Expr::Literal(self.parse_literal(pair).unwrap())),
             Rule::expression => self.parse_expression(pair).unwrap(),
             _ => unreachable!(),
         };
@@ -464,96 +456,96 @@ impl StyxParser {
         Ok(params)
     }
 
-	/// Walk the AST and correct AST node IDs.
-	fn correct_ids(&mut self, stmts: &mut Vec<Node<Stmt>>) {
-		for stmt in stmts {
-			self.correct_stmt_ids(stmt);
-		}
-	}
+    /// Walk the AST and correct AST node IDs.
+    fn correct_ids(&mut self, stmts: &mut Vec<Node<Stmt>>) {
+        for stmt in stmts {
+            self.correct_stmt_ids(stmt);
+        }
+    }
 
-	fn correct_stmt_ids(&mut self, stmt: &mut Node<Stmt>) {
-		stmt.id = self.next_id();
-		match &mut stmt.value {
-			Stmt::Declaration(decls) => {
-				for decl in decls {
-					decl.id = self.next_id();
-					decl.value.ident.id = self.next_id();
-					if let Some(ty_ident) = &mut decl.value.ty_ident {
-						ty_ident.id = self.next_id();
-					}
-					self.correct_expr_ids(&mut decl.value.value);
-				}
-			},
-			Stmt::Assignment(assign) => {
-				assign.id = self.next_id();
-				assign.value.ident.id = self.next_id();
-				self.correct_expr_ids(&mut assign.value.value);
-			},
-			Stmt::Loop(loop_block) => {
-				loop_block.id = self.next_id();
-				loop_block.value.block.id = self.next_id();
-				self.correct_ids(&mut loop_block.value.block.value.stmts);
-			},
-			Stmt::If(if_block) => {
-				if_block.id = self.next_id();
-				self.correct_expr_ids(&mut if_block.value.expr);
-				if_block.value.block.id = self.next_id();
-				self.correct_ids(&mut if_block.value.block.value.stmts);
-			},
-			Stmt::FuncDecl(decl) => {
-				decl.id = self.next_id();
-				decl.value.ident.id = self.next_id();
-				for arg in &mut decl.value.args {
-					arg.id = self.next_id();
-					arg.value.ident.id = self.next_id();
-					arg.value.ty_ident.id = self.next_id();
-				}
-				decl.value.body.id = self.next_id();
-				self.correct_ids(&mut decl.value.body.value.stmts);
-			},
-			Stmt::ExternFunc(extern_func) => {
-				extern_func.id = self.next_id();
-				extern_func.value.ident.id = self.next_id();
-				for arg in &mut extern_func.value.args {
-					arg.id = self.next_id();
-					arg.value.ident.id = self.next_id();
-					arg.value.ty_ident.id = self.next_id();
-				}
-				if let Some(ret_ty_ident) = &mut extern_func.value.ret_ty_ident {
-					ret_ty_ident.id = self.next_id();
-				}
-			},
-			Stmt::FuncCall(func_call) => {
-				func_call.id = self.next_id();
-				func_call.value.ident.id = self.next_id();
-				for arg in &mut func_call.value.args {
-					self.correct_expr_ids(arg);
-				}
-			},
-			Stmt::Return(ret) => self.correct_expr_ids(ret),
-		}
-	}
+    fn correct_stmt_ids(&mut self, stmt: &mut Node<Stmt>) {
+        stmt.id = self.next_id();
+        match &mut stmt.value {
+            Stmt::Declaration(decls) => {
+                for decl in decls {
+                    decl.id = self.next_id();
+                    decl.value.ident.id = self.next_id();
+                    if let Some(ty_ident) = &mut decl.value.ty_ident {
+                        ty_ident.id = self.next_id();
+                    }
+                    self.correct_expr_ids(&mut decl.value.value);
+                }
+            }
+            Stmt::Assignment(assign) => {
+                assign.id = self.next_id();
+                assign.value.ident.id = self.next_id();
+                self.correct_expr_ids(&mut assign.value.value);
+            }
+            Stmt::Loop(loop_block) => {
+                loop_block.id = self.next_id();
+                loop_block.value.block.id = self.next_id();
+                self.correct_ids(&mut loop_block.value.block.value.stmts);
+            }
+            Stmt::If(if_block) => {
+                if_block.id = self.next_id();
+                self.correct_expr_ids(&mut if_block.value.expr);
+                if_block.value.block.id = self.next_id();
+                self.correct_ids(&mut if_block.value.block.value.stmts);
+            }
+            Stmt::FuncDecl(decl) => {
+                decl.id = self.next_id();
+                decl.value.ident.id = self.next_id();
+                for arg in &mut decl.value.args {
+                    arg.id = self.next_id();
+                    arg.value.ident.id = self.next_id();
+                    arg.value.ty_ident.id = self.next_id();
+                }
+                decl.value.body.id = self.next_id();
+                self.correct_ids(&mut decl.value.body.value.stmts);
+            }
+            Stmt::ExternFunc(extern_func) => {
+                extern_func.id = self.next_id();
+                extern_func.value.ident.id = self.next_id();
+                for arg in &mut extern_func.value.args {
+                    arg.id = self.next_id();
+                    arg.value.ident.id = self.next_id();
+                    arg.value.ty_ident.id = self.next_id();
+                }
+                if let Some(ret_ty_ident) = &mut extern_func.value.ret_ty_ident {
+                    ret_ty_ident.id = self.next_id();
+                }
+            }
+            Stmt::FuncCall(func_call) => {
+                func_call.id = self.next_id();
+                func_call.value.ident.id = self.next_id();
+                for arg in &mut func_call.value.args {
+                    self.correct_expr_ids(arg);
+                }
+            }
+            Stmt::Return(ret) => self.correct_expr_ids(ret),
+        }
+    }
 
-	fn correct_expr_ids(&mut self, expr: &mut Node<Expr>) {
-		expr.id = self.next_id();
-		match &mut expr.value {
-			Expr::Literal(literal) => {
-				literal.id = self.next_id();
-			},
-			Expr::Ident(ident) => {
-				ident.id = self.next_id();
-			},
-			Expr::BinOp(bin_op) => {
-				bin_op.id = self.next_id();
-				self.correct_expr_ids(&mut bin_op.value.lhs);
-				self.correct_expr_ids(&mut bin_op.value.rhs);
-			},
-			Expr::Block(block) => {
-				block.id = self.next_id();
-				self.correct_ids(&mut block.value.stmts);
-			},
-		}
-	}
+    fn correct_expr_ids(&mut self, expr: &mut Node<Expr>) {
+        expr.id = self.next_id();
+        match &mut expr.value {
+            Expr::Literal(literal) => {
+                literal.id = self.next_id();
+            }
+            Expr::Ident(ident) => {
+                ident.id = self.next_id();
+            }
+            Expr::BinOp(bin_op) => {
+                bin_op.id = self.next_id();
+                self.correct_expr_ids(&mut bin_op.value.lhs);
+                self.correct_expr_ids(&mut bin_op.value.rhs);
+            }
+            Expr::Block(block) => {
+                block.id = self.next_id();
+                self.correct_ids(&mut block.value.stmts);
+            }
+        }
+    }
 }
 
 impl Default for StyxParser {

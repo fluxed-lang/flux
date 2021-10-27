@@ -1,17 +1,25 @@
 use std::error::Error;
 
-use cranelift_module::Linkage;
 use log::trace;
 
 use styxc_ast::{
-    func::ParenArgument, operations::BinOp, Declaration, Expr, Ident, Literal, LiteralKind,
-    Mutability, Node, Stmt, AST,
+    func::ParenArgument,
+    operations::{BinOp, BinOpKind},
+    Declaration, Expr, Ident, Literal, LiteralKind, Mutability, Node, Stmt, AST,
 };
 use styxc_types::{equate_types, Type};
 
+/// An enum of linkage types.
+#[derive(Debug)]
+pub enum Linkage {
+    Local,
+    Module,
+    External,
+}
+
 /// Represents a callable function.
 #[derive(Debug)]
-struct Function {
+pub struct Function {
     /// The name of the function.
     name: String,
     /// The arguments of the function.
@@ -23,7 +31,7 @@ struct Function {
 }
 
 #[derive(Debug)]
-struct Variable {
+pub struct Variable {
     /// The name of this variable.
     name: String,
     /// The type of this variable.
@@ -34,41 +42,46 @@ struct Variable {
 
 /// Represents a stack.
 #[derive(Debug)]
-struct Stack<T> {
+pub struct Stack<T> {
     /// The contents of the stack.
     contents: Vec<T>,
 }
 
 impl<T> Stack<T> {
     /// Creates a new, empty stack.
-    fn new() -> Stack<T> {
+    pub fn new() -> Stack<T> {
         Stack {
             contents: Vec::new(),
         }
     }
 
-    fn size(&self) -> usize {
+    /// Return the size of the stack.
+    pub fn size(&self) -> usize {
         self.contents.len()
     }
 
-    fn get(&self, index: usize) -> Option<&T> {
+    /// Get an object from the stack.
+    pub fn get(&self, index: usize) -> Option<&T> {
         self.contents.get(index)
     }
 
-    fn get_unchecked(&self, index: usize) -> &T {
+    /// Get an object from the stack without checking if the stack is empty.
+    pub fn get_unchecked(&self, index: usize) -> &T {
         self.contents.get(index).unwrap()
     }
 
-    fn push(&mut self, item: T) {
+    /// Push an item onto the stack.
+    pub fn push(&mut self, item: T) {
         self.contents.push(item);
     }
 
-    fn pop(&mut self) -> Option<T> {
+    /// Pop an item off of the stack.
+    pub fn pop(&mut self) -> Option<T> {
         self.contents.pop()
     }
 }
 
-struct TypeVariable {
+pub struct TypeVariable {
     /// The name of this type variable.
     name: String,
     /// The type held by this type variable.
@@ -199,7 +212,7 @@ impl TreeWalker {
             todo!("bad bin op - error recovery TODO");
         }
         // match comparisons
-        use crate::BinOpKind::*;
+        use BinOpKind::*;
         match bin_op.kind {
             Eq | Ne | Lt | Gt | Le | Ge => Type::Bool,
             _ => lhs,
