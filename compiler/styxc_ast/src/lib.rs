@@ -3,13 +3,12 @@ use styxc_types::Type;
 use crate::control::{If, Loop};
 use crate::func::{ExternFunc, FuncCall, FuncDecl};
 use crate::operations::{Assignment, BinOp};
-use crate::span::Span;
+use styxc_span::Span;
 
 pub mod control;
 pub mod func;
 pub mod operations;
 pub mod passes;
-pub mod span;
 
 #[derive(Debug, PartialEq)]
 pub struct Node<T> {
