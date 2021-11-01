@@ -41,7 +41,7 @@ fn compile_and_execute(input: String) -> Result<(), Box<dyn Error>> {
 }
 
 /// Compile the target input string into an executable binary.
-pub fn compile_to_binary<P: AsRef<Path>>(input: String, dest: P) -> Result<(), Box<dyn Error>> {
+pub fn compile_to_binary<P: AsRef<Path>>(_: String, _: P) -> Result<(), Box<dyn Error>> {
     todo!("unsupported compiler mode");
 }
 

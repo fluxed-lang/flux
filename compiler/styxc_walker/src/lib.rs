@@ -86,7 +86,7 @@ impl<T> Stack<T> {
     }
 
     /// Find an item in the stack using the given predicate.
-    pub fn find<F: Fn(&T) -> bool>(&mut self, predicate: F) -> Option<&T> {
+    pub fn find<F: Fn(&T) -> bool>(&self, predicate: F) -> Option<&T> {
         for item in self.contents.iter().rev() {
             if predicate(item) {
                 return Some(item);
@@ -180,7 +180,7 @@ impl Walker {
     }
 
     /// Lookup a variable available in the current scope.
-    pub fn lookup_variable<S: AsRef<str>>(&mut self, name: S) -> Option<&Variable> {
+    pub fn lookup_variable<S: AsRef<str>>(&self, name: S) -> Option<&Variable> {
         self.variables.find(|v| v.name == name.as_ref())
     }
 
@@ -190,8 +190,13 @@ impl Walker {
     }
 
     /// Lookup a funciton available in the current scope.
-    pub fn lookup_function(&mut self, name: &str) -> Option<&Function> {
+    pub fn lookup_function(&self, name: &str) -> Option<&Function> {
         self.functions.find(|f| f.name == name.as_ref())
+    }
+
+    /// Lookup a funciton available in the current scope.
+    pub fn lookup_function_mut(&mut self, name: &str) -> Option<&mut Function> {
+        self.functions.find_mut(|f| f.name == name.as_ref())
     }
 
     /// Get the type of an expression in the current scope.

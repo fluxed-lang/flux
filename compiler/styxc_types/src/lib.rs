@@ -1,4 +1,4 @@
-use std::{error::Error, fmt::Debug};
+use std::{error::Error, fmt::Debug, str::FromStr};
 
 #[derive(Debug, Clone)]
 pub enum Type {
@@ -30,6 +30,8 @@ pub enum Type {
     Circular(Box<Type>),
     /// Represents a function type.
     Func(Vec<Type>, Box<Type>),
+    /// Represents a reference to a named type.
+    Reference(String),
     /// Represents a unit type.
     Unit,
     /// Represents a type that has yet to be inferred.
@@ -56,6 +58,22 @@ impl From<String> for Type {
 impl PartialEq for Type {
     fn eq(&self, other: &Type) -> bool {
         equate_types(self, other)
+    }
+}
+
+impl FromStr for Type {
+    type Err = Box<dyn Error>;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "()" => Type::Unit,
+            "bool" => Type::Bool,
+            "char" => Type::Char,
+            "float" => Type::Float,
+            "int" => Type::Int,
+            "str" => Type::String,
+            _ => Type::Reference(s.to_string()),
+        })
     }
 }
 
@@ -126,7 +144,7 @@ pub fn equate_types(a: &Type, b: &Type) -> bool {
 pub fn is_primitive(t: &Type) -> bool {
     use Type::*;
     match t {
-        Int | Float | Bool => true,
+        Int | Float | Bool | String => true,
         _ => false,
     }
 }
@@ -138,6 +156,7 @@ pub fn equate_primitives(a: &Type, b: &Type) -> bool {
         (Int, Int) => true,
         (Float, Float) => true,
         (Bool, Bool) => true,
+		(String, String) => true,
         _ => false,
     }
 }

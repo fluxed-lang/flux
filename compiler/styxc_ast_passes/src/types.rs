@@ -1,8 +1,8 @@
-use std::{borrow::BorrowMut, error::Error};
+use std::{error::Error, str::FromStr};
 
 use log::trace;
 use styxc_ast::{operations::Assignment, Block, Declaration, Expr, LiteralKind, Node, Stmt, AST};
-use styxc_types::{FuncType, Type};
+use styxc_types::Type;
 use styxc_walker::Walker;
 
 /// Check an expression for type errors.
@@ -142,9 +142,74 @@ fn check_stmt(walker: &mut Walker, stmt: &mut Node<Stmt>) -> Result<(), Box<dyn 
                 .into());
             }
         }
-        Stmt::ExternFunc(_) => todo!(),
-        Stmt::FuncCall(_) => todo!(),
-        Stmt::Return(_) => todo!(),
+        Stmt::ExternFunc(extern_func) => {
+            // compute the argument types
+            let arg_tys: Vec<Type> = extern_func
+                .value
+                .args
+                .iter_mut()
+                .map(|arg| {
+                    let ty_ident = arg.value.ty_ident.value.name.clone();
+                    let ty = Type::from_str(&ty_ident).unwrap();
+                    arg.value.ty = ty.clone();
+                    ty
+                })
+                .collect();
+            // compute the return type of the function.
+            let ret_ty = match &extern_func.value.ret_ty_ident {
+                Some(ty_ident) => Type::from_str(&ty_ident.value.name).unwrap(),
+                None => Type::Unit,
+            };
+            extern_func.value.ty = Type::Func(arg_tys, ret_ty.into());
+            // lookup function in walker
+            let func = walker
+                .lookup_function_mut(&extern_func.value.ident.value.name)
+                .unwrap();
+            func.ty = extern_func.value.ty.clone();
+        }
+        Stmt::FuncCall(func_call) => {
+            // lookup function in walker
+            let func = walker
+                .lookup_function(&func_call.value.ident.value.name)
+                .unwrap();
+            // need to clone to avoid borrowing twice
+            let func_ty = func.ty.clone();
+            // ensure arguments match
+            if func.args.len() != func_call.value.args.len() {
+                return Err(format!(
+                    "function {} takes {} arguments but {} was given",
+                    func.name,
+                    func.args.len(),
+                    func_call.value.args.len()
+                )
+                .into());
+            }
+            // get param tys
+            let mut param_tys = vec![];
+            for param in func_call.value.args.iter_mut() {
+                param_tys.push(check_expr(walker, &mut param.value)?.clone());
+            }
+            // ensure arg types match
+            if let Type::Func(arg_tys, _) = func_ty {
+                for i in 0..func_call.value.args.len() {
+                    let arg_ty = arg_tys.get(i).unwrap();
+                    let param_ty = param_tys.get(i).unwrap();
+
+                    if *arg_ty != *param_ty {
+                        return Err(format!(
+							"function {} takes argument {} of type {:?} but provided value {} has type {:?}",
+							func_call.value.ident.value.name, i, arg_ty, i, param_ty
+						)
+                        .into());
+                    }
+                }
+            } else {
+                panic!("function type wasn't a function type");
+            }
+        }
+        Stmt::Return(ret) => {
+            check_expr(walker, &mut ret.value)?;
+        }
     }
     Ok(())
 }

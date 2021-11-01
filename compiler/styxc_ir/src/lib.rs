@@ -1,4 +1,4 @@
-use std::{collections::HashMap, error::Error, slice::from_raw_parts};
+use std::{collections::HashMap, error::Error};
 
 use cranelift::{
     codegen,
@@ -11,13 +11,8 @@ use cranelift::{
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataContext, Linkage, Module};
 use log::{debug, trace};
-use styxc_ast::{
-    control::{If, Loop},
-    operations::{Assignment, AssignmentKind, BinOp, BinOpKind},
-    Declaration, Expr, Ident, Literal, LiteralKind, Node, Stmt, AST,
-};
-
-mod ast;
+use styxc_ast::{AST, Declaration, Expr, Ident, Literal, LiteralKind, Node, Stmt, control::{If, Loop}, func::FuncCall, operations::{Assignment, AssignmentKind, BinOp, BinOpKind}};
+use styxc_walker::Walker;
 
 /// Root-level IR translator.
 pub struct IrTranslator {
@@ -77,7 +72,7 @@ impl IrTranslator {
         trace!("Finalizing builder...");
         trans.builder.ins().return_(&vec![]);
         trans.builder.finalize();
-        let display = Some(trans.builder.func.display(None).to_string());
+        let display = Some(trans.builder.func.display().to_string());
         // declare the main function
         trace!("Declaring main function...");
         let id = self
@@ -102,21 +97,21 @@ impl IrTranslator {
         Ok((code, display))
     }
 
-    /// Create a zero-initialized data section.
-    fn create_data(&mut self, name: &str, contents: Vec<u8>) -> Result<&[u8], String> {
-        self.data_ctx.define(contents.into_boxed_slice());
-        let id = self
-            .module
-            .declare_data(name, Linkage::Export, true, false)
-            .map_err(|e| e.to_string())?;
-        self.module
-            .define_data(id, &self.data_ctx)
-            .map_err(|e| e.to_string())?;
-        self.data_ctx.clear();
-        self.module.finalize_definitions();
-        let buffer = self.module.get_finalized_data(id);
-        Ok(unsafe { from_raw_parts(buffer.0, buffer.1) })
-    }
+    // /// Create a zero-initialized data section.
+    // fn create_data(&mut self, name: &str, contents: Vec<u8>) -> Result<&[u8], String> {
+    //     self.data_ctx.define(contents.into_boxed_slice());
+    //     let id = self
+    //         .module
+    //         .declare_data(name, Linkage::Export, true, false)
+    //         .map_err(|e| e.to_string())?;
+    //     self.module
+    //         .define_data(id, &self.data_ctx)
+    //         .map_err(|e| e.to_string())?;
+    //     self.data_ctx.clear();
+    //     self.module.finalize_definitions();
+    //     let buffer = self.module.get_finalized_data(id);
+    //     Ok(unsafe { from_raw_parts(buffer.0, buffer.1) })
+    // }
 }
 
 fn type_to_ir_type(module: &dyn Module, ty: styxc_types::Type) -> Option<Type> {
@@ -143,6 +138,7 @@ fn type_to_ir_type(module: &dyn Module, ty: styxc_types::Type) -> Option<Type> {
         Infer => panic!("failed to infer type"),
         Never => todo!(),
         Func(_, _) => todo!(),
+		Reference(_) => todo!()
     })
 }
 
@@ -153,6 +149,7 @@ struct FunctionTranslator<'a> {
     module: &'a mut JITModule,
     data_ctx: &'a mut DataContext,
     index: usize,
+	walker: Walker
 }
 
 impl<'a> FunctionTranslator<'a> {
@@ -168,6 +165,7 @@ impl<'a> FunctionTranslator<'a> {
             data_ctx,
             variables: HashMap::new(),
             index: 0,
+			walker: Walker::new()
         }
     }
 
@@ -180,6 +178,7 @@ impl<'a> FunctionTranslator<'a> {
 
     /// Translate and build statements.
     fn translate_stmts(&mut self, stmts: Vec<Node<Stmt>>) {
+		self.walker.declare_all_in_stmts(&stmts);
         for stmt in stmts {
             self.translate_stmt(stmt.value);
         }
@@ -187,6 +186,7 @@ impl<'a> FunctionTranslator<'a> {
 
     /// Translate and build a statement.
     fn translate_stmt(&mut self, stmt: Stmt) {
+		self.walker.next_stmt(&stmt);
         trace!("TRANSLATE Stmt");
         use Stmt::*;
         match stmt {
@@ -231,7 +231,7 @@ impl<'a> FunctionTranslator<'a> {
                 let val = self.translate_expr(expr.value);
                 self.builder.ins().return_(&vec![val]);
             }
-            _ => todo!(),
+			FuncCall(call) => { self.translate_func_call(call.value); }
         }
     }
 
@@ -245,7 +245,7 @@ impl<'a> FunctionTranslator<'a> {
                 .builder
                 .use_var(*self.variables.get(&ident.value.name).unwrap()),
             BinOp(bin_op) => self.translate_bin_op(bin_op.value),
-            Block(block) => todo!(),
+            Block(_) => todo!(),
         }
     }
 
@@ -316,7 +316,8 @@ impl<'a> FunctionTranslator<'a> {
 
     /// Translate a loop statement.
     fn translate_loop(&mut self, loop_node: Loop) {
-        trace!("TRANSLATE Loop");
+		trace!("TRANSLATE Loop");
+		self.walker.enter_block(&loop_node.block.value);
         let body_block = self.builder.create_block();
         let exit_block = self.builder.create_block();
         // create jump instruction and jump to block.
@@ -375,6 +376,8 @@ impl<'a> FunctionTranslator<'a> {
 
     /// Translate an if statement in to code.
     fn translate_if(&mut self, if_stmt: If) {
+		self.walker.enter_block(&if_stmt.block.value);
+
         let condition_value = self.translate_expr(if_stmt.expr.value);
         let then_block = self.builder.create_block();
         let merge_block = self.builder.create_block();
@@ -393,31 +396,42 @@ impl<'a> FunctionTranslator<'a> {
         self.builder.seal_block(merge_block);
     }
 
-    // fn translate_func_call(&mut self, call: FuncCall) -> Value {
-    // 	let mut sig = self.module.make_signature();
+    fn translate_func_call(&mut self, call: FuncCall) -> Option<Value> {
+    	let mut sig = self.module.make_signature();
+		let func = self.walker.lookup_function(&call.ident.value.name).unwrap();
 
-    //     // Add a parameter for each argument.
-    //     for _arg in &call.args {
-    //         sig.params.push(styxc_ast::);
-    //     }
+        // Add a parameter for each argument.
+		let arg_tys;
+		let ret_ty;
+		if let styxc_types::Type::Func(func_arg_tys, func_ret_ty) = &func.ty {
+			arg_tys = func_arg_tys.clone();
+			ret_ty = *func_ret_ty.clone();
+		} else {
+			panic!("function type was not a function")
+		}
+		// iterate over arguments and add to signature
+        for arg in arg_tys {
+           	sig.params.push(AbiParam::new(type_to_ir_type(self.module, arg).unwrap()));
+        }
+		// push return signature if there is one
+        if let Some(ret_ty) = type_to_ir_type(self.module, ret_ty) {
+			sig.returns.push(AbiParam::new(ret_ty));
+		}
+		// declare the function
+        let callee = self
+            .module
+            .declare_function(&call.ident.value.name, Linkage::Import, &sig)
+            .expect("problem declaring function");
+        let local_callee = self
+            .module
+            .declare_func_in_func(callee, &mut self.builder.func);
 
-    //     // For simplicity for now, just make all calls return a single I64.
-    //     sig.returns.push(AbiParam::new(self.int));
-
-    //     // TODO: Streamline the API here?
-    //     let callee = self
-    //         .module
-    //         .declare_function(&call.ident.name, Linkage::Import, &sig)
-    //         .expect("problem declaring function");
-    //     let local_callee = self
-    //         .module
-    //         .declare_func_in_func(callee, &mut self.builder.func);
-
-    //     let mut arg_values = Vec::new();
-    //     for arg in call.args {
-    //         arg_values.push(self.translate_expr(arg))
-    //     }
-    //     let call = self.builder.ins().call(local_callee, &arg_values);
-    //     self.builder.inst_results(call)[0]
-    // }
+        let mut arg_values = Vec::new();
+        for arg in call.args {
+            arg_values.push(self.translate_expr(arg.value))
+        }
+        let call = self.builder.ins().call(local_callee, &arg_values);
+        self.builder.inst_results(call);
+		None
+    }
 }

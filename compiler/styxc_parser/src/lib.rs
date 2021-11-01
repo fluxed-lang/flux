@@ -227,6 +227,7 @@ impl StyxParser {
     ) -> Result<Node<Expr>, Box<(dyn Error + 'static)>> {
         let inner = pair.into_inner().next().unwrap();
         Ok(match inner.as_rule() {
+			Rule::func_call => Node::new(0, inner.as_span().into(), Expr::FuncCall(self.parse_func_call(inner)?)),
             Rule::ident => Node::new(
                 0,
                 inner.as_span().into(),
@@ -248,6 +249,7 @@ impl StyxParser {
         Ok(match inner.as_rule() {
             Rule::int => self.parse_int_literal(inner)?,
             Rule::string => self.parse_string_literal(inner)?,
+			Rule::bool => self.parse_bool_literal(inner)?,
             _ => unreachable!(),
         })
     }
@@ -266,16 +268,23 @@ impl StyxParser {
 
     /// Parse a string literal.
     fn parse_string_literal(&mut self, pair: Pair<Rule>) -> Result<Node<Literal>, Box<dyn Error>> {
-        let inner = pair.clone().into_inner().next().unwrap().to_string();
+        let inner = pair.clone().into_inner().next().unwrap().as_str();
         Ok(Node::new(
             0,
             pair.as_span().into(),
             Literal {
                 ty: Type::Infer,
-                kind: LiteralKind::String(inner),
+                kind: LiteralKind::String(inner.to_string()),
             },
         ))
     }
+
+	fn parse_bool_literal(&mut self, pair: Pair<Rule>) -> Result<Node<Literal>, Box<dyn Error>> {
+		Ok(Node::new(0, pair.as_span().into(), Literal {
+			ty: Type::Infer,
+			kind: LiteralKind::Bool(pair.as_str().parse()?),
+		}))
+	}
 
     /// Parse a binary expression.
     fn parse_bin_exp(&mut self, pair: Pair<Rule>) -> Result<Node<Expr>, Box<dyn Error>> {

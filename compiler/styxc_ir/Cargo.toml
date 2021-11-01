@@ -6,11 +6,12 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cranelift = "0.77"
-cranelift-module = "0.77"
-cranelift-jit = "0.77"
-cranelift-native = "0.77"
+cranelift = "0.78"
+cranelift-module = "0.78"
+cranelift-jit = "0.78"
+cranelift-native = "0.78"
 log = "0.4"
 
 styxc_ast = { path = "../styxc_ast" }
 styxc_types = { path =  "../styxc_types" }
+styxc_walker = { path =  "../styxc_walker" }

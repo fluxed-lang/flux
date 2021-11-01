@@ -148,7 +148,7 @@ bin_op = _{
 
 bin_exp = { bin_exp_inner ~ (bin_op ~ bin_exp_inner)+ }
 
-expression = { bin_exp | literal | ident | block }
+expression = { func_call | bin_exp | literal | ident | block }
 
 assignment_op = { "=" | "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" | "^=" }
 assignment = !{ (ident ~ ",")* ~ ident ~ assignment_op ~ (expression ~ ",")* ~ expression }
