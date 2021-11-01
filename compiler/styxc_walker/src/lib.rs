@@ -130,17 +130,6 @@ impl Walker {
         }
     }
 
-    /// Enter the target function.
-    pub fn enter_function(&mut self, func: &FuncDecl) {
-        todo!();
-        // self.current_function = Some(
-        //     self.lookup_function(&func.ident.value.name)
-        //         .unwrap()
-        //         .clone(),
-        // );
-        // self.enter_block(&func.body.value);
-    }
-
     /// Enters the current block, declaring all classes and functions in it.
     pub fn enter_block(&mut self, block: &Block) {
         self.declare_all_in_stmts(&block.stmts);

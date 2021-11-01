@@ -1,8 +1,8 @@
-use std::error::Error;
+use std::{borrow::BorrowMut, error::Error};
 
 use log::trace;
 use styxc_ast::{operations::Assignment, Block, Declaration, Expr, LiteralKind, Node, Stmt, AST};
-use styxc_types::Type;
+use styxc_types::{FuncType, Type};
 use styxc_walker::Walker;
 
 /// Check an expression for type errors.
@@ -100,7 +100,48 @@ fn check_stmt(walker: &mut Walker, stmt: &mut Node<Stmt>) -> Result<(), Box<dyn 
         Stmt::Assignment(assignment) => check_assignment(walker, &mut assignment.value)?,
         Stmt::Loop(loop_block) => check_block(walker, &mut loop_block.value.block.value)?,
         Stmt::If(if_block) => check_block(walker, &mut if_block.value.block.value)?,
-        Stmt::FuncDecl(_) => todo!(),
+        Stmt::FuncDecl(func_decl) => {
+            // check stmts in function
+            check_block(walker, &mut func_decl.value.body.value)?;
+            // ensure last statement is a return of the correct type
+            let last_stmt = func_decl
+                .value
+                .body
+                .value
+                .stmts
+                .last_mut()
+                .map(|node| &mut node.value);
+            // ensure the last statement exists
+            if let None = last_stmt {
+                if func_decl.value.return_ty != Type::Unit {
+                    return Err(format!(
+                        "function {} does not return a value",
+                        func_decl.value.ident.value.name
+                    )
+                    .into());
+                }
+            }
+            // unwrap the last statement
+            let last_stmt = last_stmt.unwrap();
+            // check last statement is a return
+            if let Stmt::Return(return_stmt) = last_stmt {
+                // check return type is correct
+                let return_type = check_expr(walker, &mut return_stmt.value)?;
+                if func_decl.value.return_ty != return_type {
+                    return Err(format!(
+                        "function {} returns {:?} but last statement returns {:?}",
+                        func_decl.value.ident.value.name, func_decl.value.return_ty, return_type
+                    )
+                    .into());
+                }
+            } else {
+                return Err(format!(
+                    "function {} does not return a value",
+                    func_decl.value.ident.value.name
+                )
+                .into());
+            }
+        }
         Stmt::ExternFunc(_) => todo!(),
         Stmt::FuncCall(_) => todo!(),
         Stmt::Return(_) => todo!(),
