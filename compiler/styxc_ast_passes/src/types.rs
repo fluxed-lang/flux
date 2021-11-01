@@ -1,11 +1,7 @@
 use std::error::Error;
 
 use log::trace;
-use styxc_ast::{
-    func::{self, FuncDecl, ParenArgument},
-    operations::{Assignment, BinOp, BinOpKind},
-    Block, Declaration, Expr, LiteralKind, Node, Stmt, AST,
-};
+use styxc_ast::{operations::Assignment, Block, Declaration, Expr, LiteralKind, Node, Stmt, AST};
 use styxc_types::Type;
 use styxc_walker::Walker;
 
