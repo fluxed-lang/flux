@@ -5,9 +5,9 @@ members = [
 	"styxc_errors",
 	"styxc_span",
 	"styxc_tests",
-	"styxc_walker",
     "styxc_ir",
     "styxc_parser",
     "styxc_types",
+	"styxc_walker",
     "styxc"
 ]

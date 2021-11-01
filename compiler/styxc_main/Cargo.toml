@@ -9,5 +9,6 @@ edition = "2018"
 log = "0.4"
 
 styxc_ast = { path =  "../styxc_ast" }
+styxc_ast_passes = { path =  "../styxc_ast_passes" }
 styxc_ir = { path =  "../styxc_ir" }
 styxc_parser = { path =  "../styxc_parser" }

@@ -6,5 +6,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+log = "0.4"
+
 styxc_ast = { path = "../styxc_ast" }
 styxc_types = { path = "../styxc_types" }
+styxc_walker = { path = "../styxc_walker" }

@@ -41,7 +41,7 @@ pub struct FuncCall {
 }
 
 /// An argument to a function call.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ParenArgument {
     /// The identifier representing the AST node.
     pub ident: Node<Ident>,

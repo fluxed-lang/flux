@@ -1,19 +1,17 @@
-use std::error::Error;
-
-use log::trace;
-
 use styxc_ast::{
-    func::ParenArgument,
-    operations::{BinOp, BinOpKind},
-    Declaration, Expr, Ident, Literal, LiteralKind, Mutability, Node, Stmt, AST,
+    func::{ExternFunc, FuncDecl, ParenArgument},
+    Block, Declaration, Expr, LiteralKind, Mutability, Node, Stmt,
 };
-use styxc_types::{equate_types, Type};
+use styxc_types::Type;
 
 /// An enum of linkage types.
 #[derive(Debug)]
 pub enum Linkage {
+    /// The function is declared locally, and is not exported.
     Local,
+    /// The function is declared in the scope of the module being compiled.
     Module,
+    /// The function is declared externally, and has been imported.
     External,
 }
 
@@ -21,24 +19,31 @@ pub enum Linkage {
 #[derive(Debug)]
 pub struct Function {
     /// The name of the function.
-    name: String,
+    pub name: String,
     /// The arguments of the function.
-    args: Vec<ParenArgument>,
+    pub args: Vec<ParenArgument>,
     /// The type of the function.
-    ty: Type,
+    pub ty: Type,
     /// The linkage type of this function.
-    linkage: Linkage,
+    pub linkage: Linkage,
 }
 
 #[derive(Debug)]
 pub struct Variable {
     /// The name of this variable.
-    name: String,
+    pub name: String,
     /// The type of this variable.
-    ty: Type,
+    pub ty: Type,
     /// The mutability of this variable.
-    mutability: Mutability,
+    pub mutability: Mutability,
 }
+
+// pub struct TypeVariable {
+//     /// The name of this type variable.
+//     name: String,
+//     /// The type held by this type variable.
+//     ty: Type,
+// }
 
 /// Represents a stack.
 #[derive(Debug)]
@@ -79,222 +84,161 @@ impl<T> Stack<T> {
     pub fn pop(&mut self) -> Option<T> {
         self.contents.pop()
     }
-}
 
-pub struct TypeVariable {
-    /// The name of this type variable.
-    name: String,
-    /// The type held by this type variable.
-    ty: Type,
-}
-
-/// An AST tree walker.
-struct TreeWalker {
-    ast: AST,
-    /// A vector of functions available for calling in the current scope.
-    funcs: Vec<Function>,
-    /// A stack of variables available to reference in the current scope.
-    vars: Stack<Variable>,
-    /// A stack of type variables to reference in the current scope.
-    ty_vars: Stack<TypeVariable>,
-}
-
-impl TreeWalker {
-    /// Creates a new tree walker.
-    fn new(ast: AST) -> Self {
-        Self {
-            ast,
-            funcs: Vec::default(),
-            vars: Stack::new(),
-            ty_vars: Stack::new(),
-        }
-    }
-
-    /// Find a variable by its name.
-    pub fn find_var_by_name(&self, name: &str) -> Option<&Variable> {
-        for var in self.vars.contents.iter().rev() {
-            if var.name == name {
-                return Some(var.clone());
+    /// Find an item in the stack using the given predicate.
+    pub fn find<F: Fn(&T) -> bool>(&mut self, predicate: F) -> Option<&T> {
+        for item in self.contents.iter().rev() {
+            if predicate(item) {
+                return Some(item);
             }
         }
         None
     }
 
-    /// Find a type variable by its name.
-    pub fn find_ty_var_by_name(&self, name: &str) -> Option<&TypeVariable> {
-        for ty_var in self.ty_vars.contents.iter().rev() {
-            if ty_var.name == name {
-                return Some(&ty_var);
+    /// Find an item in the stack using the given predicate, returning a mutable reference to the item.
+    pub fn find_mut<F: Fn(&T) -> bool>(&mut self, predicate: F) -> Option<&mut T> {
+        for item in self.contents.iter_mut().rev() {
+            if predicate(item) {
+                return Some(item);
             }
         }
         None
     }
+}
+/// A utility for walking the AST.
+pub struct Walker {
+    current_function: Option<Function>,
+    variables: Stack<Variable>,
+    functions: Stack<Function>,
+}
 
-    /// Compute the type of an expression.
-    fn get_expr_type(&self, expr: &Expr) -> Type {
-        trace!("get expression type: {:?}", expr);
-        use Expr::*;
-        match expr {
-            Literal(literal) => self.get_literal_type(&literal.value),
-            Ident(ident) => self
-                .find(&ident.value)
-                .map_or(Type::Never, |var| var.ty.clone()),
-            BinOp(bin_op) => self.get_bin_op_type(&bin_op.value),
-            // TODO: Blocks returning things
-            Block(_) => Type::Unit,
+impl Walker {
+    /// Create a new walker.
+    pub fn new() -> Self {
+        Walker {
+            current_function: None,
+            variables: Stack::new(),
+            functions: Stack::new(),
         }
     }
 
-    /// Fetch the type of a literal.
-    fn get_literal_type(&self, literal: &Literal) -> Type {
-        trace!("get literal type: {:?}", literal);
-        use LiteralKind::*;
-        match literal.kind {
-            Int(_) => Type::Int,
-            Float(_) => Type::Float,
-            String(_) => Type::String,
-            Char(_) => Type::Char,
-            Bool(_) => Type::Bool,
+    /// Return the current function. This clones the stored function.
+    pub fn current_function(&self) -> Option<&Function> {
+        match &self.current_function {
+            Some(s) => Some(&s),
+            None => None,
         }
     }
-    /// Find a variable identified with the given identifier.
-    pub fn find(&self, ident: &Ident) -> Option<&Variable> {
-        let size = self.vars.size();
 
-        for i in 0..size {
-            let var = &self.vars.get_unchecked(i);
-            trace!("check ident eq - lhs: {:?} rhs: {:?}", ident, var.name);
-            if var.name == *ident.name {
-                return Some(var);
+    /// Enter the target function.
+    pub fn enter_function(&mut self, func: &FuncDecl) {
+        todo!();
+        // self.current_function = Some(
+        //     self.lookup_function(&func.ident.value.name)
+        //         .unwrap()
+        //         .clone(),
+        // );
+        // self.enter_block(&func.body.value);
+    }
+
+    /// Enters the current block, declaring all classes and functions in it.
+    pub fn enter_block(&mut self, block: &Block) {
+        self.declare_all_in_stmts(&block.stmts);
+    }
+
+    /// Declares all functions and classes in the given statements.
+    pub fn declare_all_in_stmts(&mut self, stmts: &Vec<Node<Stmt>>) {
+        for stmt in stmts {
+            match &stmt.value {
+                Stmt::FuncDecl(func) => self.declare_function(&func.value),
+                Stmt::ExternFunc(func) => self.declare_external_function(&func.value),
+                _ => (),
             }
         }
-        None
     }
 
-    /// Test if a variable using the specified identifier exists.
-    pub fn exists(&self, ident: &Ident) -> bool {
-        self.find(ident).is_some()
-    }
-
-    /// Declare a new variable using the specified declaration node and push it onto the stack.
-    pub fn declare(&mut self, decl: &mut Declaration) {
-        trace!("declare variable: {:?}", decl);
-        let ty = self.get_expr_type(&decl.value.value);
-        decl.ty = ty;
-        let var = Variable {
-            ty: self.get_expr_type(&decl.value.value),
-            name: decl.ident.value.name.clone(),
-            mutability: decl.mutability.clone(),
-        };
-        self.push(var);
-    }
-
-    /// Push a variable onto the stack.
-    pub fn push(&mut self, var: Variable) {
-        trace!("push to stack: {:?}", var);
-        self.vars.push(var)
-    }
-
-    /// Pop a variable from the stack.
-    pub fn pop(&mut self) -> Option<Variable> {
-        self.vars.pop().and_then(|v| {
-            trace!("pop from stack: {:?}", v);
-            Some(v)
+    /// Declare a function.
+    pub fn declare_function(&mut self, func: &FuncDecl) {
+        self.functions.push(Function {
+            name: func.ident.value.name.clone(),
+            args: func.args.iter().map(|arg| arg.value.clone()).collect(),
+            ty: func.ty.clone(),
+            linkage: Linkage::Local,
         })
     }
 
-    /// Fetch the type of a binary operation.
-    fn get_bin_op_type(&self, bin_op: &BinOp) -> Type {
-        trace!("get bin op type: {:?}", bin_op);
-        let lhs = self.get_expr_type(&bin_op.lhs.value);
-        let rhs = self.get_expr_type(&bin_op.rhs.value);
-        if !equate_types(&lhs, &rhs) {
-            todo!("bad bin op - error recovery TODO");
-        }
-        // match comparisons
-        use BinOpKind::*;
-        match bin_op.kind {
-            Eq | Ne | Lt | Gt | Le | Ge => Type::Bool,
-            _ => lhs,
+    /// Declare an external function.
+    pub fn declare_external_function(&mut self, extern_func: &ExternFunc) {
+        self.functions.push(Function {
+            name: extern_func.ident.value.name.clone(),
+            args: extern_func
+                .args
+                .iter()
+                .map(|arg| arg.value.clone())
+                .collect(),
+            ty: extern_func.ty.clone(),
+            linkage: Linkage::External,
+        })
+    }
+
+    /// Declare a variable.
+    pub fn declare_variable(&mut self, decl: &Declaration) {
+        self.variables.push(Variable {
+            name: decl.ident.value.name.clone(),
+            mutability: decl.mutability,
+            ty: decl.ty.clone(),
+        });
+    }
+
+    /// Lookup a variable available in the current scope.
+    pub fn lookup_variable<S: AsRef<str>>(&mut self, name: S) -> Option<&Variable> {
+        self.variables.find(|v| v.name == name.as_ref())
+    }
+
+    /// Lookup a variable available in the current scope, returning a mutable reference to the variable.
+    pub fn lookup_variable_mut<S: AsRef<str>>(&mut self, name: S) -> Option<&mut Variable> {
+        self.variables.find_mut(|v| v.name == name.as_ref())
+    }
+
+    /// Lookup a funciton available in the current scope.
+    pub fn lookup_function(&mut self, name: &str) -> Option<&Function> {
+        self.functions.find(|f| f.name == name.as_ref())
+    }
+
+    /// Get the type of an expression in the current scope.
+    pub fn get_expr_type(&mut self, expr: &Expr) -> Type {
+        match expr {
+            Expr::Literal(literal) => match literal.value.kind {
+                LiteralKind::Bool(_) => Type::Bool,
+                LiteralKind::Int(_) => Type::Int,
+                LiteralKind::Float(_) => Type::Float,
+                LiteralKind::String(_) => Type::String,
+                LiteralKind::Char(_) => Type::Char,
+            },
+            Expr::Ident(ident) => match self.lookup_variable(&ident.value.name) {
+                Some(var) => var.ty.clone(),
+                None => Type::Infer,
+            },
+            Expr::BinOp(bin_op) => {
+                let lhs = self.get_expr_type(&bin_op.value.lhs.value);
+                let rhs = self.get_expr_type(&bin_op.value.lhs.value);
+                lhs.intersect(rhs)
+            }
+            Expr::Block(_) => Type::Unit,
         }
     }
 
-    /// Check a statement for symbol resolution errors.
-    fn check_stmt(&mut self, stmt: &mut Stmt) -> Result<(), Box<dyn Error>> {
-        trace!("check stmt: {:?}", stmt);
+    /// Proceed to the next statement, declaring any variables and functions.
+    pub fn next_stmt(&mut self, stmt: &Stmt) {
         match stmt {
             Stmt::Declaration(decls) => {
-                for i in 0..decls.len() {
-                    self.declare(&mut decls.get_mut(i).unwrap().value)
-                }
-                Ok(())
-            }
-            Stmt::Assignment(assign) => {
-                trace!("check assignment: {:?}", assign);
-                // fetch types of lhs and rhs
-                let lhs = self
-                    .find(&assign.value.ident.value)
-                    .map_or(Type::Never, |var| var.ty.clone());
-                let rhs = self.get_expr_type(&assign.value.value.value);
-                // compute types
-                if !equate_types(&lhs, &rhs) {
-                    Err(format!(
-                        "cannot assign type {:?} to variable {} of type {:?}",
-                        rhs, assign.value.ident.value.name, lhs
-                    )
-                    .into())
-                } else {
-                    Ok(())
+                for decl in decls {
+                    self.declare_variable(&decl.value)
                 }
             }
-            Stmt::If(if_block) => {
-                // ensure eexpression is a bool
-                if self.get_expr_type(&if_block.value.expr.value) != Type::Bool {
-                    return Err("expected bool type for if expression".into());
-                }
-                self.check_stmts(&mut if_block.value.block.value.stmts)?;
-                Ok(())
-            }
-            Stmt::FuncDecl(func_decl) => {
-                self.check_stmts(&mut func_decl.value.body.value.stmts)?;
-                Ok(())
-            }
-            Stmt::FuncCall(func_call) => Ok(()),
-            Stmt::ExternFunc(extern_func) => {
-                let arg_types: Vec<Type> = extern_func
-                    .value
-                    .args
-                    .iter_mut()
-                    .map(|arg| {
-                        arg.value.ty = arg.value.ty_ident.value.name.clone().into();
-                        arg.value.ty.clone()
-                    })
-                    .collect();
-                // check if there is a return type
-                let mut ret_ty = Type::Unit;
-                if let Some(ret_ty_ident) = &extern_func.value.ret_ty_ident {
-                    ret_ty = ret_ty_ident.value.name.clone().into();
-                }
-
-                extern_func.value.ty = Type::Func(arg_types, ret_ty.into());
-
-                Ok(())
-            }
-            _ => Ok(()),
+            Stmt::FuncDecl(func) => self.declare_function(&func.value),
+            Stmt::ExternFunc(extern_func) => self.declare_external_function(&extern_func.value),
+            _ => (),
         }
-    }
-
-    /// Check a vector of statements for symbol resolution errors. Once all statements are checked,
-    /// any declared variables are popped from the stack.
-    pub fn check_stmts(&mut self, stmts: &mut Vec<Node<Stmt>>) -> Result<(), Box<dyn Error>> {
-        let initial_vars = self.vars.size();
-        for i in 0..stmts.len() {
-            self.check_stmt(&mut stmts.get_mut(i).unwrap().value)?;
-        }
-        // pop vars from the stack as they go out of scope.
-        for _ in 0..initial_vars {
-            self.pop().unwrap();
-        }
-        Ok(())
     }
 }

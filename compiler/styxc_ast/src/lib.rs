@@ -10,7 +10,7 @@ pub mod func;
 pub mod operations;
 pub mod passes;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Node<T> {
     /// The ID of this node in the AST.
     pub id: usize,

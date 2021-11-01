@@ -160,7 +160,9 @@ mut_declaration = !{ "mut" ~ (ident ~ ",")* ~ ident ~ declaration_type? ~ "=" ~ 
 func_return = !{ "return" ~ expression }
 func_param = !{ ident ~ ":" ~ type_ident }
 func_params = !{ ("(" ~ (func_param ~ ",")* ~ func_param ~ ")") | func_param }
-func_decl = !{ ident ~ func_params? ~ "->" ~ block }
+func_decl_inline = !{ ident ~ func_params? ~ "->" ~ statement }
+func_decl_block = !{ ident ~ func_params? ~ "->" ~ block }
+func_decl = { func_decl_block | func_decl_inline }
 
 func_call_params = ${ (expression ~ ",")* ~ expression }
 func_call = !{ ident ~ func_call_params | ident ~ "()" }
