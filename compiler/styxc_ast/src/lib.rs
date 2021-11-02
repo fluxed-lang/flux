@@ -128,6 +128,8 @@ pub enum Expr {
     BinOp(Node<BinOp>),
     /// A block (e.g. `{ /* ... */ }`).
     Block(Node<Block>),
+    /// A function call expression.
+    FuncCall(Node<FuncCall>),
 }
 
 #[derive(Debug, PartialEq)]

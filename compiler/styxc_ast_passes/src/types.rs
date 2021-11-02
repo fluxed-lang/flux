@@ -1,9 +1,57 @@
 use std::{error::Error, str::FromStr};
 
 use log::trace;
-use styxc_ast::{operations::Assignment, Block, Declaration, Expr, LiteralKind, Node, Stmt, AST};
+use styxc_ast::{
+    func::FuncCall, operations::Assignment, Block, Declaration, Expr, LiteralKind, Node, Stmt, AST,
+};
 use styxc_types::Type;
 use styxc_walker::Walker;
+
+/// Check a function call for errors.
+fn check_func_call(
+    walker: &mut Walker,
+    func_call: &mut Node<FuncCall>,
+) -> Result<(), Box<dyn Error>> {
+    // lookup function in walker
+    let func = walker
+        .lookup_function(&func_call.value.ident.value.name)
+        .unwrap();
+    // need to clone to avoid borrowing twice
+    let func_ty = func.ty.clone();
+    // ensure arguments match
+    if func.args.len() != func_call.value.args.len() {
+        return Err(format!(
+            "function {} takes {} arguments but {} was given",
+            func.name,
+            func.args.len(),
+            func_call.value.args.len()
+        )
+        .into());
+    }
+    // get param tys
+    let mut param_tys = vec![];
+    for param in func_call.value.args.iter_mut() {
+        param_tys.push(check_expr(walker, &mut param.value)?.clone());
+    }
+    // ensure arg types match
+    if let Type::Func(arg_tys, _) = func_ty {
+        for i in 0..func_call.value.args.len() {
+            let arg_ty = arg_tys.get(i).unwrap();
+            let param_ty = param_tys.get(i).unwrap();
+
+            if *arg_ty != *param_ty {
+                return Err(format!(
+					"function {} takes argument {} of type {:?} but provided value {} has type {:?}",
+					func_call.value.ident.value.name, i, arg_ty, i, param_ty
+				)
+                .into());
+            }
+        }
+    } else {
+        panic!("function type wasn't a function type");
+    }
+    Ok(())
+}
 
 /// Check an expression for type errors.
 fn check_expr(walker: &mut Walker, expr: &mut Expr) -> Result<Type, Box<dyn Error>> {
@@ -32,6 +80,10 @@ fn check_expr(walker: &mut Walker, expr: &mut Expr) -> Result<Type, Box<dyn Erro
             // check the block
             check_block(walker, &mut block.value)?;
             Type::Unit
+        }
+        Expr::FuncCall(func_call) => {
+            check_func_call(walker, func_call)?;
+            func_call.value.return_ty.clone()
         }
     })
 }

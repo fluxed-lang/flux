@@ -227,7 +227,11 @@ impl StyxParser {
     ) -> Result<Node<Expr>, Box<(dyn Error + 'static)>> {
         let inner = pair.into_inner().next().unwrap();
         Ok(match inner.as_rule() {
-			Rule::func_call => Node::new(0, inner.as_span().into(), Expr::FuncCall(self.parse_func_call(inner)?)),
+            Rule::func_call => Node::new(
+                0,
+                inner.as_span().into(),
+                Expr::FuncCall(self.parse_func_call(inner)?),
+            ),
             Rule::ident => Node::new(
                 0,
                 inner.as_span().into(),
@@ -249,7 +253,7 @@ impl StyxParser {
         Ok(match inner.as_rule() {
             Rule::int => self.parse_int_literal(inner)?,
             Rule::string => self.parse_string_literal(inner)?,
-			Rule::bool => self.parse_bool_literal(inner)?,
+            Rule::bool => self.parse_bool_literal(inner)?,
             _ => unreachable!(),
         })
     }
@@ -279,12 +283,16 @@ impl StyxParser {
         ))
     }
 
-	fn parse_bool_literal(&mut self, pair: Pair<Rule>) -> Result<Node<Literal>, Box<dyn Error>> {
-		Ok(Node::new(0, pair.as_span().into(), Literal {
-			ty: Type::Infer,
-			kind: LiteralKind::Bool(pair.as_str().parse()?),
-		}))
-	}
+    fn parse_bool_literal(&mut self, pair: Pair<Rule>) -> Result<Node<Literal>, Box<dyn Error>> {
+        Ok(Node::new(
+            0,
+            pair.as_span().into(),
+            Literal {
+                ty: Type::Infer,
+                kind: LiteralKind::Bool(pair.as_str().parse()?),
+            },
+        ))
+    }
 
     /// Parse a binary expression.
     fn parse_bin_exp(&mut self, pair: Pair<Rule>) -> Result<Node<Expr>, Box<dyn Error>> {
@@ -552,6 +560,13 @@ impl StyxParser {
             Expr::Block(block) => {
                 block.id = self.next_id();
                 self.correct_ids(&mut block.value.stmts);
+            }
+            Expr::FuncCall(func_call) => {
+                func_call.id = self.next_id();
+                func_call.value.ident.id = self.next_id();
+                for arg in &mut func_call.value.args {
+                    self.correct_expr_ids(arg);
+                }
             }
         }
     }

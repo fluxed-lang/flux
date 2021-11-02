@@ -11,7 +11,12 @@ use cranelift::{
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataContext, Linkage, Module};
 use log::{debug, trace};
-use styxc_ast::{AST, Declaration, Expr, Ident, Literal, LiteralKind, Node, Stmt, control::{If, Loop}, func::FuncCall, operations::{Assignment, AssignmentKind, BinOp, BinOpKind}};
+use styxc_ast::{
+    control::{If, Loop},
+    func::FuncCall,
+    operations::{Assignment, AssignmentKind, BinOp, BinOpKind},
+    Declaration, Expr, Ident, Literal, LiteralKind, Node, Stmt, AST,
+};
 use styxc_walker::Walker;
 
 /// Root-level IR translator.
@@ -138,7 +143,7 @@ fn type_to_ir_type(module: &dyn Module, ty: styxc_types::Type) -> Option<Type> {
         Infer => panic!("failed to infer type"),
         Never => todo!(),
         Func(_, _) => todo!(),
-		Reference(_) => todo!()
+        Reference(_) => todo!(),
     })
 }
 
@@ -149,7 +154,7 @@ struct FunctionTranslator<'a> {
     module: &'a mut JITModule,
     data_ctx: &'a mut DataContext,
     index: usize,
-	walker: Walker
+    walker: Walker,
 }
 
 impl<'a> FunctionTranslator<'a> {
@@ -165,7 +170,7 @@ impl<'a> FunctionTranslator<'a> {
             data_ctx,
             variables: HashMap::new(),
             index: 0,
-			walker: Walker::new()
+            walker: Walker::new(),
         }
     }
 
@@ -178,7 +183,7 @@ impl<'a> FunctionTranslator<'a> {
 
     /// Translate and build statements.
     fn translate_stmts(&mut self, stmts: Vec<Node<Stmt>>) {
-		self.walker.declare_all_in_stmts(&stmts);
+        self.walker.declare_all_in_stmts(&stmts);
         for stmt in stmts {
             self.translate_stmt(stmt.value);
         }
@@ -186,7 +191,7 @@ impl<'a> FunctionTranslator<'a> {
 
     /// Translate and build a statement.
     fn translate_stmt(&mut self, stmt: Stmt) {
-		self.walker.next_stmt(&stmt);
+        self.walker.next_stmt(&stmt);
         trace!("TRANSLATE Stmt");
         use Stmt::*;
         match stmt {
@@ -231,7 +236,9 @@ impl<'a> FunctionTranslator<'a> {
                 let val = self.translate_expr(expr.value);
                 self.builder.ins().return_(&vec![val]);
             }
-			FuncCall(call) => { self.translate_func_call(call.value); }
+            FuncCall(call) => {
+                self.translate_func_call(call.value);
+            }
         }
     }
 
@@ -246,6 +253,12 @@ impl<'a> FunctionTranslator<'a> {
                 .use_var(*self.variables.get(&ident.value.name).unwrap()),
             BinOp(bin_op) => self.translate_bin_op(bin_op.value),
             Block(_) => todo!(),
+            FuncCall(func_call) => {
+                if matches!(func_call.value.return_ty, styxc_types::Type::Unit) {
+                    panic!("")
+                }
+                self.translate_func_call(func_call.value).unwrap()
+            }
         }
     }
 
@@ -316,8 +329,8 @@ impl<'a> FunctionTranslator<'a> {
 
     /// Translate a loop statement.
     fn translate_loop(&mut self, loop_node: Loop) {
-		trace!("TRANSLATE Loop");
-		self.walker.enter_block(&loop_node.block.value);
+        trace!("TRANSLATE Loop");
+        self.walker.enter_block(&loop_node.block.value);
         let body_block = self.builder.create_block();
         let exit_block = self.builder.create_block();
         // create jump instruction and jump to block.
@@ -376,7 +389,7 @@ impl<'a> FunctionTranslator<'a> {
 
     /// Translate an if statement in to code.
     fn translate_if(&mut self, if_stmt: If) {
-		self.walker.enter_block(&if_stmt.block.value);
+        self.walker.enter_block(&if_stmt.block.value);
 
         let condition_value = self.translate_expr(if_stmt.expr.value);
         let then_block = self.builder.create_block();
@@ -397,27 +410,28 @@ impl<'a> FunctionTranslator<'a> {
     }
 
     fn translate_func_call(&mut self, call: FuncCall) -> Option<Value> {
-    	let mut sig = self.module.make_signature();
-		let func = self.walker.lookup_function(&call.ident.value.name).unwrap();
+        let mut sig = self.module.make_signature();
+        let func = self.walker.lookup_function(&call.ident.value.name).unwrap();
 
         // Add a parameter for each argument.
-		let arg_tys;
-		let ret_ty;
-		if let styxc_types::Type::Func(func_arg_tys, func_ret_ty) = &func.ty {
-			arg_tys = func_arg_tys.clone();
-			ret_ty = *func_ret_ty.clone();
-		} else {
-			panic!("function type was not a function")
-		}
-		// iterate over arguments and add to signature
-        for arg in arg_tys {
-           	sig.params.push(AbiParam::new(type_to_ir_type(self.module, arg).unwrap()));
+        let arg_tys;
+        let ret_ty;
+        if let styxc_types::Type::Func(func_arg_tys, func_ret_ty) = &func.ty {
+            arg_tys = func_arg_tys.clone();
+            ret_ty = *func_ret_ty.clone();
+        } else {
+            panic!("function type was not a function")
         }
-		// push return signature if there is one
+        // iterate over arguments and add to signature
+        for arg in arg_tys {
+            sig.params
+                .push(AbiParam::new(type_to_ir_type(self.module, arg).unwrap()));
+        }
+        // push return signature if there is one
         if let Some(ret_ty) = type_to_ir_type(self.module, ret_ty) {
-			sig.returns.push(AbiParam::new(ret_ty));
-		}
-		// declare the function
+            sig.returns.push(AbiParam::new(ret_ty));
+        }
+        // declare the function
         let callee = self
             .module
             .declare_function(&call.ident.value.name, Linkage::Import, &sig)
@@ -432,6 +446,6 @@ impl<'a> FunctionTranslator<'a> {
         }
         let call = self.builder.ins().call(local_callee, &arg_values);
         self.builder.inst_results(call);
-		None
+        None
     }
 }

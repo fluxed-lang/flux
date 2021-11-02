@@ -219,6 +219,7 @@ impl Walker {
                 lhs.intersect(rhs)
             }
             Expr::Block(_) => Type::Unit,
+            Expr::FuncCall(func_call) => func_call.value.return_ty.clone(),
         }
     }
 

@@ -156,7 +156,7 @@ pub fn equate_primitives(a: &Type, b: &Type) -> bool {
         (Int, Int) => true,
         (Float, Float) => true,
         (Bool, Bool) => true,
-		(String, String) => true,
+        (String, String) => true,
         _ => false,
     }
 }
