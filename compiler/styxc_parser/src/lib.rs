@@ -420,8 +420,8 @@ impl StyxParser {
         let mut inner = pair.into_inner();
         let mut params = vec![];
         while let Some(param) = inner.next() {
-			let param = self.parse_paren_argument(param)?;
-			params.push(param);
+            let param = self.parse_paren_argument(param)?;
+            params.push(param);
         }
         Ok(params)
     }
