@@ -32,24 +32,24 @@ lazy_static! {
     /// of operators cannot easily be inferred, we use the PrecClimber to ensure that the parser grammar will not left recurse.
     /// This has the added benefit of handling operator precedence and associativity properly.
     static ref BIN_EXP_CLIMBER: PrecClimber<Rule> = PrecClimber::new(vec![
-        Operator::new(Rule::bin_op_log_or, Assoc::Right),
-        Operator::new(Rule::bin_op_log_and, Assoc::Right),
-        Operator::new(Rule::bin_op_or, Assoc::Right),
-        Operator::new(Rule::bin_op_xor, Assoc::Right),
-        Operator::new(Rule::bin_op_and, Assoc::Right),
-        Operator::new(Rule::bin_op_eq, Assoc::Right) |
-            Operator::new(Rule::bin_op_ne, Assoc::Right),
-        Operator::new(Rule::bin_op_lt, Assoc::Right) |
-            Operator::new(Rule::bin_op_gt, Assoc::Right) |
-            Operator::new(Rule::bin_op_le, Assoc::Right) |
-            Operator::new(Rule::bin_op_ge, Assoc::Right),
-        Operator::new(Rule::bin_op_lshift, Assoc::Right) |
-            Operator::new(Rule::bin_op_rshift, Assoc::Right),
-        Operator::new(Rule::bin_op_plus, Assoc::Right)
-            | Operator::new(Rule::bin_op_minus, Assoc::Right),
-        Operator::new(Rule::bin_op_mul, Assoc::Right)
-            | Operator::new(Rule::bin_op_div, Assoc::Right)
-            | Operator::new(Rule::bin_op_mod, Assoc::Right)
+        Operator::new(Rule::binary_op_logical_or, Assoc::Right),
+        Operator::new(Rule::binary_op_logical_and, Assoc::Right),
+        Operator::new(Rule::binary_op_bitwise_or, Assoc::Right),
+        Operator::new(Rule::binary_op_bitwise_xor, Assoc::Right),
+        Operator::new(Rule::binary_op_bitwise_and, Assoc::Right),
+        Operator::new(Rule::binary_op_eq, Assoc::Right) |
+            Operator::new(Rule::binary_op_ne, Assoc::Right),
+        Operator::new(Rule::binary_op_lt, Assoc::Right) |
+            Operator::new(Rule::binary_op_gt, Assoc::Right) |
+            Operator::new(Rule::binary_op_le, Assoc::Right) |
+            Operator::new(Rule::binary_op_ge, Assoc::Right),
+        Operator::new(Rule::binary_op_lshift, Assoc::Right) |
+            Operator::new(Rule::binary_op_rshift, Assoc::Right),
+        Operator::new(Rule::binary_op_add, Assoc::Right)
+            | Operator::new(Rule::binary_op_sub, Assoc::Right),
+        Operator::new(Rule::binary_op_mul, Assoc::Right)
+            | Operator::new(Rule::binary_op_div, Assoc::Right)
+            | Operator::new(Rule::binary_op_mod, Assoc::Right)
     ]);
 }
 

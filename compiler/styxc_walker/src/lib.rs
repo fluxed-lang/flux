@@ -115,7 +115,7 @@ pub struct Walker {
 impl Walker {
     /// Create a new walker.
     pub fn new() -> Self {
-        Walker {
+		Walker {
             current_function: None,
             variables: Stack::new(),
             functions: Stack::new(),
@@ -159,7 +159,7 @@ impl Walker {
     /// Declare an external function.
     pub fn declare_external_function(&mut self, extern_func: &ExternFunc) {
         self.functions.push(Function {
-            name: extern_func.ident.value.name.clone(),
+            name: extern_func.ident.value.clone(),
             args: extern_func
                 .args
                 .iter()

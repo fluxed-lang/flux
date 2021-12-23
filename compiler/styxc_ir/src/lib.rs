@@ -403,6 +403,8 @@ impl<'a> FunctionTranslator<'a> {
         // output statements into block.
         self.translate_stmts(if_stmt.block.value.stmts);
         // jump back to merging block
+		self.builder.ins().
+
         self.builder.ins().jump(merge_block, &[]);
         // switch to the merge block for subsequent statements.
         self.builder.switch_to_block(merge_block);
