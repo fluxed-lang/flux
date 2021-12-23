@@ -184,19 +184,32 @@ func_call = !{ ident ~ func_call_params }
 func_return = !{ "return" ~ expr }
 func_defer = !{ "defer" ~ expr }
 
+class_body = !{ "{" ~  (func_decl | class_static_func_decl)* ~ "}" }
+class_static_func_decl = !{ "static" ~ func_decl }
+class_decl = !{ "class" ~ ident ~ class_body }
+
+interface_body = { "{" ~ "}" }
+interface_decl = !{ "interface" ~ ident ~ class_body }
+
+const_decl = !{ "const" ~ ident ~ type_expr? ~ "=" ~ expr }
+
+export_block = !{ "{" ~ (ident ~ ",")* ~ ident? ~ "}" }
+export_stmt = !{ "export" ~ ((class_decl | interface_decl | func_decl | const_decl) | export_block) }
+
 statement_inner = {
 	conditional_stmt
 	| loop_stmt
 	| while_stmt
 	| declaration
+    | const_decl
+    | class_decl
+    | export_stmt
 	| func_decl
 	| extern_func_decl
 	| func_defer
 	| func_return
 	| break_stmt
-	| unary_expr
-	| binary_expr
-	| func_call
+    | expr
 }
 
 statement = @{ statement_inner ~ BLANK* ~ ";"? ~ BLANK* ~ NEWLINE* }
