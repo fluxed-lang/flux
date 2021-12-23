@@ -16,7 +16,7 @@ use pest::{
 use styxc_ast::{
     control::{If, Loop},
     func::{ExternFunc, FuncCall, ParenArgument},
-    operations::{Assignment, AssignmentKind, BinOp, BinaryOp},
+    operations::{Assignment, AssignmentKind, BinaryExpr, BinaryOp},
     Block, Declaration, Expr, Ident, Literal, LiteralKind, Mutability, Node, Stmt, AST,
 };
 use styxc_types::Type;
@@ -32,43 +32,43 @@ lazy_static! {
     /// of operators cannot easily be inferred, we use the PrecClimber to ensure that the parser grammar will not left recurse.
     /// This has the added benefit of handling operator precedence and associativity properly.
     static ref BIN_EXP_CLIMBER: PrecClimber<Rule> = PrecClimber::new(vec![
-		// 15
-		Operator::new(Rule::binary_op_assign, Assoc::Left) |
-		Operator::new(Rule::binary_op_mul_eq, Assoc::Left) |
-		Operator::new(Rule::binary_op_div_eq, Assoc::Left) |
-		Operator::new(Rule::binary_op_mod_eq, Assoc::Left) |
-		Operator::new(Rule::binary_op_plus_eq, Assoc::Left) |
-		Operator::new(Rule::binary_op_minus_eq, Assoc::Left) |
-		Operator::new(Rule::binary_op_lshift_eq, Assoc::Left) |
-		Operator::new(Rule::binary_op_rshift_eq, Assoc::Left) |
-		Operator::new(Rule::binary_op_bitwise_and_eq, Assoc::Left) |
-		Operator::new(Rule::binary_op_bitwise_or_eq, Assoc::Left) |
-		Operator::new(Rule::binary_op_bitwise_xor_eq, Assoc::Left),
-		// 14
+        // 15
+        Operator::new(Rule::binary_op_assign, Assoc::Left) |
+        Operator::new(Rule::binary_op_mul_eq, Assoc::Left) |
+        Operator::new(Rule::binary_op_div_eq, Assoc::Left) |
+        Operator::new(Rule::binary_op_mod_eq, Assoc::Left) |
+        Operator::new(Rule::binary_op_plus_eq, Assoc::Left) |
+        Operator::new(Rule::binary_op_minus_eq, Assoc::Left) |
+        Operator::new(Rule::binary_op_lshift_eq, Assoc::Left) |
+        Operator::new(Rule::binary_op_rshift_eq, Assoc::Left) |
+        Operator::new(Rule::binary_op_bitwise_and_eq, Assoc::Left) |
+        Operator::new(Rule::binary_op_bitwise_or_eq, Assoc::Left) |
+        Operator::new(Rule::binary_op_bitwise_xor_eq, Assoc::Left),
+        // 14
         Operator::new(Rule::binary_op_logical_or, Assoc::Right),
-		// 13
+        // 13
         Operator::new(Rule::binary_op_logical_and, Assoc::Right),
-		// 12
+        // 12
         Operator::new(Rule::binary_op_eq, Assoc::Right) |
             Operator::new(Rule::binary_op_ne, Assoc::Right),
-		// 11
-		Operator::new(Rule::binary_op_lt, Assoc::Right) |
+        // 11
+        Operator::new(Rule::binary_op_lt, Assoc::Right) |
             Operator::new(Rule::binary_op_gt, Assoc::Right) |
             Operator::new(Rule::binary_op_le, Assoc::Right) |
             Operator::new(Rule::binary_op_ge, Assoc::Right),
-		// 10
-		Operator::new(Rule::binary_op_bitwise_or, Assoc::Right),
-		// 9
-		Operator::new(Rule::binary_op_bitwise_xor, Assoc::Right),
-		// 8
-		Operator::new(Rule::binary_op_bitwise_and, Assoc::Right),
-		// 7
+        // 10
+        Operator::new(Rule::binary_op_bitwise_or, Assoc::Right),
+        // 9
+        Operator::new(Rule::binary_op_bitwise_xor, Assoc::Right),
+        // 8
+        Operator::new(Rule::binary_op_bitwise_and, Assoc::Right),
+        // 7
         Operator::new(Rule::binary_op_lshift, Assoc::Right) |
             Operator::new(Rule::binary_op_rshift, Assoc::Right),
-		// 6
-        Operator::new(Rule::binary_op_add, Assoc::Right)
-            | Operator::new(Rule::binary_op_sub, Assoc::Right),
-		// 5
+        // 6
+        Operator::new(Rule::binary_op_plus, Assoc::Right)
+            | Operator::new(Rule::binary_op_minus, Assoc::Right),
+        // 5
         Operator::new(Rule::binary_op_mul, Assoc::Right)
             | Operator::new(Rule::binary_op_div, Assoc::Right)
             | Operator::new(Rule::binary_op_mod, Assoc::Right)
@@ -104,7 +104,6 @@ impl StyxParser {
         let mut nodes = vec![];
         for inner in pair {
             use Stmt::*;
-
             let node = Node::new(
                 0,
                 inner.as_span().into(),
@@ -120,6 +119,7 @@ impl StyxParser {
                     Rule::func_call => FuncCall(self.parse_func_call(inner)?),
                     Rule::extern_func_decl => ExternFunc(self.parse_extern_func(inner)?),
                     Rule::EOI => break,
+                    Rule::binary_expr => BinaryExpr(self.parse_binary_expr(inner)?),
                     _ => {
                         unreachable!("unexpected match: {:?}", inner.as_rule())
                     }
@@ -152,12 +152,9 @@ impl StyxParser {
                 exprs.push(next);
                 break;
             }
-            let ident = self.parse_identifier(next)?;
-            if matches!(
-                inner.peek().map(|r| r.as_rule()),
-                Some(Rule::ident)
-            ) {
-                let type_ident = self.parse_type_ident(inner.next().unwrap())?;
+            let ident = self.parse_ident(next)?;
+            if matches!(inner.peek().map(|r| r.as_rule()), Some(Rule::ident)) {
+                let type_ident = self.parse_ident(inner.next().unwrap())?;
                 idents.push((ident, Some(type_ident)))
             } else {
                 idents.push((ident, None));
@@ -212,7 +209,7 @@ impl StyxParser {
             0,
             span,
             Assignment {
-                ident: self.parse_identifier(ident)?,
+                ident: self.parse_ident(ident)?,
                 value: self.parse_expression(value)?,
                 kind: match op {
                     "=" => AssignmentKind::Assign,
@@ -231,7 +228,7 @@ impl StyxParser {
     }
 
     /// Parse an identifier.
-    fn parse_identifier(&mut self, pair: Pair<Rule>) -> Result<Node<Ident>, Box<dyn Error>> {
+    fn parse_ident(&mut self, pair: Pair<Rule>) -> Result<Node<Ident>, Box<dyn Error>> {
         Ok(Node::new(
             0,
             pair.as_span().into(),
@@ -256,14 +253,14 @@ impl StyxParser {
             Rule::ident => Node::new(
                 0,
                 inner.as_span().into(),
-                Expr::Ident(self.parse_identifier(inner)?),
+                Expr::Ident(self.parse_ident(inner)?),
             ),
             Rule::literal => Node::new(
                 0,
                 inner.as_span().into(),
                 Expr::Literal(self.parse_literal(inner)?),
             ),
-            Rule::bin_exp => self.parse_bin_exp(inner)?,
+            Rule::binary_expr => self.parse_binary_expr(inner)?,
             _ => unreachable!(),
         })
     }
@@ -316,11 +313,11 @@ impl StyxParser {
     }
 
     /// Parse a binary expression.
-    fn parse_bin_exp(&mut self, pair: Pair<Rule>) -> Result<Node<Expr>, Box<dyn Error>> {
+    fn parse_binary_expr(&mut self, pair: Pair<Rule>) -> Result<Node<Expr>, Box<dyn Error>> {
         let span = pair.as_span().into();
         let inner = pair.into_inner();
         let primary = |pair: Pair<Rule>| match pair.as_rule() {
-            Rule::ident => Node::new(0, span, Expr::Ident(self.parse_identifier(pair).unwrap())),
+            Rule::ident => Node::new(0, span, Expr::Ident(self.parse_ident(pair).unwrap())),
             Rule::literal => Node::new(0, span, Expr::Literal(self.parse_literal(pair).unwrap())),
             Rule::expr => self.parse_expression(pair).unwrap(),
             _ => unreachable!(),
@@ -332,24 +329,24 @@ impl StyxParser {
                 Expr::BinOp(Node::new(
                     0,
                     span,
-                    BinOp {
+                    BinaryExpr {
                         kind: match op.as_rule() {
-                            Rule::bin_op_plus => BinaryOp::Add,
-                            Rule::bin_op_minus => BinaryOp::Sub,
-                            Rule::bin_op_mul => BinaryOp::Mul,
-                            Rule::bin_op_div => BinaryOp::Div,
-                            Rule::bin_op_mod => BinaryOp::Mod,
-                            Rule::bin_op_and => BinaryOp::And,
-                            Rule::bin_op_or => BinaryOp::Or,
-                            Rule::bin_op_xor => BinaryOp::Xor,
-                            Rule::bin_op_eq => BinaryOp::Eq,
-                            Rule::bin_op_ne => BinaryOp::Ne,
-                            Rule::bin_op_lt => BinaryOp::Lt,
-                            Rule::bin_op_le => BinaryOp::Le,
-                            Rule::bin_op_gt => BinaryOp::Gt,
-                            Rule::bin_op_ge => BinaryOp::Ge,
-                            Rule::bin_op_log_and => BinaryOp::LogAnd,
-                            Rule::bin_op_log_or => BinaryOp::LogOr,
+                            Rule::binary_op_plus => BinaryOp::Plus,
+                            Rule::binary_op_minus => BinaryOp::Minus,
+                            Rule::binary_op_mul => BinaryOp::Mul,
+                            Rule::binary_op_div => BinaryOp::Div,
+                            Rule::binary_op_mod => BinaryOp::Mod,
+                            Rule::binary_op_bitwise_and => BinaryOp::BitwiseAnd,
+                            Rule::binary_op_bitwise_or => BinaryOp::BitwiseOr,
+                            Rule::binary_op_bitwise_xor => BinaryOp::BitwiseXor,
+                            Rule::binary_op_eq => BinaryOp::Eq,
+                            Rule::binary_op_ne => BinaryOp::Ne,
+                            Rule::binary_op_lt => BinaryOp::Lt,
+                            Rule::binary_op_le => BinaryOp::Le,
+                            Rule::binary_op_gt => BinaryOp::Gt,
+                            Rule::binary_op_ge => BinaryOp::Ge,
+                            Rule::binary_op_logical_and => BinaryOp::LogicalAnd,
+                            Rule::binary_op_logical_or => BinaryOp::LogicalOr,
                             _ => unreachable!(),
                         },
                         lhs: lhs.into(),
@@ -396,11 +393,11 @@ impl StyxParser {
     fn parse_extern_func(&mut self, pair: Pair<Rule>) -> Result<Node<ExternFunc>, Box<dyn Error>> {
         let span = pair.as_span();
         let mut inner = pair.into_inner();
-        let ident = self.parse_identifier(inner.next().unwrap())?;
+        let ident = self.parse_ident(inner.next().unwrap())?;
         let args = self.parse_paren_arguments(inner.next().unwrap())?;
         // get the return type of the function if there is one
         let ret_ty_ident = match inner.next() {
-            Some(type_ident) => Some(self.parse_type_ident(type_ident)?),
+            Some(type_ident) => Some(self.parse_ident(type_ident)?),
             None => None,
         };
         Ok(Node::new(
@@ -423,7 +420,8 @@ impl StyxParser {
         let mut inner = pair.into_inner();
         let mut params = vec![];
         while let Some(param) = inner.next() {
-            params.push(self.parse_paren_argument(param)?);
+			let param = self.parse_paren_argument(param)?;
+			params.push(param);
         }
         Ok(params)
     }
@@ -435,8 +433,8 @@ impl StyxParser {
     ) -> Result<Node<ParenArgument>, Box<dyn Error>> {
         let span = pair.as_span().into();
         let mut inner = pair.into_inner();
-        let ident = self.parse_identifier(inner.next().unwrap())?;
-        let ty_ident = self.parse_type_ident(inner.next().unwrap())?;
+        let ident = self.parse_ident(inner.next().unwrap())?;
+        let ty_ident = self.parse_ident(inner.next().unwrap())?;
         Ok(Node::new(
             0,
             span,
@@ -448,27 +446,11 @@ impl StyxParser {
         ))
     }
 
-    /// Parse a type identifier.
-    fn parse_type_ident(&mut self, pair: Pair<Rule>) -> Result<Node<Ident>, Box<dyn Error>> {
-        let inner = pair.into_inner().next().unwrap();
-        if let Rule::builtin_type = inner.as_rule() {
-            Ok(Node::new(
-                0,
-                inner.as_span().into(),
-                Ident {
-                    name: inner.as_str().to_string(),
-                },
-            ))
-        } else {
-            Ok(self.parse_identifier(inner)?)
-        }
-    }
-
     /// Parse a function call.
     fn parse_func_call(&mut self, pair: Pair<Rule>) -> Result<Node<FuncCall>, Box<dyn Error>> {
         let span = pair.as_span();
         let mut inner = pair.into_inner();
-        let ident = self.parse_identifier(inner.next().unwrap())?;
+        let ident = self.parse_ident(inner.next().unwrap())?;
         let args = self.parse_func_call_params(inner.next().unwrap())?;
         Ok(Node::new(
             0,
@@ -561,6 +543,7 @@ impl StyxParser {
                 }
             }
             Stmt::Return(ret) => self.correct_expr_ids(ret),
+            Stmt::BinaryExpr(expr) => self.correct_expr_ids(expr),
         }
     }
 
@@ -763,129 +746,12 @@ mod tests {
         let mut res =
             StyxParser::parse(Rule::statement, "let x = 5").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule statement");
-        assert_eq!(res.as_rule(), Rule::declaration);
+        let res = res
+            .into_inner()
+            .next()
+            .expect("expected match for rule statement");
+        assert_eq!(res.as_rule(), Rule::let_declaration);
         assert_eq!(res.as_span(), Span::new("let x = 5", 0, 9).unwrap());
         assert_eq!(res.as_str(), "let x = 5");
-    }
-
-    #[test]
-    fn test_inline_statements() {
-        // let x = 5; x = 2\n
-        let mut res =
-            StyxParser::parse(Rule::line, "let x = 5; x = 2\n").unwrap_or_else(|e| panic!("{}", e));
-        let mut stmts = res.next().unwrap().into_inner();
-        // let x = 5;
-        let stmt = stmts.next().expect("expected match for rule statement");
-        assert_eq!(stmt.as_rule(), Rule::declaration);
-        assert_eq!(
-            stmt.as_span(),
-            Span::new("let x = 5; x = 2\n", 0, 9).unwrap()
-        );
-        assert_eq!(stmt.as_str(), "let x = 5");
-        // x = 2
-        let stmt = stmts.next().expect("expected match for rule statement");
-        assert_eq!(stmt.as_rule(), Rule::assignment);
-        assert_eq!(
-            stmt.as_span(),
-            Span::new("let x = 5; x = 2\n", 11, 16).unwrap()
-        );
-        assert_eq!(stmt.as_str(), "x = 2");
-    }
-
-    #[test]
-    fn test_block() {
-        // { let x = 5; x = 2 }
-        let mut res = StyxParser::parse(Rule::block, "{ let x = 5; x = 2 }")
-            .unwrap_or_else(|e| panic!("{}", e));
-        // unwrap block
-        let stmt = res.next().expect("expecte match for rule `block`");
-        assert_eq!(stmt.as_rule(), Rule::block);
-        assert_eq!(
-            stmt.as_span(),
-            Span::new("{ let x = 5; x = 2 }", 0, 20).unwrap()
-        );
-        assert_eq!(stmt.as_str(), "{ let x = 5; x = 2 }");
-        // unwrap block contents
-        let mut inner = stmt.into_inner().next().unwrap().into_inner();
-        // let x = 5;
-        let stmt = inner.next().expect("expected match for rule `declaration`");
-        assert_eq!(stmt.as_rule(), Rule::declaration);
-        assert_eq!(
-            stmt.as_span(),
-            Span::new("{ let x = 5; x = 2 }", 2, 11).unwrap()
-        );
-        assert_eq!(stmt.as_str(), "let x = 5");
-        // x = 2
-        let stmt = inner.next().expect("expected match for rule `assignment`");
-        assert_eq!(stmt.as_rule(), Rule::assignment);
-        assert_eq!(
-            stmt.as_span(),
-            Span::new("{ let x = 5; x = 2 }", 13, 18).unwrap()
-        );
-        assert_eq!(stmt.as_str(), "x = 2");
-    }
-
-    #[test]
-    fn test_multiline_statements() {
-        // let x = 5
-        // x = 2
-        let mut res =
-            StyxParser::parse(Rule::stmts, "let x = 5\nx = 2").unwrap_or_else(|e| panic!("{}", e));
-        let mut stmts = res.next().unwrap().into_inner();
-        // let x = 5
-        let stmt = stmts.next().expect("expected match for rule `declaration`");
-        assert_eq!(stmt.as_rule(), Rule::declaration);
-        assert_eq!(stmt.as_span(), Span::new("let x = 5\nx = 2", 0, 9).unwrap());
-        assert_eq!(stmt.as_str(), "let x = 5");
-        // x = 2
-        let stmt = stmts.next().expect("expected match for rule `assignment`");
-        assert_eq!(stmt.as_rule(), Rule::assignment);
-        assert_eq!(
-            stmt.as_span(),
-            Span::new("let x = 5\nx = 2", 10, 15).unwrap()
-        );
-        assert_eq!(stmt.as_str(), "x = 2");
-    }
-
-    #[test]
-    fn test_multiline_xtreme() {
-        // let x = 1; x = 2;
-        // let y = 3; y = 4
-        // let z = 5;
-        // z = 6
-        let source = "let x = 1; x = 2\nlet y = 3; y = 4\nlet z = 5\nz = 6";
-        let mut res = StyxParser::parse(Rule::stmts, source).unwrap_or_else(|e| panic!("{}", e));
-        let mut stmts = res.next().unwrap().into_inner();
-
-        // let x = 1
-        let stmt = stmts.next().expect("expected match for rule `declaration`");
-        assert_eq!(stmt.as_rule(), Rule::declaration);
-        assert_eq!(stmt.as_span(), Span::new(source, 0, 9).unwrap());
-        assert_eq!(stmt.as_str(), "let x = 1");
-        // x = 2
-        let stmt = stmts.next().expect("expected match for rule `assignment`");
-        assert_eq!(stmt.as_rule(), Rule::assignment);
-        assert_eq!(stmt.as_span(), Span::new(source, 11, 16).unwrap());
-        assert_eq!(stmt.as_str(), "x = 2");
-        // let y = 3
-        let stmt = stmts.next().expect("expected match for rule `declaration`");
-        assert_eq!(stmt.as_rule(), Rule::declaration);
-        assert_eq!(stmt.as_span(), Span::new(source, 17, 26).unwrap());
-        assert_eq!(stmt.as_str(), "let y = 3");
-        // y = 4
-        let stmt = stmts.next().expect("expected match for rule `assignment`");
-        assert_eq!(stmt.as_rule(), Rule::assignment);
-        assert_eq!(stmt.as_span(), Span::new(source, 28, 33).unwrap());
-        assert_eq!(stmt.as_str(), "y = 4");
-        // let z = 5
-        let stmt = stmts.next().expect("expected match for rule `declaration`");
-        assert_eq!(stmt.as_rule(), Rule::declaration);
-        assert_eq!(stmt.as_span(), Span::new(source, 34, 43).unwrap());
-        assert_eq!(stmt.as_str(), "let z = 5");
-        // z = 6
-        let stmt = stmts.next().expect("expected match for rule `assignment`");
-        assert_eq!(stmt.as_rule(), Rule::assignment);
-        assert_eq!(stmt.as_span(), Span::new(source, 44, 49).unwrap());
-        assert_eq!(stmt.as_str(), "z = 6");
     }
 }

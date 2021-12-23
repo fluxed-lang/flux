@@ -14,7 +14,7 @@ use log::{debug, trace};
 use styxc_ast::{
     control::{If, Loop},
     func::FuncCall,
-    operations::{Assignment, AssignmentKind, BinOp, BinaryOp},
+    operations::{Assignment, AssignmentKind, BinaryExpr, BinaryOp},
     Declaration, Expr, Ident, Literal, LiteralKind, Node, Stmt, AST,
 };
 use styxc_walker::Walker;
@@ -239,6 +239,7 @@ impl<'a> FunctionTranslator<'a> {
             FuncCall(call) => {
                 self.translate_func_call(call.value);
             }
+            _ => todo!(),
         }
     }
 
@@ -346,24 +347,26 @@ impl<'a> FunctionTranslator<'a> {
     }
 
     // Translate a binary operation.
-    fn translate_bin_op(&mut self, bin_op: BinOp) -> Value {
+    fn translate_bin_op(&mut self, bin_op: BinaryExpr) -> Value {
         let lhs = self.translate_expr(bin_op.lhs.value);
         let rhs = self.translate_expr(bin_op.rhs.value);
         use BinaryOp::*;
         match bin_op.kind {
-            Add => self.builder.ins().iadd(lhs, rhs),
-            Sub => self.builder.ins().isub(lhs, rhs),
+            Plus => self.builder.ins().iadd(lhs, rhs),
+            Minus => self.builder.ins().isub(lhs, rhs),
             Mul => self.builder.ins().imul(lhs, rhs),
             Div => self.builder.ins().udiv(lhs, rhs),
             Mod => self.builder.ins().srem(lhs, rhs),
-            And => self.builder.ins().band(lhs, rhs),
-            Or => self.builder.ins().bor(lhs, rhs),
-            Xor => self.builder.ins().bxor(lhs, rhs),
-            LogAnd => todo!(),
-            LogOr => todo!(),
+            BitwiseAnd => self.builder.ins().band(lhs, rhs),
+            BitwiseOr => self.builder.ins().bor(lhs, rhs),
+            BitwiseXor => self.builder.ins().bxor(lhs, rhs),
+            LogicalAnd => todo!(),
+            LogicalOr => todo!(),
             Shl => self.builder.ins().ishl(lhs, rhs),
             Shr => self.builder.ins().sshr(lhs, rhs),
             Eq | Ne | Lt | Gt | Le | Ge => self.translate_icmp(bin_op.kind, lhs, rhs),
+            Assign | PlusEq | MinusEq | MulEq | DivEq | ModEq | BitwiseAndEq | BitwiseOrEq
+            | BitwiseXorEq | ShlEq | ShrEq => todo!(),
         }
     }
 
@@ -403,8 +406,6 @@ impl<'a> FunctionTranslator<'a> {
         // output statements into block.
         self.translate_stmts(if_stmt.block.value.stmts);
         // jump back to merging block
-		self.builder.ins().
-
         self.builder.ins().jump(merge_block, &[]);
         // switch to the merge block for subsequent statements.
         self.builder.switch_to_block(merge_block);

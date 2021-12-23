@@ -2,7 +2,7 @@ use styxc_types::Type;
 
 use crate::control::{If, Loop};
 use crate::func::{ExternFunc, FuncCall, FuncDecl};
-use crate::operations::{Assignment, BinOp};
+use crate::operations::{Assignment, BinaryExpr};
 use styxc_span::Span;
 
 pub mod control;
@@ -116,6 +116,8 @@ pub enum Stmt {
     FuncCall(Node<FuncCall>),
     /// A function return statement.
     Return(Node<Expr>),
+    /// A binary expression.
+    BinaryExpr(Node<Expr>),
 }
 
 #[derive(Debug, PartialEq)]
@@ -125,7 +127,7 @@ pub enum Expr {
     /// An identifier expression.
     Ident(Node<Ident>),
     /// A binary operation expression.
-    BinOp(Node<BinOp>),
+    BinOp(Node<BinaryExpr>),
     /// A block (e.g. `{ /* ... */ }`).
     Block(Node<Block>),
     /// A function call expression.

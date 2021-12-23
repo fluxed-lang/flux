@@ -7,5 +7,7 @@ edition = "2018"
 
 [dependencies]
 thiserror = "1"
+pest = "2"
 
 styxc_span = { path =  "../styxc_span" }
+styxc_parser = { path =  "../styxc_parser" }

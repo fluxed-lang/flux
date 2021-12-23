@@ -1,2 +1,2 @@
 extern puts x: str -> ()
-puts "Hello, world!"
+puts "This is so cool!"

@@ -262,6 +262,9 @@ fn check_stmt(walker: &mut Walker, stmt: &mut Node<Stmt>) -> Result<(), Box<dyn 
         Stmt::Return(ret) => {
             check_expr(walker, &mut ret.value)?;
         }
+        Stmt::BinaryExpr(expr) => {
+            check_expr(walker, &mut expr.value)?;
+        }
     }
     Ok(())
 }
