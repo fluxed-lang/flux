@@ -35,11 +35,17 @@ hello world!
 
 ## Crates
 
--   [`styxc`](./styxc) - The compiler entrypoint and CLI interface.
--   [`styxc_ast`](./styxc_ast) - Contains type definitions and handles the semantic analysis of the AST.
--   [`styxc_ir`](./styxc_ir) - Handles the generation of LLVM IR using the Cranelift IR generator from the AST.
--   [`styxc_lexer`](./styxc_lexer) - Generates a `TokenStream` from an input string.
--   [`styxc_parser`](./styxc_parser) - Parses a `TokenStream` into an AST.
+- [`styxc_ast_passes`](./styxc_ast_passes) - Defines the AST parses for the pre-IR generation phase.
+- [`styxc_ast`](./styxc_ast) - Contains type definitions and handles the semantic analysis of the AST.
+- [`styxc_errors`](./styxc_errors) - Error handling and message reporting crate.
+- [`styxc_ir`](./styxc_ir) - Handles the generation of LLVM IR using the Cranelift IR generator from the AST.
+- [`styxc_main`](./styxc_main) - The compiler entrypoint and step execution logic.
+- [`styxc_parser`](./styxc_parser) - Parses a `TokenStream` into an AST.
+- [`styxc_span`](./styxc_span) - Defines the `Span` type used in the compiler.
+- [`styxc_tests`](./styxc_tests) - Contains tests for the compiler.
+- [`styxc_types`](./styxc_types) - Defines the types used in the compiler.
+- [`styxc_walker`](./styxc_walker) - Defines an AST walker for performing semantic analysis.
+- [`styxc`](./styxc) - The compiler CLI interface.
 
 ## Modes
 
