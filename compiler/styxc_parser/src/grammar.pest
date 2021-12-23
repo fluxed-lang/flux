@@ -113,10 +113,8 @@ binary_op_mod_eq = { "%=" }
 binary_op_mul_eq = { "*=" }
 binary_op_ne = { "!=" }
 binary_op_not_eq = { "!=" }
-binary_op_or_eq = { "|=" }
 binary_op_plus_eq = { "+=" }
 binary_op_rshift = { ">>" }
-binary_op_xor_eq = { "^=" }
 binary_op_pow = { "**" }
 // length 1 operators
 binary_op_add = { "+" }
@@ -129,6 +127,7 @@ binary_op_lt = { "<" }
 binary_op_mod = { "%" }
 binary_op_mul = { "*" }
 binary_op_sub = { "-" }
+binary_op_assign = { "=" }
 
 
 binary_op = {
@@ -152,9 +151,8 @@ binary_op = {
 	| binary_op_mul_eq
 	| binary_op_ne
 	| binary_op_not_eq
-	| binary_op_or_eq
+	| binary_op_bitwise_or_eq
 	| binary_op_plus_eq
-	| binary_op_xor_eq
 	| binary_op_add
 	| binary_op_bitwise_and
 	| binary_op_bitwise_or
