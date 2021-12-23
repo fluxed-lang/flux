@@ -11,7 +11,8 @@ ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 int_hex = @{ "0x" ~ (ASCII_HEX_DIGIT | "_")+ }
 int_oct = @{ "0o" ~ ('0'..'7' | "_")+ }
 int_bin = @{ "0b" ~ ("0" | "1" | "_")+ }
-int = @{ "-"?  ~ (int_hex | int_oct | int_bin | (ASCII_DIGIT | "_")+) }
+int_dec = @{ "0d"? ~ (ASCII_DIGIT | "_")+ }
+int = @{ "-"?  ~ (int_hex | int_oct | int_bin | int_dec) }
 
 float_hex = @{ "0x" ~ ((ASCII_HEX_DIGIT | "_")* ~ "." ~ (ASCII_HEX_DIGIT | "_")+) | ((ASCII_HEX_DIGIT | "_")+ ~ "." ~ (ASCII_HEX_DIGIT | "_")*) }
 float_oct = @{ "0o" ~ (('0'..'7' | "_")* ~ "." ~ ('0'..'7' | "_")+) | (('0'..'7' | "_")+ ~ "." ~ ('0'..'7' | "_")*) }
