@@ -16,7 +16,7 @@ use pest::{
 use styxc_ast::{
     control::{If, Loop},
     func::{ExternFunc, FuncCall, ParenArgument},
-    operations::{Assignment, AssignmentKind, BinOp, BinOpKind},
+    operations::{Assignment, AssignmentKind, BinOp, BinaryOp},
     Block, Declaration, Expr, Ident, Literal, LiteralKind, Mutability, Node, Stmt, AST,
 };
 use styxc_types::Type;
@@ -115,11 +115,10 @@ impl StyxParser {
                     Rule::mut_declaration => {
                         Declaration(self.parse_declaration(inner, Mutability::Mutable)?)
                     }
-                    Rule::assignment => Assignment(self.parse_assignment(inner)?),
-                    Rule::loop_block => Loop(self.parse_loop_block(inner)?),
-                    Rule::if_block => If(self.parse_if_statement(inner)?),
+                    Rule::loop_stmt => Loop(self.parse_loop_block(inner)?),
+                    Rule::conditional_stmt => If(self.parse_if_statement(inner)?),
                     Rule::func_call => FuncCall(self.parse_func_call(inner)?),
-                    Rule::extern_func => ExternFunc(self.parse_extern_func(inner)?),
+                    Rule::extern_func_decl => ExternFunc(self.parse_extern_func(inner)?),
                     Rule::EOI => break,
                     _ => {
                         unreachable!("unexpected match: {:?}", inner.as_rule())
@@ -149,14 +148,14 @@ impl StyxParser {
         // concatenate all idents
         loop {
             let next = inner.next().unwrap();
-            if matches!(next.as_rule(), Rule::expression) {
+            if matches!(next.as_rule(), Rule::expr) {
                 exprs.push(next);
                 break;
             }
             let ident = self.parse_identifier(next)?;
             if matches!(
                 inner.peek().map(|r| r.as_rule()),
-                Some(Rule::declaration_type)
+                Some(Rule::ident)
             ) {
                 let type_ident = self.parse_type_ident(inner.next().unwrap())?;
                 idents.push((ident, Some(type_ident)))
@@ -323,7 +322,7 @@ impl StyxParser {
         let primary = |pair: Pair<Rule>| match pair.as_rule() {
             Rule::ident => Node::new(0, span, Expr::Ident(self.parse_identifier(pair).unwrap())),
             Rule::literal => Node::new(0, span, Expr::Literal(self.parse_literal(pair).unwrap())),
-            Rule::expression => self.parse_expression(pair).unwrap(),
+            Rule::expr => self.parse_expression(pair).unwrap(),
             _ => unreachable!(),
         };
         let infix = |lhs: Node<Expr>, op: Pair<Rule>, rhs: Node<Expr>| {
@@ -335,22 +334,22 @@ impl StyxParser {
                     span,
                     BinOp {
                         kind: match op.as_rule() {
-                            Rule::bin_op_plus => BinOpKind::Add,
-                            Rule::bin_op_minus => BinOpKind::Sub,
-                            Rule::bin_op_mul => BinOpKind::Mul,
-                            Rule::bin_op_div => BinOpKind::Div,
-                            Rule::bin_op_mod => BinOpKind::Mod,
-                            Rule::bin_op_and => BinOpKind::And,
-                            Rule::bin_op_or => BinOpKind::Or,
-                            Rule::bin_op_xor => BinOpKind::Xor,
-                            Rule::bin_op_eq => BinOpKind::Eq,
-                            Rule::bin_op_ne => BinOpKind::Ne,
-                            Rule::bin_op_lt => BinOpKind::Lt,
-                            Rule::bin_op_le => BinOpKind::Le,
-                            Rule::bin_op_gt => BinOpKind::Gt,
-                            Rule::bin_op_ge => BinOpKind::Ge,
-                            Rule::bin_op_log_and => BinOpKind::LogAnd,
-                            Rule::bin_op_log_or => BinOpKind::LogOr,
+                            Rule::bin_op_plus => BinaryOp::Add,
+                            Rule::bin_op_minus => BinaryOp::Sub,
+                            Rule::bin_op_mul => BinaryOp::Mul,
+                            Rule::bin_op_div => BinaryOp::Div,
+                            Rule::bin_op_mod => BinaryOp::Mod,
+                            Rule::bin_op_and => BinaryOp::And,
+                            Rule::bin_op_or => BinaryOp::Or,
+                            Rule::bin_op_xor => BinaryOp::Xor,
+                            Rule::bin_op_eq => BinaryOp::Eq,
+                            Rule::bin_op_ne => BinaryOp::Ne,
+                            Rule::bin_op_lt => BinaryOp::Lt,
+                            Rule::bin_op_le => BinaryOp::Le,
+                            Rule::bin_op_gt => BinaryOp::Gt,
+                            Rule::bin_op_ge => BinaryOp::Ge,
+                            Rule::bin_op_log_and => BinaryOp::LogAnd,
+                            Rule::bin_op_log_or => BinaryOp::LogOr,
                             _ => unreachable!(),
                         },
                         lhs: lhs.into(),

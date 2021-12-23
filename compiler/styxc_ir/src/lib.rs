@@ -14,7 +14,7 @@ use log::{debug, trace};
 use styxc_ast::{
     control::{If, Loop},
     func::FuncCall,
-    operations::{Assignment, AssignmentKind, BinOp, BinOpKind},
+    operations::{Assignment, AssignmentKind, BinOp, BinaryOp},
     Declaration, Expr, Ident, Literal, LiteralKind, Node, Stmt, AST,
 };
 use styxc_walker::Walker;
@@ -349,7 +349,7 @@ impl<'a> FunctionTranslator<'a> {
     fn translate_bin_op(&mut self, bin_op: BinOp) -> Value {
         let lhs = self.translate_expr(bin_op.lhs.value);
         let rhs = self.translate_expr(bin_op.rhs.value);
-        use BinOpKind::*;
+        use BinaryOp::*;
         match bin_op.kind {
             Add => self.builder.ins().iadd(lhs, rhs),
             Sub => self.builder.ins().isub(lhs, rhs),
@@ -368,8 +368,8 @@ impl<'a> FunctionTranslator<'a> {
     }
 
     /// Translate an icmp comparison code.
-    fn translate_icmp(&mut self, op: BinOpKind, lhs: Value, rhs: Value) -> Value {
-        use BinOpKind::*;
+    fn translate_icmp(&mut self, op: BinaryOp, lhs: Value, rhs: Value) -> Value {
+        use BinaryOp::*;
         match op {
             Eq => self.builder.ins().icmp(IntCC::Equal, lhs, rhs),
             Ne => self.builder.ins().icmp(IntCC::NotEqual, lhs, rhs),

@@ -96,7 +96,7 @@ impl UnOpKind {
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub enum BinOpKind {
+pub enum BinaryOp {
     /// The addition operator, `+`.
     Add,
     /// The subtraction operator, `-`.
@@ -108,15 +108,15 @@ pub enum BinOpKind {
     /// The modulo operator, `%`.
     Mod,
     /// The bitwise AND operator, `&`.
-    And,
+    BitwiseAnd,
     /// The bitwise OR operator, `|`.
-    Or,
+    BitwiseOr,
     /// The bitwise XOR operator, `^`.
-    Xor,
+    BitwiseXor,
     /// The logical AND operator, `&&`.
-    LogAnd,
+    LogicalAnd,
     /// The logical OR operator, `||`.
-    LogOr,
+    LogicalOr,
     /// The bitwise left shift operator, `<<`.
     Shl,
     /// The bitwise right shift operator, `>>`.
@@ -133,22 +133,44 @@ pub enum BinOpKind {
     Le,
     /// The greater-than-or-equal operator, `>=`.
     Ge,
+	/// The assignment operator, `=`.
+	Assign,
+	/// The assignment operator, `+=`.
+	PlusEq,
+	/// The assignment operator, `-=`.
+	MinusEq,
+	/// The assignment operator, `*=`.
+	MulEq,
+	/// The assignment operator, `/=`.
+	DivEq,
+	/// The assignment operator, `%=`.
+	ModEq,
+	/// The assignment operator, `&=`.
+	BitwiseAndEq,
+	/// The assignment operator, `|=`.
+	BitwiseOrEq,
+	/// The assignment operator, `^=`.
+	BitwiseXorEq,
+	/// The assignment operator, `<<=`.
+	ShlEq,
+	/// The assignment operator, `>>=`.
+	ShrEq
 }
 
-impl FromStr for BinOpKind {
+impl FromStr for BinaryOp {
     type Err = Box<dyn Error>;
 
-    fn from_str(s: &str) -> Result<BinOpKind, Self::Err> {
-        use BinOpKind::*;
+    fn from_str(s: &str) -> Result<BinaryOp, Self::Err> {
+        use BinaryOp::*;
         match s {
             "+" => Ok(Add),
             "-" => Ok(Sub),
             "*" => Ok(Mul),
             "/" => Ok(Div),
             "%" => Ok(Mod),
-            "&" => Ok(And),
-            "|" => Ok(Or),
-            "^" => Ok(Xor),
+            "&" => Ok(BitwiseAnd),
+            "|" => Ok(BitwiseOr),
+            "^" => Ok(BitwiseXor),
             "<<" => Ok(Shl),
             ">>" => Ok(Shr),
             "==" => Ok(Eq),
@@ -157,25 +179,37 @@ impl FromStr for BinOpKind {
             ">" => Ok(Gt),
             "<=" => Ok(Le),
             ">=" => Ok(Ge),
+			"=" => Ok(Assign),
+			"+=" => Ok(PlusEq),
+			"-=" => Ok(MinusEq),
+			"*=" => Ok(MulEq),
+			"/=" => Ok(DivEq),
+			"%=" => Ok(ModEq),
+			"&=" => Ok(BitwiseAndEq),
+			"|=" => Ok(BitwiseOrEq),
+			"^=" => Ok(BitwiseXorEq),
+			"<<=" => Ok(ShlEq),
+			">>=" => Ok(ShrEq),
             _ => Err("invalid binary operator".into()),
         }
     }
 }
 
-impl BinOpKind {
+impl BinaryOp {
     /// Fetch the precedence of this binary operator.
     pub const fn precedence(&self) -> usize {
         match self {
-            BinOpKind::Mul | BinOpKind::Div | BinOpKind::Mod => 3,
-            BinOpKind::Add | BinOpKind::Sub => 4,
-            BinOpKind::Shl | BinOpKind::Shr => 5,
-            BinOpKind::Lt | BinOpKind::Gt | BinOpKind::Le | BinOpKind::Ge => 6,
-            BinOpKind::Eq | BinOpKind::Ne => 7,
-            BinOpKind::And => 8,
-            BinOpKind::Xor => 9,
-            BinOpKind::Or => 10,
-            BinOpKind::LogAnd => 11,
-            BinOpKind::LogOr => 12,
+            BinaryOp::Mul | BinaryOp::Div | BinaryOp::Mod => 5,
+            BinaryOp::Add | BinaryOp::Sub => 6,
+            BinaryOp::Shl | BinaryOp::Shr => 7,
+            BinaryOp::BitwiseAnd => 8,
+            BinaryOp::BitwiseXor => 9,
+            BinaryOp::BitwiseOr => 10,
+            BinaryOp::Lt | BinaryOp::Gt | BinaryOp::Le | BinaryOp::Ge => 11,
+            BinaryOp::Eq | BinaryOp::Ne => 12,
+            BinaryOp::LogicalAnd => 13,
+            BinaryOp::LogicalOr => 14,
+			_ => 15,
         }
     }
 
@@ -195,7 +229,7 @@ pub struct BinOp {
     /// The right hand side of the binary expression.
     pub rhs: Box<Node<Expr>>,
     /// The kind of binary expression.
-    pub kind: BinOpKind,
+    pub kind: BinaryOp,
 }
 
 #[derive(Debug, PartialEq)]

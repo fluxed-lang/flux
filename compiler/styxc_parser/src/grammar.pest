@@ -189,8 +189,8 @@ statement_inner = {
 	| func_defer
 	| func_return
 	| break_stmt
-	| binary_expr
 	| unary_expr
+	| binary_expr
 	| func_call
 }
 
