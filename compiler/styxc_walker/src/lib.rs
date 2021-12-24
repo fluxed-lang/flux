@@ -213,7 +213,7 @@ impl Walker {
                 Some(var) => var.ty.clone(),
                 None => Type::Infer,
             },
-            Expr::BinOp(bin_op) => {
+            Expr::BinaryExpr(bin_op) => {
                 let lhs = self.get_expr_type(&bin_op.value.lhs.value);
                 let rhs = self.get_expr_type(&bin_op.value.lhs.value);
                 lhs.intersect(rhs)

@@ -71,7 +71,7 @@ fn check_expr(walker: &mut Walker, expr: &mut Expr) -> Result<Type, Box<dyn Erro
                 )
             }
         },
-        Expr::BinOp(bin_op) => {
+        Expr::BinaryExpr(bin_op) => {
             let lhs = check_expr(walker, &mut bin_op.value.lhs.value)?;
             let rhs = check_expr(walker, &mut bin_op.value.lhs.value)?;
             lhs.intersect(rhs)

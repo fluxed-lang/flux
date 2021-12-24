@@ -7,8 +7,6 @@ use crate::{Block, Expr, Ident, Node};
 pub struct FuncDecl {
     /// The identifier representing the function.
     pub ident: Node<Ident>,
-    /// The type of this function.
-    pub ty: Type,
     /// The arguments this function requires.
     pub args: Vec<Node<ParenArgument>>,
     /// The return type of the function.

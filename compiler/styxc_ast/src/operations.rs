@@ -1,3 +1,5 @@
+//! Defines data structures for various operation types within the language.
+
 use std::{error::Error, str::FromStr};
 
 use crate::{Expr, Ident, Node};
@@ -26,31 +28,33 @@ pub enum Associativity {
 ///
 /// Unary operators are operators that act on a single argument, such as `x++`, or `!x`.
 #[derive(Debug, PartialEq)]
-pub enum UnOpKind {
+pub enum UnaryExprKind {
     /// The suffix increment operator, `++`.
-    Incr,
+    Increment,
     /// The suffix decrement operator, `--`.
-    Decr,
+    Decrement,
     /// The prefix increment operator, `++`.
     /// The index operator, `[n]`
-    Index(usize),
+    Index(u64),
     /// The address-of operator, `&`.
-    Addr,
+    AddressOf,
     /// The bitwise not operator, `~`.
-    Not,
+    BitwiseNot,
     /// The logical not operator, `!`.
-    LogNot,
+    LogicalNot,
     /// The de-reference operator, `*`.
-    Deref,
-    /// The negation operator.
-    Neg,
+    Dereference,
+    /// The negation operator, `-`.
+    Negation,
+    /// The call operator, `()`.
+    Call(Vec<Expr>),
 }
 
-impl FromStr for UnOpKind {
+impl FromStr for UnaryExprKind {
     type Err = Box<dyn Error>;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use UnOpKind::*;
+        use UnaryExprKind::*;
 
         // match index operator
         if s.starts_with("[") && s.ends_with("]") {
@@ -58,28 +62,28 @@ impl FromStr for UnOpKind {
             chars.next();
             chars.next_back();
             let inner: String = chars.collect();
-            let index: usize = inner.parse::<usize>().unwrap_or(0);
+            let index: u64 = inner.parse::<u64>().unwrap_or(0);
             return Ok(Index(index));
         }
 
         match s {
-            "++" => Ok(Incr),
-            "--" => Ok(Decr),
-            "&" => Ok(Addr),
-            "~" => Ok(Not),
-            "!" => Ok(LogNot),
-            "*" => Ok(Deref),
+            "++" => Ok(Increment),
+            "--" => Ok(Decrement),
+            "&" => Ok(AddressOf),
+            "~" => Ok(BitwiseNot),
+            "!" => Ok(LogicalNot),
+            "*" => Ok(Dereference),
             _ => Err("invalid unary operator".into()),
         }
     }
 }
 
-impl UnOpKind {
+impl UnaryExprKind {
     /// Fetch the precedence of this unary operator.
     pub const fn precedence(&self) -> usize {
-        use UnOpKind::*;
+        use UnaryExprKind::*;
         match self {
-            Incr | Decr | Index(_) => 1,
+            Increment | Decrement | Index(_) => 1,
             _ => 2,
         }
     }
@@ -87,9 +91,9 @@ impl UnOpKind {
     /// Fetch the associativity of this unary operator.
 
     pub const fn associativity(&self) -> Associativity {
-        use UnOpKind::*;
+        use UnaryExprKind::*;
         match self {
-            Incr | Decr | Index(_) => Associativity::Ltr,
+            Increment | Decrement | Index(_) => Associativity::Ltr,
             _ => Associativity::Rtl,
         }
     }

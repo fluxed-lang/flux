@@ -120,6 +120,7 @@ impl StyxParser {
                     Rule::extern_func_decl => ExternFunc(self.parse_extern_func(inner)?),
                     Rule::EOI => break,
                     Rule::binary_expr => BinaryExpr(self.parse_binary_expr(inner)?),
+                    // Rule::expr => Expr()
                     _ => {
                         unreachable!("unexpected match: {:?}", inner.as_rule())
                     }
@@ -326,7 +327,7 @@ impl StyxParser {
             Node::new(
                 0,
                 span,
-                Expr::BinOp(Node::new(
+                Expr::BinaryExpr(Node::new(
                     0,
                     span,
                     BinaryExpr {
@@ -556,7 +557,7 @@ impl StyxParser {
             Expr::Ident(ident) => {
                 ident.id = self.next_id();
             }
-            Expr::BinOp(bin_op) => {
+            Expr::BinaryExpr(bin_op) => {
                 bin_op.id = self.next_id();
                 self.correct_expr_ids(&mut bin_op.value.lhs);
                 self.correct_expr_ids(&mut bin_op.value.rhs);

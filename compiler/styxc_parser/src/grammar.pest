@@ -55,7 +55,15 @@ type_expr = {
 
 literal = { tuple | string | char | bool | array | float | int }
 
-expr = ${ conditional_stmt | func_call | binary_expr | unary_expr | literal | ident }
+expr = ${ 
+	conditional_stmt 
+    | func_call
+    | match_expr
+    | binary_expr
+    | unary_expr
+    | literal
+    | ident
+}
 
 mut_token = { "mut" }
 let_declaration = !{ "let" ~ (mut_token? ~ ident ~ ",")* ~ mut_token? ~ ident ~ "=" ~ (expr ~ ",")* ~ expr }
@@ -171,6 +179,9 @@ binary_op = {
 
 binary_expr = !{ ("(" ~ expr ~ ")" | ident) ~ (binary_op ~ expr)+ }
 
+match_body = !{ (literal ~ "->" ~ expr)* }
+match_expr = !{ "match" ~ expr ~ "{" ~ match_body ~"}"}
+
 // func_decl_generics = !{ "<" ~ (ident ~ ("extends" ~ ident)? ~ ",")* ~ ident ~ ("extends" ~ type_expr)? ~ ">" }
 func_decl_param = !{ ident ~ ":" ~ type_expr }
 func_decl_params = !{ (func_decl_param ~ ",")* ~ func_decl_param }
@@ -200,6 +211,7 @@ statement_inner = {
 	conditional_stmt
 	| loop_stmt
 	| while_stmt
+    | match_expr
 	| declaration
     | const_decl
     | class_decl

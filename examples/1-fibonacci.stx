@@ -1,4 +1,3 @@
-# variable declaration
 mut x, y = 1
 mut z = 0
 

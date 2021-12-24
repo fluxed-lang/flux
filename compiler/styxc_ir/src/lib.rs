@@ -252,7 +252,7 @@ impl<'a> FunctionTranslator<'a> {
             Ident(ident) => self
                 .builder
                 .use_var(*self.variables.get(&ident.value.name).unwrap()),
-            BinOp(bin_op) => self.translate_bin_op(bin_op.value),
+            BinaryExpr(bin_op) => self.translate_bin_op(bin_op.value),
             Block(_) => todo!(),
             FuncCall(func_call) => {
                 if matches!(func_call.value.return_ty, styxc_types::Type::Unit) {

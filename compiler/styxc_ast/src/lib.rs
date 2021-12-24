@@ -1,14 +1,19 @@
+//! # styxc_ast
+//! Defines AST data structures and types for representing Styx code at compile time.
+
+use control::{Conditional, While};
+use module::{Export, Import};
 use styxc_types::Type;
 
-use crate::control::{If, Loop};
+use crate::control::Loop;
 use crate::func::{ExternFunc, FuncCall, FuncDecl};
-use crate::operations::{Assignment, BinaryExpr};
+use crate::operations::BinaryExpr;
 use styxc_span::Span;
 
 pub mod control;
 pub mod func;
+pub mod module;
 pub mod operations;
-pub mod passes;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Node<T> {
@@ -102,22 +107,20 @@ pub struct Ident {
 pub enum Stmt {
     /// A declaration.
     Declaration(Vec<Node<Declaration>>),
-    /// An assignment.
-    Assignment(Node<Assignment>),
-    // A loop block.
-    Loop(Node<Loop>),
-    /// An if statement.
-    If(Node<If>),
     /// A function declaration.
     FuncDecl(Node<FuncDecl>),
     /// An external function declaration.
     ExternFunc(Node<ExternFunc>),
-    /// A function call.
-    FuncCall(Node<FuncCall>),
     /// A function return statement.
     Return(Node<Expr>),
-    /// A binary expression.
-    BinaryExpr(Node<Expr>),
+    /// A loop break statement.
+    Break(Node<Expr>),
+    /// An import statement.
+    Import(Node<Import>),
+    /// An export statement.
+    Export(Node<Export>),
+    /// A generic expression.
+    Expr(Node<Expr>),
 }
 
 #[derive(Debug, PartialEq)]
@@ -127,11 +130,17 @@ pub enum Expr {
     /// An identifier expression.
     Ident(Node<Ident>),
     /// A binary operation expression.
-    BinOp(Node<BinaryExpr>),
+    BinaryExpr(Node<BinaryExpr>),
     /// A block (e.g. `{ /* ... */ }`).
     Block(Node<Block>),
     /// A function call expression.
     FuncCall(Node<FuncCall>),
+    /// A conditional expression.
+    Conditional(Node<Conditional>),
+    /// An Unconditional loop expression.
+    Loop(Node<Loop>),
+    /// A conditional loop expression.
+    While(Node<While>),
 }
 
 #[derive(Debug, PartialEq)]
