@@ -1,4 +1,4 @@
-use crate::{Block, Expr, Ident, Node, types::TypeExpr};
+use crate::{types::TypeExpr, Block, Expr, Ident, Node};
 
 /// A function declaration.
 #[derive(Debug, PartialEq)]
@@ -17,7 +17,7 @@ pub struct FuncCall {
     /// The identifier of the function
     pub ident: Node<Ident>,
     /// Arguments being passed to the function.
-    pub args: Vec<Node<Expr>>
+    pub args: Vec<Node<Expr>>,
 }
 
 /// An argument to a function call.

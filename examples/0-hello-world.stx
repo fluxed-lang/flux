@@ -1,7 +1,2 @@
 extern puts x: str -> ()
-
-hue -> {
-	puts "hue has been compiled"
-}
-
-hue
+puts "hello, world!"
