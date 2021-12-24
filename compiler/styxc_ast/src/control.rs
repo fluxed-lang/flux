@@ -12,7 +12,7 @@ pub struct Conditional {
 }
 
 /// A match result, either a single expression or a block.
-enum MatchResult {
+pub enum MatchResult {
     /// A single expression.
     Single(Node<Expr>),
     /// A block expression.
