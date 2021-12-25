@@ -46,8 +46,8 @@ pub enum Literal {
     Char(char),
     /// A boolean literal (e.g. `true`, `false`).
     Bool(bool),
-	/// An array literal (e.g. `[1, 2, 3]`).
-	Array(Vec<Box<Expr>>)
+    /// An array literal (e.g. `[1, 2, 3]`).
+    Array(Vec<Box<Expr>>),
 }
 
 /// The identifier type.
@@ -61,7 +61,7 @@ impl From<Literal> for Type {
             Literal::String(_) => Type::Array(Type::Char.into()),
             Literal::Char(_) => Type::Char,
             Literal::Bool(_) => Type::Bool,
-			Literal::Array(_) => Type::Array(Type::Int.into()),
+            Literal::Array(_) => Type::Array(Type::Int.into()),
         }
     }
 }
@@ -90,7 +90,6 @@ pub enum Mutability {
     /// that the size of the constant is known.
     Constant,
 }
-
 
 /// Enum of possible statement kinds.
 #[derive(Debug, PartialEq)]
@@ -143,14 +142,12 @@ pub struct Block {
 #[derive(Debug, PartialEq)]
 pub struct AST {
     /// The list of top-level statements in the AST.
-    pub stmts: Vec<Node<Stmt>>
+    pub stmts: Vec<Node<Stmt>>,
 }
 
 impl AST {
     /// Create a new AST instance.
     pub fn new() -> AST {
-        AST {
-            stmts: vec![]
-        }
+        AST { stmts: vec![] }
     }
 }

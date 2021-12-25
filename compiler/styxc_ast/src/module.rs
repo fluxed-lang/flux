@@ -1,6 +1,6 @@
 //! Contains data structures for representing imports and exports.
 
-use crate::{Node};
+use crate::Node;
 
 /// An external, imported module.
 #[derive(Debug, PartialEq, Clone)]

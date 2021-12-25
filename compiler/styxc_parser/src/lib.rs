@@ -14,10 +14,10 @@ use pest::{
     Parser,
 };
 use styxc_ast::{
-    control::{Loop},
+    control::Loop,
     func::{ExternFunc, FuncCall, ParenArgument},
     operations::{Assignment, AssignmentKind, BinaryExpr, BinaryOp},
-    Block, Declaration, Expr, Ident, Literal, Literal, Mutability, Node, Stmt, AST,
+    Block, Declaration, Expr, Ident, Literal, Mutability, Node, Stmt, AST,
 };
 use styxc_types::Type;
 

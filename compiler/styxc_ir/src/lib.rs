@@ -414,7 +414,10 @@ impl<'a> FunctionTranslator<'a> {
 
     fn translate_func_call(&mut self, call: FuncCall) -> Option<Value> {
         let mut sig = self.module.make_signature();
-        let func = self.walker.lookup_function(&call.ident.value.inner).unwrap();
+        let func = self
+            .walker
+            .lookup_function(&call.ident.value.inner)
+            .unwrap();
 
         // Add a parameter for each argument.
         let arg_tys;
