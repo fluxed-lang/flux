@@ -87,10 +87,7 @@ impl StyxParser {
         self.correct_ids(&mut stmts);
         debug!("Produced {} top-level AST statements", stmts.len());
         trace!("{:#?}", stmts);
-        Ok(AST {
-            modules: vec![],
-            stmts,
-        })
+        Ok(AST { stmts })
     }
 
     /// Fetch the next AST ID, incrementing the stored `next_id` field.
@@ -186,8 +183,6 @@ impl StyxParser {
                 0,
                 span,
                 Declaration {
-                    ty: Type::Infer,
-                    ty_ident,
                     ident,
                     mutability,
                     value,

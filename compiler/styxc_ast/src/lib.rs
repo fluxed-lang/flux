@@ -3,7 +3,6 @@
 
 use control::{Conditional, While};
 use module::{Export, Import};
-use styxc_types::Type;
 
 use crate::control::Loop;
 use crate::func::{ExternFunc, FuncCall, FuncDecl};
@@ -52,19 +51,6 @@ pub enum Literal {
 
 /// The identifier type.
 pub type Ident = Node<String>;
-
-impl From<Literal> for Type {
-    fn from(kind: Literal) -> Self {
-        match kind {
-            Literal::Int(_) => Type::Int,
-            Literal::Float(_) => Type::Float,
-            Literal::String(_) => Type::Array(Type::Char.into()),
-            Literal::Char(_) => Type::Char,
-            Literal::Bool(_) => Type::Bool,
-            Literal::Array(_) => Type::Array(Type::Int.into()),
-        }
-    }
-}
 
 /// A declaration of a variable.
 #[derive(Debug, PartialEq)]

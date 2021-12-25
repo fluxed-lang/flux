@@ -1,15 +1,8 @@
 //! Contains data structures for representing Type expressions.
 
-use crate::{Ident, Node};
+use styxc_types::Type;
 
-/// The kind of a type binary expression operator.
-#[derive(Debug, PartialEq, Clone)]
-pub enum TypeBinaryExprOpKind {
-    /// The `&` type operator, intersect.
-    Intersect,
-    /// The `|` type operator, union.
-    Union,
-}
+use crate::{Ident, Node};
 
 /// An enum of type literals.
 #[derive(Debug, PartialEq, Clone)]
@@ -28,6 +21,19 @@ pub enum TypeLiteral {
     String,
 }
 
+impl From<TypeLiteral> for Type {
+    fn from(lit: TypeLiteral) -> Self {
+        match lit {
+            TypeLiteral::Unit => Type::Unit,
+            TypeLiteral::Bool => Type::Bool,
+            TypeLiteral::Int => Type::Int,
+            TypeLiteral::Float => Type::Float,
+            TypeLiteral::Char => Type::Char,
+            TypeLiteral::String => Type::String,
+        }
+    }
+}
+
 /// The kind of a type unary expression.
 #[derive(Debug, PartialEq, Clone)]
 pub enum TypeUnaryExprOpKind {
@@ -44,6 +50,23 @@ pub struct TypeUnaryExpr {
     pub operand: Box<TypeExpr>,
 }
 
+impl From<TypeUnaryExpr> for Type {
+    fn from(expr: TypeUnaryExpr) -> Self {
+        match expr.op {
+            TypeUnaryExprOpKind::Array => Type::Array(Box::new(expr.operand.into())),
+        }
+    }
+}
+
+/// The kind of a type binary expression operator.
+#[derive(Debug, PartialEq, Clone)]
+pub enum TypeBinaryExprOpKind {
+    /// The `&` type operator, intersect.
+    Intersect,
+    /// The `|` type operator, union.
+    Union,
+}
+
 /// A type binary expression.
 #[derive(Debug, PartialEq, Clone)]
 pub struct TypeBinaryExpr {
@@ -53,6 +76,17 @@ pub struct TypeBinaryExpr {
     pub operator: TypeBinaryExprOpKind,
     /// The right-hand side of the binary expression.
     pub rhs: Box<TypeExpr>,
+}
+
+impl From<TypeBinaryExpr> for Type {
+    fn from(expr: TypeBinaryExpr) -> Self {
+        match expr.operator {
+            TypeBinaryExprOpKind::Intersect => {
+                Type::Intersection(vec![expr.lhs.into(), expr.rhs.into()])
+            }
+            TypeBinaryExprOpKind::Union => Type::Union(vec![expr.lhs.into(), expr.rhs.into()]),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -65,4 +99,21 @@ pub enum TypeExpr {
     Binary(Node<TypeBinaryExpr>),
     /// An identifier.
     Ident(Node<Ident>),
+}
+
+impl From<TypeExpr> for Type {
+    fn from(expr: TypeExpr) -> Self {
+        match expr {
+            TypeExpr::Literal(lit) => lit.value.into(),
+            TypeExpr::Unary(unary) => unary.value.into(),
+            TypeExpr::Binary(binary) => binary.value.into(),
+            TypeExpr::Ident(_) => Type::Infer,
+        }
+    }
+}
+
+impl From<Box<TypeExpr>> for Type {
+    fn from(expr: Box<TypeExpr>) -> Self {
+        expr.into()
+    }
 }

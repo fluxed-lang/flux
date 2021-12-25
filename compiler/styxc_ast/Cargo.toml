@@ -10,4 +10,4 @@ log = "0.4"
 pest = "2"
 
 styxc_span = { path =  "../styxc_span" }
-styxc_types = { path = "../styxc_types" }
+styxc_types = { path =  "../styxc_types" }

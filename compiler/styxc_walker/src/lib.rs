@@ -22,28 +22,31 @@ pub struct Function {
     pub name: String,
     /// The arguments of the function.
     pub args: Vec<ParenArgument>,
-    /// The type of the function.
-    pub ty: Type,
     /// The linkage type of this function.
     pub linkage: Linkage,
+    /// The return type of this function.
+    pub ret_type: Type,
+    /// The type of this function.
+    pub ty: Type,
 }
 
 #[derive(Debug)]
 pub struct Variable {
     /// The name of this variable.
     pub name: String,
-    /// The type of this variable.
-    pub ty: Type,
     /// The mutability of this variable.
     pub mutability: Mutability,
+    /// The type of this variable.
+    pub ty: Type,
 }
 
-// pub struct TypeVariable {
-//     /// The name of this type variable.
-//     name: String,
-//     /// The type held by this type variable.
-//     ty: Type,
-// }
+/// Represents a type variable declared via the `type x = ` expression.
+pub struct TypeVariable {
+    /// The name of this type variable.
+    name: String,
+    /// The type held by this type variable.
+    ty: Type,
+}
 
 /// Represents a stack.
 #[derive(Debug)]
@@ -105,6 +108,7 @@ impl<T> Stack<T> {
         None
     }
 }
+
 /// A utility for walking the AST.
 pub struct Walker {
     current_function: Option<Function>,
@@ -149,7 +153,7 @@ impl Walker {
     /// Declare a function.
     pub fn declare_function(&mut self, func: &FuncDecl) {
         self.functions.push(Function {
-            name: func.ident.value.inner.clone(),
+            name: func.ident.value.clone(),
             args: func.args.iter().map(|arg| arg.value.clone()).collect(),
             ty: func.ty.clone(),
             linkage: Linkage::Local,
@@ -159,7 +163,7 @@ impl Walker {
     /// Declare an external function.
     pub fn declare_external_function(&mut self, extern_func: &ExternFunc) {
         self.functions.push(Function {
-            name: extern_func.ident.value.inner.clone(),
+            name: extern_func.ident.value.clone(),
             args: extern_func
                 .args
                 .iter()
