@@ -14,10 +14,10 @@ use pest::{
     Parser,
 };
 use styxc_ast::{
-    control::{If, Loop},
+    control::{Loop},
     func::{ExternFunc, FuncCall, ParenArgument},
     operations::{Assignment, AssignmentKind, BinaryExpr, BinaryOp},
-    Block, Declaration, Expr, Ident, Literal, LiteralKind, Mutability, Node, Stmt, AST,
+    Block, Declaration, Expr, Ident, Literal, Literal, Mutability, Node, Stmt, AST,
 };
 use styxc_types::Type;
 
@@ -234,7 +234,7 @@ impl StyxParser {
             0,
             pair.as_span().into(),
             Ident {
-                name: pair.as_str().into(),
+                inner: pair.as_str().into(),
             },
         ))
     }
@@ -284,7 +284,7 @@ impl StyxParser {
             pair.as_span().into(),
             Literal {
                 ty: Type::Infer,
-                kind: LiteralKind::Int(pair.as_str().parse()?),
+                kind: Literal::Int(pair.as_str().parse()?),
             },
         ))
     }
@@ -297,7 +297,7 @@ impl StyxParser {
             pair.as_span().into(),
             Literal {
                 ty: Type::Infer,
-                kind: LiteralKind::String(inner.to_string()),
+                kind: Literal::String(inner.to_string()),
             },
         ))
     }
@@ -308,7 +308,7 @@ impl StyxParser {
             pair.as_span().into(),
             Literal {
                 ty: Type::Infer,
-                kind: LiteralKind::Bool(pair.as_str().parse()?),
+                kind: Literal::Bool(pair.as_str().parse()?),
             },
         ))
     }

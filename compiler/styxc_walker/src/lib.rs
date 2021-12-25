@@ -1,6 +1,6 @@
 use styxc_ast::{
     func::{ExternFunc, FuncDecl, ParenArgument},
-    Block, Declaration, Expr, LiteralKind, Mutability, Node, Stmt,
+    Block, Declaration, Expr, Literal, Mutability, Node, Stmt,
 };
 use styxc_types::Type;
 
@@ -149,7 +149,7 @@ impl Walker {
     /// Declare a function.
     pub fn declare_function(&mut self, func: &FuncDecl) {
         self.functions.push(Function {
-            name: func.ident.value.name.clone(),
+            name: func.ident.value.inner.clone(),
             args: func.args.iter().map(|arg| arg.value.clone()).collect(),
             ty: func.ty.clone(),
             linkage: Linkage::Local,
@@ -159,7 +159,7 @@ impl Walker {
     /// Declare an external function.
     pub fn declare_external_function(&mut self, extern_func: &ExternFunc) {
         self.functions.push(Function {
-            name: extern_func.ident.value.name.clone(),
+            name: extern_func.ident.value.inner.clone(),
             args: extern_func
                 .args
                 .iter()
@@ -173,7 +173,7 @@ impl Walker {
     /// Declare a variable.
     pub fn declare_variable(&mut self, decl: &Declaration) {
         self.variables.push(Variable {
-            name: decl.ident.value.name.clone(),
+            name: decl.ident.value.inner.clone(),
             mutability: decl.mutability,
             ty: decl.ty.clone(),
         });
@@ -203,13 +203,13 @@ impl Walker {
     pub fn get_expr_type(&mut self, expr: &Expr) -> Type {
         match expr {
             Expr::Literal(literal) => match literal.value.kind {
-                LiteralKind::Bool(_) => Type::Bool,
-                LiteralKind::Int(_) => Type::Int,
-                LiteralKind::Float(_) => Type::Float,
-                LiteralKind::String(_) => Type::String,
-                LiteralKind::Char(_) => Type::Char,
+                Literal::Bool(_) => Type::Bool,
+                Literal::Int(_) => Type::Int,
+                Literal::Float(_) => Type::Float,
+                Literal::String(_) => Type::String,
+                Literal::Char(_) => Type::Char,
             },
-            Expr::Ident(ident) => match self.lookup_variable(&ident.value.name) {
+            Expr::Ident(ident) => match self.lookup_variable(&ident.value.inner) {
                 Some(var) => var.ty.clone(),
                 None => Type::Infer,
             },

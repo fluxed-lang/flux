@@ -2,7 +2,7 @@ use std::{error::Error, str::FromStr};
 
 use log::trace;
 use styxc_ast::{
-    func::FuncCall, operations::Assignment, Block, Declaration, Expr, LiteralKind, Node, Stmt, AST,
+    func::FuncCall, operations::Assignment, Block, Declaration, Expr, Literal, Node, Stmt, AST,
 };
 use styxc_types::Type;
 use styxc_walker::Walker;
@@ -14,7 +14,7 @@ fn check_func_call(
 ) -> Result<(), Box<dyn Error>> {
     // lookup function in walker
     let func = walker
-        .lookup_function(&func_call.value.ident.value.name)
+        .lookup_function(&func_call.value.ident.value.inner)
         .unwrap();
     // need to clone to avoid borrowing twice
     let func_ty = func.ty.clone();
@@ -42,7 +42,7 @@ fn check_func_call(
             if *arg_ty != *param_ty {
                 return Err(format!(
 					"function {} takes argument {} of type {:?} but provided value {} has type {:?}",
-					func_call.value.ident.value.name, i, arg_ty, i, param_ty
+					func_call.value.ident.value.inner, i, arg_ty, i, param_ty
 				)
                 .into());
             }
@@ -57,17 +57,17 @@ fn check_func_call(
 fn check_expr(walker: &mut Walker, expr: &mut Expr) -> Result<Type, Box<dyn Error>> {
     Ok(match expr {
         Expr::Literal(literal) => match literal.value.kind {
-            LiteralKind::Bool(_) => Type::Bool,
-            LiteralKind::Char(_) => Type::Char,
-            LiteralKind::Float(_) => Type::Float,
-            LiteralKind::Int(_) => Type::Int,
-            LiteralKind::String(_) => Type::String,
+            Literal::Bool(_) => Type::Bool,
+            Literal::Char(_) => Type::Char,
+            Literal::Float(_) => Type::Float,
+            Literal::Int(_) => Type::Int,
+            Literal::String(_) => Type::String,
         },
-        Expr::Ident(ident) => match walker.lookup_variable(&ident.value.name) {
+        Expr::Ident(ident) => match walker.lookup_variable(&ident.value.inner) {
             Some(var) => var.ty.clone(),
             None => {
                 return Err(
-                    format!("variable with name {} does not exist", ident.value.name).into(),
+                    format!("variable with name {} does not exist", ident.value.inner).into(),
                 )
             }
         },
@@ -94,7 +94,7 @@ fn check_declaration(walker: &mut Walker, decl: &mut Declaration) -> Result<(), 
     decl.ty = check_expr(walker, &mut decl.value.value)?;
     // set the variable type in the walker
     walker
-        .lookup_variable_mut(&decl.ident.value.name)
+        .lookup_variable_mut(&decl.ident.value.inner)
         .unwrap()
         .ty = decl.ty.clone();
     Ok(())
@@ -102,12 +102,12 @@ fn check_declaration(walker: &mut Walker, decl: &mut Declaration) -> Result<(), 
 
 /// Check an assignment for type errors.
 fn check_assignment(walker: &mut Walker, assign: &mut Assignment) -> Result<(), Box<dyn Error>> {
-    let var = walker.lookup_variable(&assign.ident.value.name);
+    let var = walker.lookup_variable(&assign.ident.value.inner);
     // check if variable is none
     if let None = var {
         return Err(format!(
             "variable with name {} does not exist",
-            assign.ident.value.name
+            assign.ident.value.inner
         )
         .into());
     }
@@ -119,7 +119,7 @@ fn check_assignment(walker: &mut Walker, assign: &mut Assignment) -> Result<(), 
     if var_ty != ty {
         return Err(format!(
             "variable with name {} has type {:?} but expression has type {:?}",
-            assign.ident.value.name, var_ty, ty
+            assign.ident.value.inner, var_ty, ty
         )
         .into());
     }
@@ -168,7 +168,7 @@ fn check_stmt(walker: &mut Walker, stmt: &mut Node<Stmt>) -> Result<(), Box<dyn 
                 if func_decl.value.return_ty != Type::Unit {
                     return Err(format!(
                         "function {} does not return a value",
-                        func_decl.value.ident.value.name
+                        func_decl.value.ident.value.inner
                     )
                     .into());
                 }
@@ -182,14 +182,14 @@ fn check_stmt(walker: &mut Walker, stmt: &mut Node<Stmt>) -> Result<(), Box<dyn 
                 if func_decl.value.return_ty != return_type {
                     return Err(format!(
                         "function {} returns {:?} but last statement returns {:?}",
-                        func_decl.value.ident.value.name, func_decl.value.return_ty, return_type
+                        func_decl.value.ident.value.inner, func_decl.value.return_ty, return_type
                     )
                     .into());
                 }
             } else {
                 return Err(format!(
                     "function {} does not return a value",
-                    func_decl.value.ident.value.name
+                    func_decl.value.ident.value.inner
                 )
                 .into());
             }
@@ -215,7 +215,7 @@ fn check_stmt(walker: &mut Walker, stmt: &mut Node<Stmt>) -> Result<(), Box<dyn 
             extern_func.value.ty = Type::Func(arg_tys, ret_ty.into());
             // lookup function in walker
             let func = walker
-                .lookup_function_mut(&extern_func.value.ident.value.name)
+                .lookup_function_mut(&extern_func.value.ident.value.inner)
                 .unwrap();
             func.ty = extern_func.value.ty.clone();
         }

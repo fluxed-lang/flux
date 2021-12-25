@@ -15,7 +15,7 @@ use styxc_ast::{
     control::{If, Loop},
     func::FuncCall,
     operations::{Assignment, AssignmentKind, BinaryExpr, BinaryOp},
-    Declaration, Expr, Ident, Literal, LiteralKind, Node, Stmt, AST,
+    Declaration, Expr, Ident, Literal, Literal, Node, Stmt, AST,
 };
 use styxc_walker::Walker;
 
@@ -175,7 +175,7 @@ impl<'a> FunctionTranslator<'a> {
     }
 
     fn resolve_var(&mut self, ident: &Ident) -> Option<Value> {
-        match self.variables.get(&ident.name) {
+        match self.variables.get(&ident.inner) {
             Some(var) => Some(self.builder.use_var(*var)),
             None => None,
         }
@@ -227,7 +227,7 @@ impl<'a> FunctionTranslator<'a> {
                 }
                 // declare function
                 self.module
-                    .declare_function(&extern_func.value.ident.value.name, Linkage::Import, &sig)
+                    .declare_function(&extern_func.value.ident.value.inner, Linkage::Import, &sig)
                     .unwrap();
             }
             FuncDecl(_) => todo!(),
@@ -251,7 +251,7 @@ impl<'a> FunctionTranslator<'a> {
             Literal(literal) => self.translate_literal(literal.value),
             Ident(ident) => self
                 .builder
-                .use_var(*self.variables.get(&ident.value.name).unwrap()),
+                .use_var(*self.variables.get(&ident.value.inner).unwrap()),
             BinaryExpr(bin_op) => self.translate_bin_op(bin_op.value),
             Block(_) => todo!(),
             FuncCall(func_call) => {
@@ -265,7 +265,7 @@ impl<'a> FunctionTranslator<'a> {
 
     fn translate_literal(&mut self, literal: Literal) -> Value {
         trace!("TRANSLATE Literal");
-        use LiteralKind::*;
+        use Literal::*;
         match literal.kind {
             Int(val) => self
                 .builder
@@ -295,7 +295,7 @@ impl<'a> FunctionTranslator<'a> {
         trace!("TRANSLATE Declaration");
         let var = Variable::new(self.index);
         self.index += 1;
-        self.variables.insert(decl.ident.value.name, var);
+        self.variables.insert(decl.ident.value.inner, var);
         let val = self.translate_expr(decl.value.value);
         self.builder
             .declare_var(var, type_to_ir_type(self.module, decl.ty).unwrap());
@@ -324,7 +324,7 @@ impl<'a> FunctionTranslator<'a> {
             DivAssign => self.builder.ins().sdiv(val, rhs),
             ModAssign => self.builder.ins().srem(val, rhs),
         };
-        let variable = self.variables.get(&assign.ident.value.name).unwrap();
+        let variable = self.variables.get(&assign.ident.value.inner).unwrap();
         self.builder.def_var(*variable, new_value);
     }
 
@@ -414,7 +414,7 @@ impl<'a> FunctionTranslator<'a> {
 
     fn translate_func_call(&mut self, call: FuncCall) -> Option<Value> {
         let mut sig = self.module.make_signature();
-        let func = self.walker.lookup_function(&call.ident.value.name).unwrap();
+        let func = self.walker.lookup_function(&call.ident.value.inner).unwrap();
 
         // Add a parameter for each argument.
         let arg_tys;
@@ -437,7 +437,7 @@ impl<'a> FunctionTranslator<'a> {
         // declare the function
         let callee = self
             .module
-            .declare_function(&call.ident.value.name, Linkage::Import, &sig)
+            .declare_function(&call.ident.value.inner, Linkage::Import, &sig)
             .expect("problem declaring function");
         let local_callee = self
             .module

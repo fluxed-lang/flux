@@ -29,7 +29,7 @@ pub struct Match {
 #[derive(Debug, PartialEq)]
 pub struct Loop {
     /// The name of this loop.
-    pub name: Node<Ident>,
+    pub name: Ident,
     /// The block owned by this loop.
     pub block: Node<Block>,
 }

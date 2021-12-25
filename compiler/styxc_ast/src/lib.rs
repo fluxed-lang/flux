@@ -35,7 +35,7 @@ impl<T> Node<T> {
 
 #[derive(Debug, PartialEq)]
 /// Enum representing the type of a literal.
-pub enum LiteralKind {
+pub enum Literal {
     /// An integer literal (e.g. `1234`, `0x1234`, `0o1234`, `0b1001`).
     Int(i64),
     /// A floating-point literal (e.g. `1234.5`, `0x1234.5`, `0o1234.5`, `0b0110.1`).
@@ -46,42 +46,37 @@ pub enum LiteralKind {
     Char(char),
     /// A boolean literal (e.g. `true`, `false`).
     Bool(bool),
+	/// An array literal (e.g. `[1, 2, 3]`).
+	Array(Vec<Box<Expr>>)
 }
 
-impl From<LiteralKind> for Type {
-    fn from(kind: LiteralKind) -> Self {
+/// The identifier type.
+pub type Ident = Node<String>;
+
+impl From<Literal> for Type {
+    fn from(kind: Literal) -> Self {
         match kind {
-            LiteralKind::Int(_) => Type::Int,
-            LiteralKind::Float(_) => Type::Float,
-            LiteralKind::String(_) => Type::Array(Type::Char.into()),
-            LiteralKind::Char(_) => Type::Char,
-            LiteralKind::Bool(_) => Type::Bool,
+            Literal::Int(_) => Type::Int,
+            Literal::Float(_) => Type::Float,
+            Literal::String(_) => Type::Array(Type::Char.into()),
+            Literal::Char(_) => Type::Char,
+            Literal::Bool(_) => Type::Bool,
+			Literal::Array(_) => Type::Array(Type::Int.into()),
         }
     }
-}
-
-/// A literal value.
-#[derive(Debug, PartialEq)]
-pub struct Literal {
-    /// The type of this literal.
-    pub ty: Type,
-    /// The kind of literal.
-    pub kind: LiteralKind,
 }
 
 /// A declaration of a variable.
 #[derive(Debug, PartialEq)]
 pub struct Declaration {
-    /// The type of this declaration.
-    pub ty: Type,
     /// The explicit type identifier of this declaration, if it exists.
-    pub ty_ident: Option<Node<Ident>>,
+    pub ty_ident: Option<Ident>,
     /// The identifier being declared.
-    pub ident: Node<Ident>,
+    pub ident: Ident,
     /// The mutability of the declared identifier.
     pub mutability: Mutability,
     /// The declared value.
-    pub value: Node<Expr>,
+    pub value: Expr,
 }
 
 /// An enum representing variable mutability.
@@ -96,12 +91,6 @@ pub enum Mutability {
     Constant,
 }
 
-/// An identifier.
-#[derive(Debug, PartialEq, Clone)]
-pub struct Ident {
-    /// The name of this node.
-    pub name: String,
-}
 
 /// Enum of possible statement kinds.
 #[derive(Debug, PartialEq)]
@@ -113,9 +102,9 @@ pub enum Stmt {
     /// An external function declaration.
     ExternFunc(Node<ExternFunc>),
     /// A function return statement.
-    Return(Node<Expr>),
+    Return(Expr),
     /// A loop break statement.
-    Break(Node<Expr>),
+    Break(Expr),
     /// An import statement.
     Import(Node<Import>),
     /// An export statement.
@@ -129,7 +118,7 @@ pub enum Expr {
     /// A literal expression.
     Literal(Node<Literal>),
     /// An identifier expression.
-    Ident(Node<Ident>),
+    Ident(Ident),
     /// A binary operation expression.
     BinaryExpr(Node<BinaryExpr>),
     /// A block (e.g. `{ /* ... */ }`).
@@ -150,25 +139,18 @@ pub struct Block {
     pub stmts: Vec<Node<Stmt>>,
 }
 
-/// An external, imported module.
-#[derive(Debug, PartialEq, Clone)]
-pub struct Module {}
-
 /// The root AST instance.
 #[derive(Debug, PartialEq)]
 pub struct AST {
     /// The list of top-level statements in the AST.
-    pub stmts: Vec<Node<Stmt>>,
-    /// The list of external modules imported into this file.
-    pub modules: Vec<Module>,
+    pub stmts: Vec<Node<Stmt>>
 }
 
 impl AST {
     /// Create a new AST instance.
     pub fn new() -> AST {
         AST {
-            stmts: vec![],
-            modules: vec![],
+            stmts: vec![]
         }
     }
 }
