@@ -1,6 +1,6 @@
 use styxc_ast::{
     func::{ExternFunc, FuncDecl, ParenArgument},
-    Block, Declaration, Expr, Literal, Mutability, Node, Stmt,
+    Block, Declaration, Expr, Literal, Node, Stmt,
 };
 use styxc_types::Type;
 
@@ -76,7 +76,7 @@ pub struct Variable {
     /// The name of this variable.
     pub name: String,
     /// The mutability of this variable.
-    pub mutability: Mutability,
+    pub mutable: bool,
     /// The type of this variable.
     pub ty: Type,
 }
@@ -223,14 +223,7 @@ impl Walker {
 
     /// Declare a variable.
     pub fn declare_variable(&mut self, decl: &Declaration) {
-        self.variables.push(Variable {
-            name: decl.ident.value.clone(),
-            mutability: decl.mutability,
-            ty: decl
-                .type_expr
-                .clone()
-                .map_or(Type::Infer, |type_expr| type_expr.into()),
-        });
+        todo!()
     }
 
     /// Lookup a variable available in the current scope.
@@ -285,9 +278,7 @@ impl Walker {
     pub fn next_stmt(&mut self, stmt: &Stmt) {
         match stmt {
             Stmt::Declaration(decls) => {
-                for decl in decls {
-                    self.declare_variable(&decl.value)
-                }
+                todo!()
             }
             Stmt::FuncDecl(func) => self.declare_function(&func.value),
             Stmt::ExternFunc(extern_func) => self.declare_external_function(&extern_func.value),

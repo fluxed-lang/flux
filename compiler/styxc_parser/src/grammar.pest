@@ -37,8 +37,8 @@ literal_string = ${ "\"" ~ literal_string_inner ~ "\"" }
 
 literal_bool = { "true" | "false" }
 
-literal_tuple = { "(" ~ (expr ~ "," )+ ~ expr ~ ")" }
-literal_array = { "[" ~ (expr ~ ",")+ ~ expr ~ "]" }
+literal_tuple = !{ "(" ~ (expr ~ "," )+ ~ expr ~ ")" }
+literal_array = !{ "[" ~ (expr ~ ",")+ ~ expr ~ "]" }
 
 literal = ${ 
 	literal_tuple
@@ -54,15 +54,16 @@ literal = ${
 // Type Expressions
 //
 
-type_binary_op = { "&" | "|" }
-type_binary_expr = { ("(" ~ type_expr ~ ")" | type_literal) ~ (type_binary_op ~ type_expr)+ }
+type_binary_op = @{ "&" | "|" }
+type_binary_expr = !{ ("(" ~ type_expr ~ ")" | type_literal) ~ (type_binary_op ~ type_expr)+ }
 
-type_tuple = { "(" ~ (type_expr ~ ",")*  ~ type_expr ~ ")"}
-type_unary_op = { "[]" }
-type_unary_expr = { ("(" ~ ")" | type_literal) ~ type_unary_op }
-type_unit = { "()" }
+type_tuple = !{ "(" ~ (type_expr ~ ",")*  ~ type_expr ~ ")"}
+type_unary_op = @{ "[]" }
+type_unary_expr = !{ ("(" ~ ")" | type_literal) ~ type_unary_op }
+type_unit = @{ "()" }
+type_func = !{ "(" ~ (ident ~ ":" ~ type_expr ~ ",")* ~ (ident ~ ":" ~ type_expr)? ~ ")" ~ "->"  ~ type_expr }
 
-type_literal = { type_tuple | ident | type_unit }
+type_literal = { type_tuple | type_unit | type_func }
 
 type_expr = ${
     type_literal
@@ -75,17 +76,36 @@ type_expr = ${
 /// Declarations
 /// 
 
-token_mut = { "mut" }
-stmt_let_decl = !{ "let" ~ (token_mut? ~ ident ~ ",")* ~ token_mut? ~ ident ~ "=" ~ (expr ~ ",")* ~ expr }
-stmt_mut_decl = !{ token_mut ~ (ident? ~ ",")* ~ ident ~ "=" ~ (expr ~ ",")* ~ expr }
+stmt_let_decl_inline_inner_mut = { "mut" ~ ident ~ (":" ~ type_expr)? ~ "=" ~ expr}
+stmt_let_decl_inline_inner_immut = { ident ~ (":" ~ type_expr)? ~ "=" ~ expr }
+stmt_let_decl_inline_inner = _{ 
+	stmt_let_decl_inline_inner_mut
+	| stmt_let_decl_inline_inner_immut 
+}
+stmt_let_decl_inline = !{ "let" ~ (stmt_let_decl_inline_inner ~ ",")* ~ stmt_let_decl_inline_inner }
+
+stmt_let_decl_single_inner_mut = { "mut" ~ ident ~ (":" ~ type_expr)? }
+stmt_let_decl_single_inner_immut = { ident ~ (":" ~ type_expr)? }
+stmt_let_decl_single_inner = _{ stmt_let_decl_single_inner_mut | stmt_let_decl_single_inner_immut }
+stmt_let_decl_single = !{ "let" ~ (stmt_let_decl_single_inner ~ ",")* ~ stmt_let_decl_single_inner ~ "=" ~ expr}
+
+stmt_let_decl = _{ stmt_let_decl_inline | stmt_let_decl_single }
+
+stmt_mut_decl_inline_inner = { ident ~ (":" ~ type_expr)? ~ "=" ~ expr }
+stmt_mut_decl_inline = !{ "mut" ~ (stmt_mut_decl_inline_inner ~ ",")* ~ stmt_mut_decl_inline_inner }
+
+stmt_mut_decl_single = !{ "mut" ~ (ident ~ (":" ~ type_expr)? ~ ",")* ~ ident ~ (":" ~ type_expr)? ~ "=" ~ expr}
+
+stmt_mut_decl = _{ stmt_mut_decl_inline | stmt_mut_decl_single }
+
 stmt_decl = _{ stmt_let_decl | stmt_mut_decl }
 
 // func_decl_generics = !{ "<" ~ (ident ~ ("extends" ~ ident)? ~ ",")* ~ ident ~ ("extends" ~ type_expr)? ~ ">" }
 stmt_func_decl_param = !{ ident ~ ":" ~ type_expr }
 stmt_func_decl_params = !{ (stmt_func_decl_param ~ ",")* ~ stmt_func_decl_param }
-stmt_func_decl = !{ ident ~ stmt_func_decl_params? ~ "->" ~ expr }
+stmt_func_decl = !{ ident ~ "(" ~ stmt_func_decl_params? ~ ")" ~ "->" ~ expr }
 
-stmt_extern_func_decl = !{ "extern" ~ ident ~ stmt_func_decl_params? ~ "->" ~ type_expr }
+stmt_extern_func_decl = !{ "extern" ~ ident ~ "(" ~ stmt_func_decl_params? ~ ")" ~ "->" ~ type_expr }
 
 stmt_class_body = !{ "{" ~  (stmt_func_decl | stmt_class_static_func_decl)* ~ "}" }
 stmt_class_static_func_decl = !{ "static" ~ stmt_func_decl }
@@ -96,13 +116,24 @@ stmt_interface_decl = !{ "interface" ~ ident ~ stmt_class_body }
 
 stmt_const_decl = !{ "const" ~ ident ~ type_expr? ~ "=" ~ expr }
 
+stmt_type_decl = !{ "type" ~ ident ~ "=" ~ type_expr }
+
+stmt_enum_variant_unit = !{ ident }
+stmt_enum_variant_tuple = !{ ident ~ (type_tuple | type_unit) }
+stmt_enum_variant_literal = !{ ident ~ "=" ~ expr }
+stmt_enum_variant_struct = !{ ident ~ "{" ~ (ident ~ ":" ~ type_expr ~ ",")* ~ (ident ~ ":" ~ type_expr)? ~ "}" }
+stmt_enum_variant = !{ stmt_enum_variant_tuple | stmt_enum_variant_literal | stmt_enum_variant_struct | stmt_enum_variant_unit }
+
+stmt_enum_decl = !{ "enum " ~ ident ~ "{" ~ (stmt_enum_variant ~ ",")* ~ stmt_enum_variant? ~ "}" }
+
 //
 // Generic Expressions
 //
+
 expr_block = !{ "{" ~ statement* ~ "}" }
 
 expr_func_call_params = @{ ((expr ~ ",")* ~ expr) | "()" }
-expr_func_call = !{ ident ~ expr_func_call_params }
+expr_func_call = !{ ident ~ "(" ~ expr_func_call_params ~ ")" }
 
 //
 // Control Flow
@@ -225,7 +256,6 @@ token_binary_op = {
 
 expr_binary = !{ ("(" ~ expr ~ ")" | ident) ~ (token_binary_op ~ expr)+ }
 
-
 // 
 // Modules
 //
@@ -243,16 +273,20 @@ expr = ${
     | expr_match
     | expr_binary
     | expr_unary
+    | expr_loop
+	| expr_block
     | literal
     | ident
 }
 
-statement_inner = {
+statement_inner = @{
 	stmt_decl
     | stmt_const_decl
     | stmt_class_decl
     | stmt_export
 	| stmt_func_decl
+	| stmt_enum_decl
+	| stmt_type_decl
 	| stmt_extern_func_decl
 	| stmt_defer
 	| stmt_return
@@ -260,6 +294,6 @@ statement_inner = {
     | expr
 }
 
-statement = @{ statement_inner ~ BLANK* ~ ";"? ~ BLANK* ~ NEWLINE* }
+statement = @{ statement_inner ~ (";" | NEWLINE | &EOI) }
 
-styx = ${ SOI ~ statement* ~ EOI }
+styx = { SOI ~ statement* ~ EOI }

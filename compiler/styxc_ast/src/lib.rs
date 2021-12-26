@@ -78,7 +78,7 @@ pub struct MutDeclaration {
 #[derive(Debug, PartialEq)]
 pub enum Declaration {
     /// A `let x, mut y` declaration.
-    LetDeclaration(Vec<LetDeclaration>),
+    Let(Vec<LetDeclaration>),
     /// A `mut x, y` declaration.
     MutDeclaration(Vec<MutDeclaration>),
 }

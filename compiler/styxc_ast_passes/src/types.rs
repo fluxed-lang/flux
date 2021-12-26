@@ -94,10 +94,7 @@ fn check_declaration(walker: &mut Walker, decl: &mut Declaration) -> Result<(), 
     // fetch the rhs expression type and put the information into the AST
     // decl. = check_expr(walker, &mut decl.value)?;
     // set the variable type in the walker
-    walker.lookup_variable_mut(&decl.ident.value).unwrap().ty = decl
-        .type_expr
-        .as_ref()
-        .map_or(Type::Infer, |type_expr| type_expr.clone().into());
+    todo!();
     Ok(())
 }
 
@@ -141,10 +138,7 @@ fn check_stmt(walker: &mut Walker, stmt: &mut Node<Stmt>) -> Result<(), Box<dyn 
     walker.next_stmt(&stmt);
     match stmt {
         Stmt::Declaration(decls) => {
-            for decl in decls {
-                trace!("Checking declaration {}", decl.id);
-                check_declaration(walker, &mut decl.value)?;
-            }
+            todo!()
         }
         Stmt::FuncDecl(func_decl) => {
             // // check stmts in function

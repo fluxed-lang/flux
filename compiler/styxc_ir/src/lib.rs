@@ -195,9 +195,7 @@ impl<'a> FunctionTranslator<'a> {
         trace!("TRANSLATE Stmt");
         use Stmt::*;
         match stmt {
-            Declaration(decl) => decl
-                .into_iter()
-                .for_each(|decl| self.translate_declaration(decl.value)),
+            Declaration(decl) => todo!(),
             // FuncCall(call) => { self.translate_func_call(call.value); },
             ExternFunc(extern_func) => {
                 // create function signature
@@ -292,15 +290,7 @@ impl<'a> FunctionTranslator<'a> {
     /// Translate a declaration statement.
     fn translate_declaration(&mut self, decl: Declaration) {
         trace!("TRANSLATE Declaration");
-        let var = Variable::new(self.index);
-        self.index += 1;
-        self.variables.insert(decl.ident.value, var);
-        let val = self.translate_expr(decl.value);
-        self.builder.declare_var(
-            var,
-            type_to_ir_type(self.module, decl.type_expr.unwrap().into()).unwrap(),
-        );
-        self.builder.def_var(var, val)
+        todo!()
     }
 
     /// Translate an assignment statement.
