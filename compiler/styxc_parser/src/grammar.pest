@@ -2,39 +2,57 @@
 BLANK = _{ " " | "\t" }
 WHITESPACE = _{ BLANK | NEWLINE }
 // comments
-line_comment = { "#" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
-block_comment = { "/*" ~ ANY* ~ "*/" }
-COMMENT = _{ block_comment | line_comment }
+comment_line = { "#" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
+comment_block = { "/*" ~ ANY* ~ "*/" }
+COMMENT = _{ comment_line | comment_block }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 
-int_hex = @{ "0x" ~ (ASCII_HEX_DIGIT | "_")+ }
-int_oct = @{ "0o" ~ ('0'..'7' | "_")+ }
-int_bin = @{ "0b" ~ ("0" | "1" | "_")+ }
-int_dec = @{ "0d"? ~ (ASCII_DIGIT | "_")+ }
-int = @{ "-"?  ~ (int_hex | int_oct | int_bin | int_dec) }
+//
+// Literals
+//
 
-float_hex = @{ "0x" ~ ((ASCII_HEX_DIGIT | "_")* ~ "." ~ (ASCII_HEX_DIGIT | "_")+) | ((ASCII_HEX_DIGIT | "_")+ ~ "." ~ (ASCII_HEX_DIGIT | "_")*) }
-float_oct = @{ "0o" ~ (('0'..'7' | "_")* ~ "." ~ ('0'..'7' | "_")+) | (('0'..'7' | "_")+ ~ "." ~ ('0'..'7' | "_")*) }
-float_bin = @{ "0b" ~ (("0" | "1" | "_")* ~ "." ~ ("0" | "1" | "_")+) | (("0" | "1" | "_")+ ~ "." ~ ("0" | "1" | "_")*) }
-float_with_exp = @{ (ASCII_DIGIT | "_")+ ~ "e" ~ "-"? ~ (ASCII_DIGIT | "_")+ }
-float = @{ "-"? ~ (float_hex | float_oct | float_bin | float_with_exp) }
+literal_int_hex = @{ "0x" ~ (ASCII_HEX_DIGIT | "_")+ }
+literal_int_oct = @{ "0o" ~ ('0'..'7' | "_")+ }
+literal_int_bin = @{ "0b" ~ ("0" | "1" | "_")+ }
+literal_int_dec = @{ "0d"? ~ (ASCII_DIGIT | "_")+ }
+literal_int = @{ "-"?  ~ (literal_int_hex | literal_int_oct | literal_int_bin | literal_int_dec) }
 
-raw_char = {
+literal_float_hex = @{ "0x" ~ ((ASCII_HEX_DIGIT | "_")* ~ "." ~ (ASCII_HEX_DIGIT | "_")+) | ((ASCII_HEX_DIGIT | "_")+ ~ "." ~ (ASCII_HEX_DIGIT | "_")*) }
+literal_float_oct = @{ "0o" ~ (('0'..'7' | "_")* ~ "." ~ ('0'..'7' | "_")+) | (('0'..'7' | "_")+ ~ "." ~ ('0'..'7' | "_")*) }
+literal_float_bin = @{ "0b" ~ (("0" | "1" | "_")* ~ "." ~ ("0" | "1" | "_")+) | (("0" | "1" | "_")+ ~ "." ~ ("0" | "1" | "_")*) }
+literal_float_with_exp = @{ (ASCII_DIGIT | "_")+ ~ "e" ~ "-"? ~ (ASCII_DIGIT | "_")+ }
+literal_float = @{ "-"? ~ (literal_float_hex | literal_float_oct | literal_float_bin | literal_float_with_exp) }
+
+literal_raw_char = {
     !("\"" | "\\") ~ ANY
     | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
     | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
 }
-char_inner = @{ raw_char }
-char = ${ "'" ~ char_inner ~ "'" }
+literal_char_inner = @{ literal_raw_char }
+literal_char = ${ "'" ~ literal_char_inner ~ "'" }
 
-string_inner = @{ raw_char* }
-string = ${ "\"" ~ string_inner ~ "\"" }
+literal_string_inner = @{ literal_raw_char* }
+literal_string = ${ "\"" ~ literal_string_inner ~ "\"" }
 
-bool = { "true" | "false" }
+literal_bool = { "true" | "false" }
 
-tuple = { "(" ~ (expr ~ "," )+ ~ expr ~ ")" }
-array = { "[" ~ (expr ~ ",")+ ~ expr ~ "]" }
+literal_tuple = { "(" ~ (expr ~ "," )+ ~ expr ~ ")" }
+literal_array = { "[" ~ (expr ~ ",")+ ~ expr ~ "]" }
+
+literal = ${ 
+	literal_tuple
+	| literal_string
+	| literal_char
+	| literal_bool
+	| literal_array
+	| literal_float
+	| literal_int
+}
+
+//
+// Type Expressions
+//
 
 type_binary_op = { "&" | "|" }
 type_binary_expr = { ("(" ~ type_expr ~ ")" | type_literal) ~ (type_binary_op ~ type_expr)+ }
@@ -46,177 +64,199 @@ type_unit = { "()" }
 
 type_literal = { type_tuple | ident | type_unit }
 
-type_expr = {
+type_expr = ${
     type_literal
 	| type_binary_expr
     | type_unary_expr
     | ident
 }
 
-literal = { tuple | string | char | bool | array | float | int }
+///
+/// Declarations
+/// 
 
-expr = ${ 
-	conditional_stmt 
-    | func_call
-    | match_expr
-    | binary_expr
-    | unary_expr
-    | literal
-    | ident
-}
+token_mut = { "mut" }
+stmt_let_decl = !{ "let" ~ (token_mut? ~ ident ~ ",")* ~ token_mut? ~ ident ~ "=" ~ (expr ~ ",")* ~ expr }
+stmt_mut_decl = !{ token_mut ~ (ident? ~ ",")* ~ ident ~ "=" ~ (expr ~ ",")* ~ expr }
+stmt_decl = _{ stmt_let_decl | stmt_mut_decl }
 
-mut_token = { "mut" }
-let_declaration = !{ "let" ~ (mut_token? ~ ident ~ ",")* ~ mut_token? ~ ident ~ "=" ~ (expr ~ ",")* ~ expr }
-mut_declaration = !{ mut_token ~ (ident? ~ ",")* ~ ident ~ "=" ~ (expr ~ ",")* ~ expr }
-declaration = _{ let_declaration | mut_declaration }
+// func_decl_generics = !{ "<" ~ (ident ~ ("extends" ~ ident)? ~ ",")* ~ ident ~ ("extends" ~ type_expr)? ~ ">" }
+stmt_func_decl_param = !{ ident ~ ":" ~ type_expr }
+stmt_func_decl_params = !{ (stmt_func_decl_param ~ ",")* ~ stmt_func_decl_param }
+stmt_func_decl = !{ ident ~ stmt_func_decl_params? ~ "->" ~ expr }
 
-block = !{ "{" ~ statement* ~ "}" }
+stmt_extern_func_decl = !{ "extern" ~ ident ~ stmt_func_decl_params? ~ "->" ~ type_expr }
 
-if_stmt = !{ "if" ~ expr ~ block }
-else_stmt = !{ "else" ~ block }
-else_if_stmt = !{ "else" ~ "if" ~ expr ~ block }
-conditional_stmt = !{ if_stmt ~ else_if_stmt* ~ else_stmt? }
+stmt_class_body = !{ "{" ~  (stmt_func_decl | stmt_class_static_func_decl)* ~ "}" }
+stmt_class_static_func_decl = !{ "static" ~ stmt_func_decl }
+stmt_class_decl = !{ "class" ~ ident ~ stmt_class_body }
 
-loop_stmt = !{ "loop" ~ ident? ~ block }
-while_stmt = !{ "while" ~ expr ~ block }
-break_stmt = !{ "break" ~ ident? }
+stmt_interface_body = { "{" ~ "}" }
+stmt_interface_decl = !{ "interface" ~ ident ~ stmt_class_body }
 
-unary_op_prefix = {
+stmt_const_decl = !{ "const" ~ ident ~ type_expr? ~ "=" ~ expr }
+
+//
+// Generic Expressions
+//
+expr_block = !{ "{" ~ statement* ~ "}" }
+
+expr_func_call_params = @{ ((expr ~ ",")* ~ expr) | "()" }
+expr_func_call = !{ ident ~ expr_func_call_params }
+
+//
+// Control Flow
+//
+
+expr_if= !{ "if" ~ expr ~ expr_block }
+expr_else = !{ "else" ~ expr_block }
+expr_else_if = !{ "else" ~ "if" ~ expr ~ expr_block }
+expr_conditional = !{ expr_if ~ expr_else_if* ~ expr_else? }
+
+expr_loop = !{ "loop" ~ ident? ~ expr_block }
+expr_while = !{ "while" ~ expr ~ expr_block }
+
+stmt_break = !{ "break" ~ ident? }
+stmt_return = !{ "return" ~ expr }
+stmt_defer = !{ "defer" ~ expr }
+
+expr_match_body = !{ (literal ~ "->" ~ expr)* }
+expr_match = !{ "match" ~ expr ~ "{" ~ expr_match_body ~ "}"}
+
+//
+// Operations
+//
+
+token_unary_op_prefix = {
 	"~"
 	| "!"
 	| "&"
 	| "*"
 }
 
-unary_op_suffix = {
+token_unary_op_suffix = {
 	"++"
 	| "--"
 }
 
-unary_expr_inner = _{ ("(" ~ expr ~ ")") | literal | ident }
-unary_expr = !{ 
-	(unary_op_prefix? ~ unary_expr_inner ~ unary_op_suffix) 
-	| (unary_op_prefix ~ unary_expr_inner ~ unary_op_suffix?) 
+expr_unary_inner = _{ ("(" ~ expr ~ ")") | literal | ident }
+expr_unary = !{ 
+	(token_unary_op_prefix? ~ expr_unary_inner ~ token_unary_op_suffix) 
+	| (token_unary_op_prefix ~ expr_unary_inner ~ token_unary_op_suffix?) 
 }
 
 // define all binary operation rules
 // length 3 operators
-binary_op_logical_and_eq = { "&&=" }
-binary_op_logical_or_eq = { "||=" }
-binary_op_lshift_eq = { "<<=" }
-binary_op_rshift_eq = { ">>=" }
-binary_op_pow_eq = { "**=" }
+token_binary_op_logical_and_eq = { "&&=" }
+token_binary_op_logical_or_eq = { "||=" }
+token_binary_op_lshift_eq = { "<<=" }
+token_binary_op_rshift_eq = { ">>=" }
+token_binary_op_pow_eq = { "**=" }
 // length 2 operators
-binary_op_and_eq = { "&=" }
-binary_op_as = { "as" }
-binary_op_bitwise_and_eq = { "&=" }
-binary_op_bitwise_not_eq = { "~=" }
-binary_op_bitwise_or_eq = { "|=" }
-binary_op_bitwise_xor_eq = { "^=" }
-binary_op_div_eq = { "/=" }
-binary_op_eq = { "==" }
-binary_op_ge = { ">=" }
-binary_op_le = { "<=" }
-binary_op_logical_and = { "&&" }
-binary_op_logical_or = { "||" }
-binary_op_lshift = { "<<" }
-binary_op_minus_eq = { "-=" }
-binary_op_mod_eq = { "%=" }
-binary_op_mul_eq = { "*=" }
-binary_op_ne = { "!=" }
-binary_op_not_eq = { "!=" }
-binary_op_plus_eq = { "+=" }
-binary_op_rshift = { ">>" }
-binary_op_pow = { "**" }
+token_binary_op_and_eq = { "&=" }
+token_binary_op_as = { "as" }
+token_binary_op_bitwise_and_eq = { "&=" }
+token_binary_op_bitwise_not_eq = { "~=" }
+token_binary_op_bitwise_or_eq = { "|=" }
+token_binary_op_bitwise_xor_eq = { "^=" }
+token_binary_op_div_eq = { "/=" }
+token_binary_op_eq = { "==" }
+token_binary_op_ge = { ">=" }
+token_binary_op_le = { "<=" }
+token_binary_op_logical_and = { "&&" }
+token_binary_op_logical_or = { "||" }
+token_binary_op_lshift = { "<<" }
+token_binary_op_minus_eq = { "-=" }
+token_binary_op_mod_eq = { "%=" }
+token_binary_op_mul_eq = { "*=" }
+token_binary_op_ne = { "!=" }
+token_binary_op_not_eq = { "!=" }
+token_binary_op_plus_eq = { "+=" }
+token_binary_op_rshift = { ">>" }
+token_binary_op_pow = { "**" }
 // length 1 operators
-binary_op_assign = { "=" }
-binary_op_bitwise_and = { "&" }
-binary_op_bitwise_or = { "|" }
-binary_op_bitwise_xor = { "^" }
-binary_op_div = { "/" }
-binary_op_gt = { ">" }
-binary_op_lt = { "<" }
-binary_op_minus = { "-" }
-binary_op_mod = { "%" }
-binary_op_mul = { "*" }
-binary_op_plus = { "+" }
+token_binary_op_assign = { "=" }
+token_binary_op_bitwise_and = { "&" }
+token_binary_op_bitwise_or = { "|" }
+token_binary_op_bitwise_xor = { "^" }
+token_binary_op_div = { "/" }
+token_binary_op_gt = { ">" }
+token_binary_op_lt = { "<" }
+token_binary_op_minus = { "-" }
+token_binary_op_mod = { "%" }
+token_binary_op_mul = { "*" }
+token_binary_op_plus = { "+" }
 
-binary_op = {
-	binary_op_lshift_eq
-	| binary_op_rshift_eq
-	| binary_op_logical_and_eq
-	| binary_op_logical_or_eq
-	| binary_op_and_eq
-	| binary_op_bitwise_and_eq
-	| binary_op_bitwise_not_eq
-	| binary_op_bitwise_or_eq
-	| binary_op_bitwise_xor_eq
-	| binary_op_div_eq
-	| binary_op_eq
-	| binary_op_ge
-	| binary_op_le
-	| binary_op_logical_and
-	| binary_op_logical_or
-	| binary_op_minus_eq
-	| binary_op_mod_eq
-	| binary_op_mul_eq
-	| binary_op_ne
-	| binary_op_not_eq
-	| binary_op_bitwise_or_eq
-	| binary_op_plus_eq
-	| binary_op_plus
-	| binary_op_bitwise_and
-	| binary_op_bitwise_or
-	| binary_op_bitwise_xor
-	| binary_op_div
-	| binary_op_gt
-	| binary_op_lt
-	| binary_op_mod
-	| binary_op_mul
-	| binary_op_minus
-    | binary_op_assign
+token_binary_op = {
+	token_binary_op_lshift_eq
+	| token_binary_op_rshift_eq
+	| token_binary_op_logical_and_eq
+	| token_binary_op_logical_or_eq
+	| token_binary_op_and_eq
+	| token_binary_op_bitwise_and_eq
+	| token_binary_op_bitwise_not_eq
+	| token_binary_op_bitwise_or_eq
+	| token_binary_op_bitwise_xor_eq
+	| token_binary_op_div_eq
+	| token_binary_op_eq
+	| token_binary_op_ge
+	| token_binary_op_le
+	| token_binary_op_logical_and
+	| token_binary_op_logical_or
+	| token_binary_op_minus_eq
+	| token_binary_op_mod_eq
+	| token_binary_op_mul_eq
+	| token_binary_op_ne
+	| token_binary_op_not_eq
+	| token_binary_op_bitwise_or_eq
+	| token_binary_op_plus_eq
+	| token_binary_op_plus
+	| token_binary_op_bitwise_and
+	| token_binary_op_bitwise_or
+	| token_binary_op_bitwise_xor
+	| token_binary_op_div
+	| token_binary_op_gt
+	| token_binary_op_lt
+	| token_binary_op_mod
+	| token_binary_op_mul
+	| token_binary_op_minus
+    | token_binary_op_assign
 }
 
-binary_expr = !{ ("(" ~ expr ~ ")" | ident) ~ (binary_op ~ expr)+ }
+expr_binary = !{ ("(" ~ expr ~ ")" | ident) ~ (token_binary_op ~ expr)+ }
 
-match_body = !{ (literal ~ "->" ~ expr)* }
-match_expr = !{ "match" ~ expr ~ "{" ~ match_body ~"}"}
 
-// func_decl_generics = !{ "<" ~ (ident ~ ("extends" ~ ident)? ~ ",")* ~ ident ~ ("extends" ~ type_expr)? ~ ">" }
-func_decl_param = !{ ident ~ ":" ~ type_expr }
-func_decl_params = !{ (func_decl_param ~ ",")* ~ func_decl_param }
-func_decl = !{ ident ~ func_decl_params? ~ "->" ~ (block | expr) }
+// 
+// Modules
+//
 
-extern_func_decl = !{ "extern" ~ ident ~ func_decl_params? ~ "->" ~ type_expr }
+stmt_export_block = !{ "{" ~ (ident ~ ",")* ~ ident? ~ "}" }
+stmt_export = !{ "export" ~ ((stmt_class_decl | stmt_interface_decl | stmt_func_decl | stmt_const_decl) | stmt_export_block) }
 
-func_call_params = @{ ((expr ~ ",")* ~ expr) | "()" }
-func_call = !{ ident ~ func_call_params }
+//
+// Root-level grammar
+//
 
-func_return = !{ "return" ~ expr }
-func_defer = !{ "defer" ~ expr }
-
-class_body = !{ "{" ~  (func_decl | class_static_func_decl)* ~ "}" }
-class_static_func_decl = !{ "static" ~ func_decl }
-class_decl = !{ "class" ~ ident ~ class_body }
-
-interface_body = { "{" ~ "}" }
-interface_decl = !{ "interface" ~ ident ~ class_body }
-
-const_decl = !{ "const" ~ ident ~ type_expr? ~ "=" ~ expr }
-
-export_block = !{ "{" ~ (ident ~ ",")* ~ ident? ~ "}" }
-export_stmt = !{ "export" ~ ((class_decl | interface_decl | func_decl | const_decl) | export_block) }
+expr = ${ 
+	expr_conditional 
+    | expr_func_call
+    | expr_match
+    | expr_binary
+    | expr_unary
+    | literal
+    | ident
+}
 
 statement_inner = {
-	declaration
-    | const_decl
-    | class_decl
-    | export_stmt
-	| func_decl
-	| extern_func_decl
-	| func_defer
-	| func_return
-	| break_stmt
+	stmt_decl
+    | stmt_const_decl
+    | stmt_class_decl
+    | stmt_export
+	| stmt_func_decl
+	| stmt_extern_func_decl
+	| stmt_defer
+	| stmt_return
+	| stmt_break
     | expr
 }
 

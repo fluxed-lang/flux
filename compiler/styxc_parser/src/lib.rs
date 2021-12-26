@@ -33,45 +33,45 @@ lazy_static! {
     /// This has the added benefit of handling operator precedence and associativity properly.
     static ref BIN_EXP_CLIMBER: PrecClimber<Rule> = PrecClimber::new(vec![
         // 15
-        Operator::new(Rule::binary_op_assign, Assoc::Left) |
-        Operator::new(Rule::binary_op_mul_eq, Assoc::Left) |
-        Operator::new(Rule::binary_op_div_eq, Assoc::Left) |
-        Operator::new(Rule::binary_op_mod_eq, Assoc::Left) |
-        Operator::new(Rule::binary_op_plus_eq, Assoc::Left) |
-        Operator::new(Rule::binary_op_minus_eq, Assoc::Left) |
-        Operator::new(Rule::binary_op_lshift_eq, Assoc::Left) |
-        Operator::new(Rule::binary_op_rshift_eq, Assoc::Left) |
-        Operator::new(Rule::binary_op_bitwise_and_eq, Assoc::Left) |
-        Operator::new(Rule::binary_op_bitwise_or_eq, Assoc::Left) |
-        Operator::new(Rule::binary_op_bitwise_xor_eq, Assoc::Left),
+        Operator::new(Rule::token_binary_op_assign, Assoc::Left) |
+        Operator::new(Rule::token_binary_op_mul_eq, Assoc::Left) |
+        Operator::new(Rule::token_binary_op_div_eq, Assoc::Left) |
+        Operator::new(Rule::token_binary_op_mod_eq, Assoc::Left) |
+        Operator::new(Rule::token_binary_op_plus_eq, Assoc::Left) |
+        Operator::new(Rule::token_binary_op_minus_eq, Assoc::Left) |
+        Operator::new(Rule::token_binary_op_lshift_eq, Assoc::Left) |
+        Operator::new(Rule::token_binary_op_rshift_eq, Assoc::Left) |
+        Operator::new(Rule::token_binary_op_bitwise_and_eq, Assoc::Left) |
+        Operator::new(Rule::token_binary_op_bitwise_or_eq, Assoc::Left) |
+        Operator::new(Rule::token_binary_op_bitwise_xor_eq, Assoc::Left),
         // 14
-        Operator::new(Rule::binary_op_logical_or, Assoc::Right),
+        Operator::new(Rule::token_binary_op_logical_or, Assoc::Right),
         // 13
-        Operator::new(Rule::binary_op_logical_and, Assoc::Right),
+        Operator::new(Rule::token_binary_op_logical_and, Assoc::Right),
         // 12
-        Operator::new(Rule::binary_op_eq, Assoc::Right) |
-            Operator::new(Rule::binary_op_ne, Assoc::Right),
+        Operator::new(Rule::token_binary_op_eq, Assoc::Right) |
+            Operator::new(Rule::token_binary_op_ne, Assoc::Right),
         // 11
-        Operator::new(Rule::binary_op_lt, Assoc::Right) |
-            Operator::new(Rule::binary_op_gt, Assoc::Right) |
-            Operator::new(Rule::binary_op_le, Assoc::Right) |
-            Operator::new(Rule::binary_op_ge, Assoc::Right),
+        Operator::new(Rule::token_binary_op_lt, Assoc::Right) |
+            Operator::new(Rule::token_binary_op_gt, Assoc::Right) |
+            Operator::new(Rule::token_binary_op_le, Assoc::Right) |
+            Operator::new(Rule::token_binary_op_ge, Assoc::Right),
         // 10
-        Operator::new(Rule::binary_op_bitwise_or, Assoc::Right),
+        Operator::new(Rule::token_binary_op_bitwise_or, Assoc::Right),
         // 9
-        Operator::new(Rule::binary_op_bitwise_xor, Assoc::Right),
+        Operator::new(Rule::token_binary_op_bitwise_xor, Assoc::Right),
         // 8
-        Operator::new(Rule::binary_op_bitwise_and, Assoc::Right),
+        Operator::new(Rule::token_binary_op_bitwise_and, Assoc::Right),
         // 7
-        Operator::new(Rule::binary_op_lshift, Assoc::Right) |
-            Operator::new(Rule::binary_op_rshift, Assoc::Right),
+        Operator::new(Rule::token_binary_op_lshift, Assoc::Right) |
+            Operator::new(Rule::token_binary_op_rshift, Assoc::Right),
         // 6
-        Operator::new(Rule::binary_op_plus, Assoc::Right)
-            | Operator::new(Rule::binary_op_minus, Assoc::Right),
+        Operator::new(Rule::token_binary_op_plus, Assoc::Right)
+            | Operator::new(Rule::token_binary_op_minus, Assoc::Right),
         // 5
-        Operator::new(Rule::binary_op_mul, Assoc::Right)
-            | Operator::new(Rule::binary_op_div, Assoc::Right)
-            | Operator::new(Rule::binary_op_mod, Assoc::Right)
+        Operator::new(Rule::token_binary_op_mul, Assoc::Right)
+            | Operator::new(Rule::token_binary_op_div, Assoc::Right)
+            | Operator::new(Rule::token_binary_op_mod, Assoc::Right)
     ]);
 }
 
@@ -108,15 +108,15 @@ impl StyxParser {
         debug_assert!(matches!(pair.as_rule(), Rule::statement));
         let inner = pair.into_inner().next().unwrap();
         match inner.as_rule() {
-            Rule::declaration => todo!(),
-            Rule::const_decl => todo!(),
-            Rule::class_decl => todo!(),
-            Rule::export_stmt => todo!(),
-            Rule::func_decl => todo!(),
-            Rule::extern_func_decl => todo!(),
-            Rule::func_defer => todo!(),
-            Rule::func_return => todo!(),
-            Rule::break_stmt => todo!(),
+            Rule::stmt_decl => todo!(),
+            Rule::stmt_const_decl => todo!(),
+            Rule::stmt_class_decl => todo!(),
+            Rule::stmt_export => todo!(),
+            Rule::stmt_func_decl => todo!(),
+            Rule::stmt_extern_func_decl => todo!(),
+            Rule::stmt_defer => todo!(),
+            Rule::stmt_return => todo!(),
+            Rule::stmt_break => todo!(),
             Rule::expr => todo!(),
             _ => unreachable!(),
         }
@@ -158,45 +158,45 @@ mod tests {
     #[test]
     fn test_int() {
         // 1234
-        let mut res = StyxParser::parse(Rule::int, "1234").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = StyxParser::parse(Rule::literal_int, "1234").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `int`");
-        assert_eq!(res.as_rule(), Rule::int);
+        assert_eq!(res.as_rule(), Rule::literal_int);
         assert_eq!(res.as_span(), Span::new("1234", 0, 4).unwrap());
         assert_eq!(res.as_str(), "1234");
 
         // -4321
-        let mut res = StyxParser::parse(Rule::int, "-4321").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = StyxParser::parse(Rule::literal_int, "-4321").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `int`");
-        assert_eq!(res.as_rule(), Rule::int);
+        assert_eq!(res.as_rule(), Rule::literal_int);
         assert_eq!(res.as_span(), Span::new("-4321", 0, 5).unwrap());
         assert_eq!(res.as_str(), "-4321");
 
         // 0b1011101
-        let mut res = StyxParser::parse(Rule::int, "0b1011101").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = StyxParser::parse(Rule::literal_int, "0b1011101").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `int`");
-        assert_eq!(res.as_rule(), Rule::int);
+        assert_eq!(res.as_rule(), Rule::literal_int);
         assert_eq!(res.as_span(), Span::new("0b1011101", 0, 9).unwrap());
         assert_eq!(res.as_str(), "0b1011101");
 
         // -0d123456890
         let mut res =
-            StyxParser::parse(Rule::int, "-0d123456890").unwrap_or_else(|e| panic!("{}", e));
+            StyxParser::parse(Rule::literal_int, "-0d123456890").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule int");
-        assert_eq!(res.as_rule(), Rule::int);
+        assert_eq!(res.as_rule(), Rule::literal_int);
         assert_eq!(res.as_span(), Span::new("-0d123456890", 0, 12).unwrap());
         assert_eq!(res.as_str(), "-0d123456890");
 
         // 0o1234567
-        let mut res = StyxParser::parse(Rule::int, "0o1234567").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = StyxParser::parse(Rule::literal_int, "0o1234567").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `int`");
-        assert_eq!(res.as_rule(), Rule::int);
+        assert_eq!(res.as_rule(), Rule::literal_int);
         assert_eq!(res.as_span(), Span::new("0o1234567", 0, 9).unwrap());
         assert_eq!(res.as_str(), "0o1234567");
 
         // 0xffff
-        let mut res = StyxParser::parse(Rule::int, "0xffff").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = StyxParser::parse(Rule::literal_int, "0xffff").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `int`");
-        assert_eq!(res.as_rule(), Rule::int);
+        assert_eq!(res.as_rule(), Rule::literal_int);
         assert_eq!(res.as_span(), Span::new("0xffff", 0, 6).unwrap());
         assert_eq!(res.as_str(), "0xffff");
     }
@@ -204,30 +204,30 @@ mod tests {
     #[test]
     fn test_float() {
         // 1234.5
-        let mut res = StyxParser::parse(Rule::float, "1234.5").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = StyxParser::parse(Rule::literal_float, "1234.5").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `float`");
-        assert_eq!(res.as_rule(), Rule::float);
+        assert_eq!(res.as_rule(), Rule::literal_float);
         assert_eq!(res.as_span(), Span::new("1234.5", 0, 6).unwrap());
         assert_eq!(res.as_str(), "1234.5");
 
         // -543.21
-        let mut res = StyxParser::parse(Rule::float, "-543.21").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = StyxParser::parse(Rule::literal_float, "-543.21").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `float`");
-        assert_eq!(res.as_rule(), Rule::float);
+        assert_eq!(res.as_rule(), Rule::literal_float);
         assert_eq!(res.as_span(), Span::new("-543.21", 0, 7).unwrap());
         assert_eq!(res.as_str(), "-543.21");
 
         // 23e7
-        let mut res = StyxParser::parse(Rule::float, "23e7").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = StyxParser::parse(Rule::literal_float, "23e7").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `float`");
-        assert_eq!(res.as_rule(), Rule::float);
+        assert_eq!(res.as_rule(), Rule::literal_float);
         assert_eq!(res.as_span(), Span::new("23e7", 0, 4).unwrap());
         assert_eq!(res.as_str(), "23e7");
 
         // 32e-72
-        let mut res = StyxParser::parse(Rule::float, "32e-72").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = StyxParser::parse(Rule::literal_float, "32e-72").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `float`");
-        assert_eq!(res.as_rule(), Rule::float);
+        assert_eq!(res.as_rule(), Rule::literal_float);
         assert_eq!(res.as_span(), Span::new("32e-72", 0, 6).unwrap());
         assert_eq!(res.as_str(), "32e-72");
     }
@@ -235,24 +235,24 @@ mod tests {
     #[test]
     fn test_char() {
         // 'a'
-        let mut res = StyxParser::parse(Rule::char, "'a'").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = StyxParser::parse(Rule::literal_char, "'a'").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `char`");
-        assert_eq!(res.as_rule(), Rule::char);
+        assert_eq!(res.as_rule(), Rule::literal_char);
         assert_eq!(res.as_span(), Span::new("'a'", 0, 3).unwrap());
         assert_eq!(res.as_str(), "'a'");
 
         // '\n'
-        let mut res = StyxParser::parse(Rule::char, "'\\n'").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = StyxParser::parse(Rule::literal_char, "'\\n'").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `char`");
-        assert_eq!(res.as_rule(), Rule::char);
+        assert_eq!(res.as_rule(), Rule::literal_char);
         assert_eq!(res.as_span(), Span::new("'\\n'", 0, 4).unwrap());
         assert_eq!(res.as_str(), "'\\n'");
 
         // '\uFF0F'
         let mut res =
-            StyxParser::parse(Rule::char, "'\\uFF0F'").unwrap_or_else(|e| panic!("{}", e));
+            StyxParser::parse(Rule::literal_char, "'\\uFF0F'").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `char`");
-        assert_eq!(res.as_rule(), Rule::char);
+        assert_eq!(res.as_rule(), Rule::literal_char);
         assert_eq!(res.as_span(), Span::new("'\\uFF0F'", 0, 8).unwrap());
         assert_eq!(res.as_str(), "'\\uFF0F'");
     }
@@ -261,17 +261,17 @@ mod tests {
     fn test_string() {
         // "hello world"
         let mut res =
-            StyxParser::parse(Rule::string, "\"hello world\"").unwrap_or_else(|e| panic!("{}", e));
+            StyxParser::parse(Rule::literal_string, "\"hello world\"").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `string`");
-        assert_eq!(res.as_rule(), Rule::string);
+        assert_eq!(res.as_rule(), Rule::literal_string);
         assert_eq!(res.as_span(), Span::new("\"hello world\"", 0, 13).unwrap());
         assert_eq!(res.as_str(), "\"hello world\"");
 
         // "hello, \u60ff"
-        let mut res = StyxParser::parse(Rule::string, "\"hello, \\u60ff\"")
+        let mut res = StyxParser::parse(Rule::literal_string, "\"hello, \\u60ff\"")
             .unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `string`");
-        assert_eq!(res.as_rule(), Rule::string);
+        assert_eq!(res.as_rule(), Rule::literal_string);
         assert_eq!(
             res.as_span(),
             Span::new("\"hello, \\u60ff\"", 0, 15).unwrap()
@@ -280,9 +280,9 @@ mod tests {
 
         // hello, 🦊
         let mut res =
-            StyxParser::parse(Rule::string, "\"hello, 🦊\"").unwrap_or_else(|e| panic!("{}", e));
+            StyxParser::parse(Rule::literal_string, "\"hello, 🦊\"").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `string`");
-        assert_eq!(res.as_rule(), Rule::string);
+        assert_eq!(res.as_rule(), Rule::literal_string);
         assert_eq!(res.as_span(), Span::new("\"hello, 🦊\"", 0, 13).unwrap());
         assert_eq!(res.as_str(), "\"hello, 🦊\"");
     }
@@ -297,7 +297,7 @@ mod tests {
             .into_inner()
             .next()
             .expect("expected match for rule statement");
-        assert_eq!(res.as_rule(), Rule::let_declaration);
+        assert_eq!(res.as_rule(), Rule::stmt_let_decl);
         assert_eq!(res.as_span(), Span::new("let x = 5", 0, 9).unwrap());
         assert_eq!(res.as_str(), "let x = 5");
     }
