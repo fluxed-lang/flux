@@ -50,36 +50,44 @@ pub enum Literal {
 /// The identifier type.
 pub type Ident = Node<String>;
 
-/// A declaration of a variable.
+/// A `let` declaration.
 #[derive(Debug, PartialEq)]
-pub struct Declaration {
-    /// The explicit type identifier of this declaration, if it exists.
-    pub type_expr: Option<TypeExpr>,
-    /// The identifier being declared.
+pub struct LetDeclaration {
+    /// The identifier used in the declaration.
     pub ident: Ident,
-    /// The mutability of the declared identifier.
-    pub mutability: Mutability,
-    /// The declared value.
-    pub value: Expr,
+    /// The type of the value being declared.
+    pub type_expr: Option<TypeExpr>,
+    /// The value being declared.
+    pub expr: Expr,
+    /// The mutability of the value being declared.
+    pub mutable: bool,
 }
 
-/// An enum representing variable mutability.
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum Mutability {
-    /// A mutable variable.
-    Mutable,
-    /// An immutable variable.
-    Immutable,
-    /// A constant. Unlike an immutable variable, the type of a constant must be defined at compile time, such
-    /// that the size of the constant is known.
-    Constant,
+/// A `mut` declaration.
+#[derive(Debug, PartialEq)]
+pub struct MutDeclaration {
+    /// The identifier used in the declaration.
+    pub ident: Ident,
+    /// The type of the value being declared.
+    pub type_expr: Option<TypeExpr>,
+    /// The value being declared.
+    pub expr: Expr,
+}
+
+/// A `let` or `mut` declaration.
+#[derive(Debug, PartialEq)]
+pub enum Declaration {
+    /// A `let x, mut y` declaration.
+    LetDeclaration(Vec<LetDeclaration>),
+    /// A `mut x, y` declaration.
+    MutDeclaration(Vec<MutDeclaration>),
 }
 
 /// Enum of possible statement kinds.
 #[derive(Debug, PartialEq)]
 pub enum Stmt {
     /// A declaration.
-    Declaration(Vec<Node<Declaration>>),
+    Declaration(Node<Declaration>),
     /// A function declaration.
     FuncDecl(Node<FuncDecl>),
     /// An external function declaration.
@@ -94,6 +102,8 @@ pub enum Stmt {
     Export(Node<Export>),
     /// A generic expression.
     Expr(Expr),
+    /// Defer a function call to the end of this function.
+    Defer(Expr),
 }
 
 #[derive(Debug, PartialEq)]

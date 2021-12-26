@@ -219,6 +219,7 @@ fn check_stmt(walker: &mut Walker, stmt: &mut Node<Stmt>) -> Result<(), Box<dyn 
         Stmt::Import(_) => todo!(),
         Stmt::Export(_) => todo!(),
         Stmt::Expr(_) => todo!(),
+        Stmt::Defer(_) => todo!(),
     }
     Ok(())
 }

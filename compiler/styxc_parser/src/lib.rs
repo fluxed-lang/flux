@@ -17,7 +17,7 @@ use styxc_ast::{
     control::Loop,
     func::{ExternFunc, FuncCall, ParenArgument},
     operations::{Assignment, AssignmentKind, BinaryExpr, BinaryOp},
-    Block, Declaration, Expr, Ident, Literal, Mutability, Node, Stmt, AST,
+    Block, Declaration, Expr, Ident, Literal, Node, Stmt, AST,
 };
 use styxc_types::Type;
 
@@ -106,20 +106,59 @@ impl StyxParser {
 
     fn parse_statement(pair: Pair<Rule>) -> Result<Node<Stmt>, Vec<Box<dyn Error>>> {
         debug_assert!(matches!(pair.as_rule(), Rule::statement));
+        let span = pair.as_span();
         let inner = pair.into_inner().next().unwrap();
-        match inner.as_rule() {
-            Rule::stmt_decl => todo!(),
-            Rule::stmt_const_decl => todo!(),
-            Rule::stmt_class_decl => todo!(),
-            Rule::stmt_export => todo!(),
-            Rule::stmt_func_decl => todo!(),
-            Rule::stmt_extern_func_decl => todo!(),
-            Rule::stmt_defer => todo!(),
-            Rule::stmt_return => todo!(),
+        let stmt = match inner.as_rule() {
+            Rule::stmt_decl => Self::parse_stmt_decl(inner)?,
+            Rule::stmt_const_decl => Self::parse_stmt_const_decl(inner)?,
+            Rule::stmt_class_decl => Self::parse_stmt_class_decl(inner)?,
+            Rule::stmt_export => Self::parse_stmt_export(inner)?,
+            Rule::stmt_func_decl => Self::parse_stmt_func_decl(inner)?,
+            Rule::stmt_extern_func_decl => Self::parse_stmt_extern_func_decl(inner)?,
+            Rule::stmt_defer => Stmt::Defer(Self::parse_expr(inner.into_inner().next().unwrap())?),
+            Rule::stmt_return => {
+                Stmt::Return(Self::parse_expr(inner.into_inner().next().unwrap())?)
+            }
             Rule::stmt_break => todo!(),
-            Rule::expr => todo!(),
+            Rule::expr => Stmt::Expr(Self::parse_expr(inner)?),
             _ => unreachable!(),
-        }
+        };
+        Ok(Node::new(0, span.into(), stmt))
+    }
+
+    fn parse_stmt_decl(pair: Pair<Rule>) -> Result<Stmt, Vec<Box<dyn Error>>> {
+        debug_assert!(matches!(pair.as_rule(), Rule::stmt_decl));
+        todo!()
+    }
+
+    fn parse_stmt_const_decl(pair: Pair<Rule>) -> Result<Stmt, Vec<Box<dyn Error>>> {
+        debug_assert!(matches!(pair.as_rule(), Rule::stmt_const_decl));
+        todo!()
+    }
+
+    fn parse_stmt_class_decl(pair: Pair<Rule>) -> Result<Stmt, Vec<Box<dyn Error>>> {
+        debug_assert!(matches!(pair.as_rule(), Rule::stmt_class_decl));
+        todo!()
+    }
+
+    fn parse_stmt_export(pair: Pair<Rule>) -> Result<Stmt, Vec<Box<dyn Error>>> {
+        debug_assert!(matches!(pair.as_rule(), Rule::stmt_export));
+        todo!()
+    }
+
+    fn parse_stmt_func_decl(pair: Pair<Rule>) -> Result<Stmt, Vec<Box<dyn Error>>> {
+        debug_assert!(matches!(pair.as_rule(), Rule::stmt_func_decl));
+        todo!()
+    }
+
+    fn parse_stmt_extern_func_decl(pair: Pair<Rule>) -> Result<Stmt, Vec<Box<dyn Error>>> {
+        debug_assert!(matches!(pair.as_rule(), Rule::stmt_extern_func_decl));
+        todo!()
+    }
+
+    fn parse_expr(pair: Pair<Rule>) -> Result<Expr, Vec<Box<dyn Error>>> {
+        debug_assert!(matches!(pair.as_rule(), Rule::expr));
+        todo!()
     }
 }
 
