@@ -17,7 +17,7 @@ use styxc_ast::{
     control::Loop,
     func::{ExternFunc, FuncCall, ParenArgument},
     operations::{Assignment, AssignmentKind, BinaryExpr, BinaryOp},
-    Block, Declaration, Expr, Ident, Literal, Node, Stmt, AST, LetDeclaration,
+    Block, Declaration, Expr, Ident, LetDeclaration, Literal, Node, Stmt, AST,
 };
 use styxc_types::Type;
 
@@ -107,13 +107,13 @@ impl StyxParser {
     fn parse_statement(pair: Pair<Rule>) -> Result<Node<Stmt>, Vec<Box<dyn Error>>> {
         debug_assert!(matches!(pair.as_rule(), Rule::statement));
 
-		trace!("{:#?}", pair);
+        trace!("{:#?}", pair);
 
         let span = pair.as_span();
         let inner = pair.into_inner().next().unwrap();
         let stmt = match inner.as_rule() {
             Rule::stmt_mut_decl => Self::parse_stmt_mut_decl(inner)?,
-			Rule::stmt_let_decl => Self::parse_stmt_let_decl(inner)?,
+            Rule::stmt_let_decl => Self::parse_stmt_let_decl(inner)?,
             Rule::stmt_const_decl => Self::parse_stmt_const_decl(inner)?,
             Rule::stmt_class_decl => Self::parse_stmt_class_decl(inner)?,
             Rule::stmt_export => Self::parse_stmt_export(inner)?,
@@ -136,24 +136,21 @@ impl StyxParser {
         todo!()
     }
 
-	fn parse_stmt_let_decl(pair: Pair<Rule>) -> Result<Stmt, Vec<Box<dyn Error>>> {
-		debug_assert!(matches!(pair.as_rule(), Rule::stmt_let_decl));
-		let span = pair.as_span();
-		let inner_pairs = pair.into_inner();
+    fn parse_stmt_let_decl(pair: Pair<Rule>) -> Result<Stmt, Vec<Box<dyn Error>>> {
+        debug_assert!(matches!(pair.as_rule(), Rule::stmt_let_decl));
+        let span = pair.as_span();
+        let inner_pairs = pair.into_inner();
 
-		let mut mutable = false;
-		let ident = match inner_pairs.next().unwrap().as_rule() {
-			Rule::token_mut => {
-				mutable = true;
-				Self::parse_ident(pair.into_inner().next().unwrap())?
-			},
-			Rule::ident => {
-				Self::parse_ident(pair.into_inner().next().unwrap())?
-			}
-			_ => unreachable!(),
-		};
-
-	}
+        let mut mutable = false;
+        let ident = match inner_pairs.next().unwrap().as_rule() {
+            Rule::token_mut => {
+                mutable = true;
+                Self::parse_ident(pair.into_inner().next().unwrap())?
+            }
+            Rule::ident => Self::parse_ident(pair.into_inner().next().unwrap())?,
+            _ => unreachable!(),
+        };
+    }
 
     fn parse_stmt_const_decl(pair: Pair<Rule>) -> Result<Stmt, Vec<Box<dyn Error>>> {
         debug_assert!(matches!(pair.as_rule(), Rule::stmt_const_decl));
@@ -185,12 +182,12 @@ impl StyxParser {
         todo!()
     }
 
-	fn parse_ident(pair: Pair<Rule>) -> Result<Ident, Vec<Box<dyn Error>>> {
-		debug_assert!(matches!(pair.as_rule(), Rule::ident));
-		let span = pair.as_span();
-		let ident = Node::new(0, span.into(), pair.as_str().to_string());
-		Ok(ident)
-	}
+    fn parse_ident(pair: Pair<Rule>) -> Result<Ident, Vec<Box<dyn Error>>> {
+        debug_assert!(matches!(pair.as_rule(), Rule::ident));
+        let span = pair.as_span();
+        let ident = Node::new(0, span.into(), pair.as_str().to_string());
+        Ok(ident)
+    }
 }
 
 impl Default for StyxParser {
