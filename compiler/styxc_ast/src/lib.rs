@@ -1,12 +1,10 @@
 //! # styxc_ast
 //! Defines AST data structures and types for representing Styx code at compile time.
-
-use control::{Conditional, While};
-use module::{Export, Import};
-
-use crate::control::Loop;
+use crate::control::{Conditional, Loop, While};
 use crate::func::{ExternFunc, FuncCall, FuncDecl};
+use crate::module::{Export, Import};
 use crate::operations::BinaryExpr;
+use crate::types::TypeExpr;
 use styxc_span::Span;
 
 pub mod control;
@@ -56,7 +54,7 @@ pub type Ident = Node<String>;
 #[derive(Debug, PartialEq)]
 pub struct Declaration {
     /// The explicit type identifier of this declaration, if it exists.
-    pub ty_ident: Option<Ident>,
+    pub type_expr: Option<TypeExpr>,
     /// The identifier being declared.
     pub ident: Ident,
     /// The mutability of the declared identifier.
@@ -95,7 +93,7 @@ pub enum Stmt {
     /// An export statement.
     Export(Node<Export>),
     /// A generic expression.
-    Expr(Node<Expr>),
+    Expr(Expr),
 }
 
 #[derive(Debug, PartialEq)]

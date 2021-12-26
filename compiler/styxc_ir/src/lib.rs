@@ -12,10 +12,10 @@ use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataContext, Linkage, Module};
 use log::{debug, trace};
 use styxc_ast::{
-    control::{If, Loop},
+    control::{Conditional, Loop},
     func::FuncCall,
     operations::{Assignment, AssignmentKind, BinaryExpr, BinaryOp},
-    Declaration, Expr, Ident, Literal, Literal, Node, Stmt, AST,
+    Declaration, Expr, Ident, Literal, Node, Stmt, AST,
 };
 use styxc_walker::Walker;
 
@@ -175,7 +175,7 @@ impl<'a> FunctionTranslator<'a> {
     }
 
     fn resolve_var(&mut self, ident: &Ident) -> Option<Value> {
-        match self.variables.get(&ident.inner) {
+        match self.variables.get(&ident.value) {
             Some(var) => Some(self.builder.use_var(*var)),
             None => None,
         }
@@ -198,46 +198,41 @@ impl<'a> FunctionTranslator<'a> {
             Declaration(decl) => decl
                 .into_iter()
                 .for_each(|decl| self.translate_declaration(decl.value)),
-            Assignment(assign) => self.translate_assignment(assign.value),
-            Loop(loop_node) => self.translate_loop(loop_node.value),
-            If(if_stmt) => self.translate_if(if_stmt.value),
             // FuncCall(call) => { self.translate_func_call(call.value); },
             ExternFunc(extern_func) => {
                 // create function signature
-                let mut sig = Signature::new(self.module.target_config().default_call_conv);
-                // declare parameter types
-                extern_func
-                    .value
-                    .args
-                    .into_iter()
-                    .map(|arg| type_to_ir_type(self.module, arg.value.ty).unwrap())
-                    .map(|ty| AbiParam::new(ty))
-                    .for_each(|param| sig.params.push(param));
-                // declare return type
-                let ret_ty = type_to_ir_type(
-                    self.module,
-                    match extern_func.value.ty {
-                        styxc_types::Type::Func(_, ret_ty) => *ret_ty,
-                        _ => panic!("ExternFunc should have a function type"),
-                    },
-                );
-                // declare the return type if it exists
-                if let Some(ret_ty) = ret_ty {
-                    sig.returns.push(AbiParam::new(ret_ty));
-                }
-                // declare function
-                self.module
-                    .declare_function(&extern_func.value.ident.value.inner, Linkage::Import, &sig)
-                    .unwrap();
+                // let mut sig = Signature::new(self.module.target_config().default_call_conv);
+                // // declare parameter types
+                // extern_func
+                //     .value
+                //     .args
+                //     .into_iter()
+                //     .map(|arg| type_to_ir_type(self.module, arg.value.ty).unwrap())
+                //     .map(|ty| AbiParam::new(ty))
+                //     .for_each(|param| sig.params.push(param));
+                // // declare return type
+                // let ret_ty = type_to_ir_type(
+                //     self.module,
+                //     match extern_func.value.into() {
+                //         styxc_types::Type::Func(_, ret_ty) => *ret_ty,
+                //         _ => panic!("ExternFunc should have a function type"),
+                //     },
+                // );
+                // // declare the return type if it exists
+                // if let Some(ret_ty) = ret_ty {
+                //     sig.returns.push(AbiParam::new(ret_ty));
+                // }
+                // // declare function
+                // self.module
+                //     .declare_function(&extern_func.value.ident.value, Linkage::Import, &sig)
+                //     .unwrap();
+                todo!()
             }
             FuncDecl(_) => todo!(),
             Return(expr) => {
                 // translate the expression and return
-                let val = self.translate_expr(expr.value);
+                let val = self.translate_expr(expr);
                 self.builder.ins().return_(&vec![val]);
-            }
-            FuncCall(call) => {
-                self.translate_func_call(call.value);
             }
             _ => todo!(),
         }
@@ -251,22 +246,25 @@ impl<'a> FunctionTranslator<'a> {
             Literal(literal) => self.translate_literal(literal.value),
             Ident(ident) => self
                 .builder
-                .use_var(*self.variables.get(&ident.value.inner).unwrap()),
+                .use_var(*self.variables.get(&ident.value).unwrap()),
             BinaryExpr(bin_op) => self.translate_bin_op(bin_op.value),
             Block(_) => todo!(),
             FuncCall(func_call) => {
-                if matches!(func_call.value.return_ty, styxc_types::Type::Unit) {
-                    panic!("")
-                }
+                // if matches!(func_call.value, styxc_types::Type::Unit) {
+                //     panic!("")
+                // }
                 self.translate_func_call(func_call.value).unwrap()
             }
+            Conditional(_) => todo!(),
+            Loop(_) => todo!(),
+            While(_) => todo!(),
         }
     }
 
     fn translate_literal(&mut self, literal: Literal) -> Value {
         trace!("TRANSLATE Literal");
         use Literal::*;
-        match literal.kind {
+        match literal {
             Int(val) => self
                 .builder
                 .ins()
@@ -287,6 +285,7 @@ impl<'a> FunctionTranslator<'a> {
             }
             Char(val) => self.builder.ins().iconst(types::I32, val as i64),
             Bool(val) => self.builder.ins().bconst(types::B1, val),
+            Array(_) => todo!(),
         }
     }
 
@@ -295,10 +294,12 @@ impl<'a> FunctionTranslator<'a> {
         trace!("TRANSLATE Declaration");
         let var = Variable::new(self.index);
         self.index += 1;
-        self.variables.insert(decl.ident.value.inner, var);
-        let val = self.translate_expr(decl.value.value);
-        self.builder
-            .declare_var(var, type_to_ir_type(self.module, decl.ty).unwrap());
+        self.variables.insert(decl.ident.value, var);
+        let val = self.translate_expr(decl.value);
+        self.builder.declare_var(
+            var,
+            type_to_ir_type(self.module, decl.type_expr.unwrap().into()).unwrap(),
+        );
         self.builder.def_var(var, val)
     }
 
@@ -308,8 +309,8 @@ impl<'a> FunctionTranslator<'a> {
 
         use AssignmentKind::*;
 
-        let val = self.resolve_var(&assign.ident.value).unwrap();
-        let rhs = self.translate_expr(assign.value.value);
+        let val = self.resolve_var(&assign.ident).unwrap();
+        let rhs = self.translate_expr(assign.value);
 
         let new_value = match assign.kind {
             Assign => rhs,
@@ -324,7 +325,7 @@ impl<'a> FunctionTranslator<'a> {
             DivAssign => self.builder.ins().sdiv(val, rhs),
             ModAssign => self.builder.ins().srem(val, rhs),
         };
-        let variable = self.variables.get(&assign.ident.value.inner).unwrap();
+        let variable = self.variables.get(&assign.ident.value).unwrap();
         self.builder.def_var(*variable, new_value);
     }
 
@@ -390,43 +391,40 @@ impl<'a> FunctionTranslator<'a> {
         }
     }
 
-    /// Translate an if statement in to code.
-    fn translate_if(&mut self, if_stmt: If) {
-        self.walker.enter_block(&if_stmt.block.value);
+    // /// Translate an if statement in to code.
+    // fn translate_if(&mut self, if_stmt: If) {
+    //     self.walker.enter_block(&if_stmt.block.value);
 
-        let condition_value = self.translate_expr(if_stmt.expr.value);
-        let then_block = self.builder.create_block();
-        let merge_block = self.builder.create_block();
-        // test if condition and conditionally branch
-        self.builder.ins().brz(condition_value, merge_block, &[]);
-        // go to then block if condition is true
-        self.builder.ins().jump(then_block, &[]);
-        self.builder.switch_to_block(then_block);
-        self.builder.seal_block(then_block);
-        // output statements into block.
-        self.translate_stmts(if_stmt.block.value.stmts);
-        // jump back to merging block
-        self.builder.ins().jump(merge_block, &[]);
-        // switch to the merge block for subsequent statements.
-        self.builder.switch_to_block(merge_block);
-        self.builder.seal_block(merge_block);
-    }
+    //     let condition_value = self.translate_expr(if_stmt.expr.value);
+    //     let then_block = self.builder.create_block();
+    //     let merge_block = self.builder.create_block();
+    //     // test if condition and conditionally branch
+    //     self.builder.ins().brz(condition_value, merge_block, &[]);
+    //     // go to then block if condition is true
+    //     self.builder.ins().jump(then_block, &[]);
+    //     self.builder.switch_to_block(then_block);
+    //     self.builder.seal_block(then_block);
+    //     // output statements into block.
+    //     self.translate_stmts(if_stmt.block.value.stmts);
+    //     // jump back to merging block
+    //     self.builder.ins().jump(merge_block, &[]);
+    //     // switch to the merge block for subsequent statements.
+    //     self.builder.switch_to_block(merge_block);
+    //     self.builder.seal_block(merge_block);
+    // }
 
     fn translate_func_call(&mut self, call: FuncCall) -> Option<Value> {
         let mut sig = self.module.make_signature();
-        let func = self
-            .walker
-            .lookup_function(&call.ident.value.inner)
-            .unwrap();
+        let func = self.walker.lookup_function(&call.ident.value).unwrap();
 
         // Add a parameter for each argument.
         let arg_tys;
         let ret_ty;
-        if let styxc_types::Type::Func(func_arg_tys, func_ret_ty) = &func.ty {
+        if let styxc_types::Type::Func(func_arg_tys, func_ret_ty) = func.into() {
             arg_tys = func_arg_tys.clone();
             ret_ty = *func_ret_ty.clone();
         } else {
-            panic!("function type was not a function")
+            unreachable!("function type was not a function")
         }
         // iterate over arguments and add to signature
         for arg in arg_tys {
@@ -440,7 +438,7 @@ impl<'a> FunctionTranslator<'a> {
         // declare the function
         let callee = self
             .module
-            .declare_function(&call.ident.value.inner, Linkage::Import, &sig)
+            .declare_function(&call.ident.value, Linkage::Import, &sig)
             .expect("problem declaring function");
         let local_callee = self
             .module

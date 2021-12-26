@@ -26,8 +26,49 @@ pub struct Function {
     pub linkage: Linkage,
     /// The return type of this function.
     pub ret_type: Type,
-    /// The type of this function.
-    pub ty: Type,
+}
+
+impl From<Function> for Type {
+    fn from(func: Function) -> Self {
+        Type::Func(
+            func.args
+                .iter()
+                .map(|arg| arg.type_expr.value.clone().into())
+                .collect(),
+            func.ret_type.into(),
+        )
+    }
+}
+
+impl From<&Function> for Type {
+    fn from(func: &Function) -> Self {
+        Type::Func(
+            func.args
+                .iter()
+                .map(|arg| arg.type_expr.value.clone().into())
+                .collect(),
+            func.ret_type.clone().into(),
+        )
+    }
+}
+
+impl Function {
+    pub fn from_declaration(decl: &FuncDecl, linkage: Linkage) -> Self {
+        Function {
+            name: decl.ident.value.clone(),
+            args: decl
+                .args
+                .clone()
+                .into_iter()
+                .map(|node| node.value)
+                .collect(),
+            linkage,
+            ret_type: decl
+                .ret_type_expr
+                .clone()
+                .map_or(Type::Unit, |type_expr| type_expr.value.into()),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -155,8 +196,11 @@ impl Walker {
         self.functions.push(Function {
             name: func.ident.value.clone(),
             args: func.args.iter().map(|arg| arg.value.clone()).collect(),
-            ty: func.ty.clone(),
             linkage: Linkage::Local,
+            ret_type: func
+                .ret_type_expr
+                .clone()
+                .map_or(Type::Unit, |type_expr| type_expr.value.into()),
         })
     }
 
@@ -169,17 +213,23 @@ impl Walker {
                 .iter()
                 .map(|arg| arg.value.clone())
                 .collect(),
-            ty: extern_func.ty.clone(),
             linkage: Linkage::External,
+            ret_type: extern_func
+                .ret_type_expr
+                .clone()
+                .map_or(Type::Unit, |type_expr| type_expr.value.into()),
         })
     }
 
     /// Declare a variable.
     pub fn declare_variable(&mut self, decl: &Declaration) {
         self.variables.push(Variable {
-            name: decl.ident.value.inner.clone(),
+            name: decl.ident.value.clone(),
             mutability: decl.mutability,
-            ty: decl.ty.clone(),
+            ty: decl
+                .type_expr
+                .clone()
+                .map_or(Type::Infer, |type_expr| type_expr.into()),
         });
     }
 
@@ -206,14 +256,15 @@ impl Walker {
     /// Get the type of an expression in the current scope.
     pub fn get_expr_type(&mut self, expr: &Expr) -> Type {
         match expr {
-            Expr::Literal(literal) => match literal.value.kind {
+            Expr::Literal(literal) => match literal.value {
                 Literal::Bool(_) => Type::Bool,
                 Literal::Int(_) => Type::Int,
                 Literal::Float(_) => Type::Float,
                 Literal::String(_) => Type::String,
                 Literal::Char(_) => Type::Char,
+                Literal::Array(_) => Type::Array(Box::new(Type::Infer)),
             },
-            Expr::Ident(ident) => match self.lookup_variable(&ident.value.inner) {
+            Expr::Ident(ident) => match self.lookup_variable(&ident.value) {
                 Some(var) => var.ty.clone(),
                 None => Type::Infer,
             },
@@ -222,8 +273,11 @@ impl Walker {
                 let rhs = self.get_expr_type(&bin_op.value.lhs.value);
                 lhs.intersect(rhs)
             }
-            Expr::Block(_) => Type::Unit,
-            Expr::FuncCall(func_call) => func_call.value.return_ty.clone(),
+            Expr::Block(_) => todo!(),
+            Expr::FuncCall(_) => todo!(),
+            Expr::Conditional(_) => todo!(),
+            Expr::Loop(_) => todo!(),
+            Expr::While(_) => todo!(),
         }
     }
 

@@ -208,11 +208,7 @@ export_block = !{ "{" ~ (ident ~ ",")* ~ ident? ~ "}" }
 export_stmt = !{ "export" ~ ((class_decl | interface_decl | func_decl | const_decl) | export_block) }
 
 statement_inner = {
-	conditional_stmt
-	| loop_stmt
-	| while_stmt
-    | match_expr
-	| declaration
+	declaration
     | const_decl
     | class_decl
     | export_stmt
@@ -226,4 +222,4 @@ statement_inner = {
 
 statement = @{ statement_inner ~ BLANK* ~ ";"? ~ BLANK* ~ NEWLINE* }
 
-styx = @{ SOI ~ statement* ~ EOI }
+styx = ${ SOI ~ statement* ~ EOI }

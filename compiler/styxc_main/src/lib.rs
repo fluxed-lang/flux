@@ -11,14 +11,15 @@ pub enum Mode<'i> {
 }
 
 /// Compile the target input string into memory.
-pub fn compile_to_mem(input: String) -> Result<fn() -> u32, Box<dyn Error>> {
+pub fn compile_to_mem(input: String) -> Result<fn() -> u32, Vec<Box<dyn Error>>> {
     // 1. Parse input source
-    let mut parser = styxc_parser::StyxParser::default();
-    let mut ast = parser.build(&input)?;
+    let mut ast = styxc_parser::StyxParser::build(&input)?;
     // 2. Run AST validation on the AST
-    styxc_ast_passes::perform_ast_passes(&mut ast)?;
+    styxc_ast_passes::perform_ast_passes(&mut ast).map_err(|err| vec![err])?;
     // 3. Generate IR
-    let (pointer, _) = styxc_ir::IrTranslator::default().build(ast)?;
+    let (pointer, _) = styxc_ir::IrTranslator::default()
+        .build(ast)
+        .map_err(|err| vec![err])?;
     let code_fn;
     unsafe {
         code_fn = mem::transmute::<_, fn() -> u32>(pointer);
@@ -27,7 +28,7 @@ pub fn compile_to_mem(input: String) -> Result<fn() -> u32, Box<dyn Error>> {
 }
 
 /// Compile the target input string into memory and execute it immediately.
-fn compile_and_execute(input: String) -> Result<(), Box<dyn Error>> {
+fn compile_and_execute(input: String) -> Result<(), Vec<Box<dyn Error>>> {
     let now = Instant::now();
     match compile_to_mem(input) {
         Ok(mem) => {
@@ -41,23 +42,23 @@ fn compile_and_execute(input: String) -> Result<(), Box<dyn Error>> {
 }
 
 /// Compile the target input string into an executable binary.
-pub fn compile_to_binary<P: AsRef<Path>>(_: String, _: P) -> Result<(), Box<dyn Error>> {
+pub fn compile_to_binary<P: AsRef<Path>>(_: String, _: P) -> Result<(), Vec<Box<dyn Error>>> {
     todo!("unsupported compiler mode");
 }
 
 /// Compile the target file using the given compiler mode.
-pub fn compile<P: AsRef<Path>>(target: P, mode: Mode) -> Result<(), Box<dyn Error>> {
+pub fn compile<P: AsRef<Path>>(target: P, mode: Mode) -> Result<(), Vec<Box<dyn Error>>> {
     debug!("Compiling {:?}", target.as_ref());
 
     let mut file = match File::open(target) {
         Ok(f) => f,
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(vec![e.into()]),
     };
 
     let mut buf = String::new();
     match file.read_to_string(&mut buf) {
         Ok(_) => (),
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(vec![e.into()]),
     };
 
     match mode {

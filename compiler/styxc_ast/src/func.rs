@@ -9,6 +9,8 @@ pub struct FuncDecl {
     pub args: Vec<Node<ParenArgument>>,
     /// The body of the function.
     pub body: Node<Block>,
+    /// The return type expression of the function.
+    pub ret_type_expr: Option<Node<TypeExpr>>,
 }
 
 /// A function call.
@@ -36,5 +38,5 @@ pub struct ExternFunc {
     /// The arguments this function requires.
     pub args: Vec<Node<ParenArgument>>,
     /// The identifier representing the return type of the function.
-    pub ret_type_expr: Node<TypeExpr>,
+    pub ret_type_expr: Option<Node<TypeExpr>>,
 }

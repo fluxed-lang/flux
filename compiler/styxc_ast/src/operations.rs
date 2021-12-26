@@ -267,9 +267,9 @@ pub enum AssignmentKind {
 
 pub struct Assignment {
     /// The identifier being assigned to.
-    pub ident: Node<Ident>,
+    pub ident: Ident,
     /// The declared value.
-    pub value: Node<Expr>,
+    pub value: Expr,
     /// The kind of assignment.
     pub kind: AssignmentKind,
 }
