@@ -1,7 +1,7 @@
 <div align="center">
   <br />
   <p>
-    <a href="https://flux.skzr.dev"><img src="./assets/logo-dark.png" width="546" alt="flux" /></a>
+    <a href="https://flux.skzr.dev"><img src="./assets/logo.png" width="546" alt="flux" /></a>
   </p>
   <br />
 </div>
