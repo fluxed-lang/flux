@@ -1,26 +1,26 @@
 # Compiler
 
-The Styx compiler is responsible for translating Styx source code into compiled Styx code (obviously). However, it's clearly not as simple as that, so I have gone into detail on how it works below.
+The Flux compiler is responsible for translating Flux source code into compiled Flux code (obviously). However, it's clearly not as simple as that, so I have gone into detail on how it works below.
 
 ## Usage
 
-> Note: This is the usage specification for the compiler CLI, which does not currently exist! The Styx CLI is also referenced, which also does not currently exist!
+> Note: This is the usage specification for the compiler CLI, which does not currently exist! The Flux CLI is also referenced, which also does not currently exist!
 
-### Run a Styx script
+### Run a Flux script
 
 ```sh
-$ styxc hello-world.stx
-# or, use the styx CLI
-$ styx hello-world.stx
+$ fluxc hello-world.stx
+# or, use the flux CLI
+$ flux build hello-world.stx
 hello world!
 ```
 
-### Compile a Styx script
+### Compile a Flux script
 
 ```sh
-$ styxc --binary hello-world.stx -o hello-world
-# or, use the styx CLI
-$ styx compile hello-world.stx -o hello-world
+$ fluxc --binary hello-world.stx -o hello-world
+# or, use the flux CLI
+$ flux compile hello-world.stx -o hello-world
 $ ./hello-world
 hello world!
 ```
@@ -35,21 +35,21 @@ hello world!
 
 ## Crates
 
-- [`styxc_ast_passes`](./styxc_ast_passes) - Defines the AST parses for the pre-IR generation phase.
-- [`styxc_ast`](./styxc_ast) - Contains type definitions and handles the semantic analysis of the AST.
-- [`styxc_errors`](./styxc_errors) - Error handling and message reporting crate.
-- [`styxc_ir`](./styxc_ir) - Handles the generation of LLVM IR using the Cranelift IR generator from the AST.
-- [`styxc_main`](./styxc_main) - The compiler entrypoint and step execution logic.
-- [`styxc_parser`](./styxc_parser) - Parses a `TokenStream` into an AST.
-- [`styxc_span`](./styxc_span) - Defines the `Span` type used in the compiler.
-- [`styxc_tests`](./styxc_tests) - Contains tests for the compiler.
-- [`styxc_types`](./styxc_types) - Defines the types used in the compiler.
-- [`styxc_walker`](./styxc_walker) - Defines an AST walker for performing semantic analysis.
-- [`styxc`](./styxc) - The compiler CLI interface.
+- [`fluxc_ast_passes`](./fluxc_ast_passes) - Defines the AST parses for the pre-IR generation phase.
+- [`fluxc_ast`](./fluxc_ast) - Contains type definitions and handles the semantic analysis of the AST.
+- [`fluxc_errors`](./fluxc_errors) - Error handling and message reporting crate.
+- [`fluxc_ir`](./fluxc_ir) - Handles the generation of LLVM IR using the Cranelift IR generator from the AST.
+- [`fluxc_main`](./fluxc_main) - The compiler entrypoint and step execution logic.
+- [`fluxc_parser`](./fluxc_parser) - Parses a `TokenStream` into an AST.
+- [`fluxc_span`](./fluxc_span) - Defines the `Span` type used in the compiler.
+- [`fluxc_tests`](./fluxc_tests) - Contains tests for the compiler.
+- [`fluxc_types`](./fluxc_types) - Defines the types used in the compiler.
+- [`fluxc_walker`](./fluxc_walker) - Defines an AST walker for performing semantic analysis.
+- [`fluxc`](./fluxc) - The compiler CLI interface.
 
 ## Modes
 
-The Styx compiler has two distinct modes.
+The Flux compiler has two distinct modes.
 
 -   JIT - The compiler immediately triggers execution of compiles source code as soon as it is finished. Dynamic imports are enabled, and will be compiled as soon as they are imported.
 -   AOT - The compiler builds a static binary for the target system and architecture which can be run at a later date.

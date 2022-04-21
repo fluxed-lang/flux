@@ -1,0 +1,8 @@
+[package]
+name = "fluxc_walker"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+fluxc_ast = { path = "../fluxc_ast" }
+fluxc_types = { path =  "../fluxc_types" }

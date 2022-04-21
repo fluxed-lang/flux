@@ -1,0 +1,15 @@
+[package]
+name = "fluxc_parser"
+version = "0.0.0"
+authors = ["SkyezerFox <actuallyori@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+lazy_static = "1"
+log = "0.4"
+pest = { version = "2" } 
+pest_derive = "2"
+thiserror = "1"
+
+fluxc_ast = { path =  "../fluxc_ast" }
+fluxc_types = { path = "../fluxc_types" }

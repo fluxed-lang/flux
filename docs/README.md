@@ -1,10 +1,10 @@
-# Styx Documentation
+# Flux Documentation
 
-Styx is a general-purpose, multi-paradigm programming language. Designed as an intermediary between [nodejs](https://nodejs.org) and [python](https://python.org), and lower level languages like [Rust](https://rust-lang.org) and [C++](https://wikipedia.org/C++), it provides a friendly programming experience while maintaining the speed of a low-level language.
+Flux is a general-purpose, multi-paradigm programming language. Designed as an intermediary between [nodejs](https://nodejs.org) and [python](https://python.org), and lower level languages like [Rust](https://rust-lang.org) and [C++](https://wikipedia.org/C++), it provides a friendly programming experience while maintaining the speed of a low-level language.
 
 ## Basics
 
-Styx currently supports 5 primitive variable types:
+Flux currently supports 5 primitive variable types:
 
 -   Int
 -   Float
@@ -18,9 +18,9 @@ Once the type system is up to scratch, you will be able to build more complex ty
 
 ## Control Flow
 
-Like any other language, Styx provides a means to control the flow of your program's logic.
+Like any other language, Flux provides a means to control the flow of your program's logic.
 
-```styx
+```flux
 if expression {
     # do something
 }
@@ -33,16 +33,16 @@ if another_expression {
 
 `if` expressions can come at any point (including as an inline statement), and `else` expressions must follow an `if` expression.
 
-```styx
+```flux
 let x = 1
 let y = if x == 1 { 1 } else { 2 }
 ```
 
-Inline if expressions are often represented as "ternary" expressions, but, for ease of use, these do not exist in Styx.
+Inline if expressions are often represented as "ternary" expressions, but, for ease of use, these do not exist in Flux.
 
 ## Variables
 
-Like all languages aiming for Turing-complete goodness, Styx supports variables. These must be statically typed, unless a type can be inferred at compile time.
+Like all languages aiming for Turing-complete goodness, Flux supports variables. These must be statically typed, unless a type can be inferred at compile time.
 
 ```
 let x = 1
@@ -66,7 +66,7 @@ Variables can have one of three mutability states. These all allow for better me
 
 ## Loops
 
-There are three types of loops available in Styx:
+There are three types of loops available in Flux:
 
 -   Unconditional
 -   Conditional
@@ -76,7 +76,7 @@ More commonly, you may know the last two as `while` and `for`. You can think of 
 
 ## Functions
 
-Function declaration in Styx is relatively simple and requires little syntactic sugar:
+Function declaration in Flux is relatively simple and requires little syntactic sugar:
 
 ```
 foo x: int -> {

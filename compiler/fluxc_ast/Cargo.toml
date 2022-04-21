@@ -1,0 +1,13 @@
+[package]
+name = "fluxc_ast"
+version = "0.1.0"
+authors = ["SkyezerFox <actuallyori@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+log = "0.4"
+# needed for Span
+pest = "2"
+
+fluxc_span = { path =  "../fluxc_span" }
+fluxc_types = { path =  "../fluxc_types" }
