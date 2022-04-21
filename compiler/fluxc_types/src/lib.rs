@@ -7,10 +7,11 @@ use std::fmt::Debug;
 
 pub use extends::*;
 pub use intersect::*;
+pub use simplify::*;
 pub use union::*;
 
 /// The root-level type expression enumeration
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum Type {
     /// A primitive type.
     Primitive(Primitive),
@@ -107,4 +108,14 @@ impl Typed for Primitive {
     fn type_of(&self) -> Type {
         Type::Primitive(self.clone())
     }
+}
+
+impl PartialEq for Type {
+	fn eq(&self, other: &Self) -> bool {
+		match (self.simplify(), other.simplify()) {
+			(Type::Primitive(a), Type::Primitive(b)) => a == b,
+			(Type::Operation(a), Type::Operation(b)) => a == b,
+			_ => false,
+		}
+	}
 }

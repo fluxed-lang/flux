@@ -1,7 +1,7 @@
 use crate::{Operation, Primitive, Type, Typed};
 
 // Trait for simplifying a type tree.
-trait Simplify: Typed {
+pub trait Simplify: Typed {
     /// Simplify the type tree.
     fn simplify(&self) -> Type;
 }
