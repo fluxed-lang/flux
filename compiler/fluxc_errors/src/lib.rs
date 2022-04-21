@@ -1,4 +1,4 @@
-use styxc_span::Span;
+use fluxc_span::Span;
 use thiserror::Error;
 
 /// An enum of all possible errors thrown by the compiler.

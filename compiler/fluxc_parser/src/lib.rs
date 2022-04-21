@@ -13,17 +13,17 @@ use pest::{
     prec_climber::{Assoc, Operator, PrecClimber},
     Parser,
 };
-use styxc_ast::{
+use fluxc_ast::{
     control::Loop,
     func::{ExternFunc, FuncCall, ParenArgument},
     operations::{Assignment, AssignmentKind, BinaryExpr, BinaryOp},
     Block, Declaration, Expr, Ident, Literal, Mutability, Node, Stmt, AST,
 };
-use styxc_types::Type;
+use fluxc_types::Type;
 
 #[derive(Parser)]
 #[grammar = "./grammar.pest"]
-pub struct StyxParser {
+pub struct FluxParser {
     next_id: usize,
 }
 
@@ -75,7 +75,7 @@ lazy_static! {
     ]);
 }
 
-impl StyxParser {
+impl FluxParser {
     /// Build the AST by parsing the source.
     pub fn build(&mut self, source: &String) -> Result<AST, Box<dyn Error>> {
         debug!("Building AST from source (len {})", source.len());
@@ -572,7 +572,7 @@ impl StyxParser {
     }
 }
 
-impl Default for StyxParser {
+impl Default for FluxParser {
     fn default() -> Self {
         Self { next_id: 0 }
     }
@@ -587,7 +587,7 @@ mod tests {
     #[test]
     fn test_ident() {
         // x
-        let mut res = StyxParser::parse(Rule::ident, "x").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = FluxParser::parse(Rule::ident, "x").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `ident`");
 
         assert_eq!(res.as_rule(), Rule::ident);
@@ -596,7 +596,7 @@ mod tests {
 
         // someFunc_1234
         let mut res =
-            StyxParser::parse(Rule::ident, "someFunc_1234").unwrap_or_else(|e| panic!("{}", e));
+            FluxParser::parse(Rule::ident, "someFunc_1234").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `ident`");
 
         assert_eq!(res.as_rule(), Rule::ident);
@@ -607,21 +607,21 @@ mod tests {
     #[test]
     fn test_int() {
         // 1234
-        let mut res = StyxParser::parse(Rule::int, "1234").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = FluxParser::parse(Rule::int, "1234").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `int`");
         assert_eq!(res.as_rule(), Rule::int);
         assert_eq!(res.as_span(), Span::new("1234", 0, 4).unwrap());
         assert_eq!(res.as_str(), "1234");
 
         // -4321
-        let mut res = StyxParser::parse(Rule::int, "-4321").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = FluxParser::parse(Rule::int, "-4321").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `int`");
         assert_eq!(res.as_rule(), Rule::int);
         assert_eq!(res.as_span(), Span::new("-4321", 0, 5).unwrap());
         assert_eq!(res.as_str(), "-4321");
 
         // 0b1011101
-        let mut res = StyxParser::parse(Rule::int, "0b1011101").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = FluxParser::parse(Rule::int, "0b1011101").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `int`");
         assert_eq!(res.as_rule(), Rule::int);
         assert_eq!(res.as_span(), Span::new("0b1011101", 0, 9).unwrap());
@@ -629,21 +629,21 @@ mod tests {
 
         // -0d123456890
         let mut res =
-            StyxParser::parse(Rule::int, "-0d123456890").unwrap_or_else(|e| panic!("{}", e));
+            FluxParser::parse(Rule::int, "-0d123456890").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule int");
         assert_eq!(res.as_rule(), Rule::int);
         assert_eq!(res.as_span(), Span::new("-0d123456890", 0, 12).unwrap());
         assert_eq!(res.as_str(), "-0d123456890");
 
         // 0o1234567
-        let mut res = StyxParser::parse(Rule::int, "0o1234567").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = FluxParser::parse(Rule::int, "0o1234567").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `int`");
         assert_eq!(res.as_rule(), Rule::int);
         assert_eq!(res.as_span(), Span::new("0o1234567", 0, 9).unwrap());
         assert_eq!(res.as_str(), "0o1234567");
 
         // 0xffff
-        let mut res = StyxParser::parse(Rule::int, "0xffff").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = FluxParser::parse(Rule::int, "0xffff").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `int`");
         assert_eq!(res.as_rule(), Rule::int);
         assert_eq!(res.as_span(), Span::new("0xffff", 0, 6).unwrap());
@@ -653,28 +653,28 @@ mod tests {
     #[test]
     fn test_float() {
         // 1234.5
-        let mut res = StyxParser::parse(Rule::float, "1234.5").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = FluxParser::parse(Rule::float, "1234.5").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `float`");
         assert_eq!(res.as_rule(), Rule::float);
         assert_eq!(res.as_span(), Span::new("1234.5", 0, 6).unwrap());
         assert_eq!(res.as_str(), "1234.5");
 
         // -543.21
-        let mut res = StyxParser::parse(Rule::float, "-543.21").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = FluxParser::parse(Rule::float, "-543.21").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `float`");
         assert_eq!(res.as_rule(), Rule::float);
         assert_eq!(res.as_span(), Span::new("-543.21", 0, 7).unwrap());
         assert_eq!(res.as_str(), "-543.21");
 
         // 23e7
-        let mut res = StyxParser::parse(Rule::float, "23e7").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = FluxParser::parse(Rule::float, "23e7").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `float`");
         assert_eq!(res.as_rule(), Rule::float);
         assert_eq!(res.as_span(), Span::new("23e7", 0, 4).unwrap());
         assert_eq!(res.as_str(), "23e7");
 
         // 32e-72
-        let mut res = StyxParser::parse(Rule::float, "32e-72").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = FluxParser::parse(Rule::float, "32e-72").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `float`");
         assert_eq!(res.as_rule(), Rule::float);
         assert_eq!(res.as_span(), Span::new("32e-72", 0, 6).unwrap());
@@ -684,14 +684,14 @@ mod tests {
     #[test]
     fn test_char() {
         // 'a'
-        let mut res = StyxParser::parse(Rule::char, "'a'").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = FluxParser::parse(Rule::char, "'a'").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `char`");
         assert_eq!(res.as_rule(), Rule::char);
         assert_eq!(res.as_span(), Span::new("'a'", 0, 3).unwrap());
         assert_eq!(res.as_str(), "'a'");
 
         // '\n'
-        let mut res = StyxParser::parse(Rule::char, "'\\n'").unwrap_or_else(|e| panic!("{}", e));
+        let mut res = FluxParser::parse(Rule::char, "'\\n'").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `char`");
         assert_eq!(res.as_rule(), Rule::char);
         assert_eq!(res.as_span(), Span::new("'\\n'", 0, 4).unwrap());
@@ -699,7 +699,7 @@ mod tests {
 
         // '\uFF0F'
         let mut res =
-            StyxParser::parse(Rule::char, "'\\uFF0F'").unwrap_or_else(|e| panic!("{}", e));
+            FluxParser::parse(Rule::char, "'\\uFF0F'").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `char`");
         assert_eq!(res.as_rule(), Rule::char);
         assert_eq!(res.as_span(), Span::new("'\\uFF0F'", 0, 8).unwrap());
@@ -710,14 +710,14 @@ mod tests {
     fn test_string() {
         // "hello world"
         let mut res =
-            StyxParser::parse(Rule::string, "\"hello world\"").unwrap_or_else(|e| panic!("{}", e));
+            FluxParser::parse(Rule::string, "\"hello world\"").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `string`");
         assert_eq!(res.as_rule(), Rule::string);
         assert_eq!(res.as_span(), Span::new("\"hello world\"", 0, 13).unwrap());
         assert_eq!(res.as_str(), "\"hello world\"");
 
         // "hello, \u60ff"
-        let mut res = StyxParser::parse(Rule::string, "\"hello, \\u60ff\"")
+        let mut res = FluxParser::parse(Rule::string, "\"hello, \\u60ff\"")
             .unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `string`");
         assert_eq!(res.as_rule(), Rule::string);
@@ -729,7 +729,7 @@ mod tests {
 
         // hello, 🦊
         let mut res =
-            StyxParser::parse(Rule::string, "\"hello, 🦊\"").unwrap_or_else(|e| panic!("{}", e));
+            FluxParser::parse(Rule::string, "\"hello, 🦊\"").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule `string`");
         assert_eq!(res.as_rule(), Rule::string);
         assert_eq!(res.as_span(), Span::new("\"hello, 🦊\"", 0, 13).unwrap());
@@ -740,7 +740,7 @@ mod tests {
     fn test_statement() {
         // let x = 5;
         let mut res =
-            StyxParser::parse(Rule::statement, "let x = 5").unwrap_or_else(|e| panic!("{}", e));
+            FluxParser::parse(Rule::statement, "let x = 5").unwrap_or_else(|e| panic!("{}", e));
         let res = res.next().expect("expected match for rule statement");
         let res = res
             .into_inner()

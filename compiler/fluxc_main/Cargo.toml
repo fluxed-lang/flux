@@ -1,5 +1,5 @@
 [package]
-name = "styxc_main"
+name = "fluxc_main"
 version = "0.1.0"
 edition = "2018"
 
@@ -8,7 +8,7 @@ edition = "2018"
 [dependencies]
 log = "0.4"
 
-styxc_ast = { path =  "../styxc_ast" }
-styxc_ast_passes = { path =  "../styxc_ast_passes" }
-styxc_ir = { path =  "../styxc_ir" }
-styxc_parser = { path =  "../styxc_parser" }
+fluxc_ast = { path =  "../fluxc_ast" }
+fluxc_ast_passes = { path =  "../fluxc_ast_passes" }
+fluxc_ir = { path =  "../fluxc_ir" }
+fluxc_parser = { path =  "../fluxc_parser" }

@@ -1,3 +1,3 @@
-# styxc_lexer
+# fluxc_lexer
 
-The Styx lexer, which generates a `TokenStream` from an input string.
+The Flux lexer, which generates a `TokenStream` from an input string.

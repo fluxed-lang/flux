@@ -1,10 +1,10 @@
-# styxc_types
+# fluxc_types
 
-Contains the type system definitions for Styx.
+Contains the type system definitions for Flux.
 
 ## Overview
 
-The Styx type system takes heavy inspiration from that of TypeScript's.
+The Flux type system takes heavy inspiration from that of TypeScript's.
 
 ## Built-in Types
 

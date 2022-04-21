@@ -9,4 +9,4 @@ clap = "3.0.0-beta.2"
 env_logger = "0.8"
 log = "0.4"
 
-styxc_main = { path =  "../styxc_main"}
+fluxc_main = { path =  "../fluxc_main"}

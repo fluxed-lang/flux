@@ -1,5 +1,5 @@
 [package]
-name = "styxc_ir"
+name = "fluxc_ir"
 version = "0.1.0"
 edition = "2018"
 
@@ -12,6 +12,6 @@ cranelift-jit = "0.78"
 cranelift-native = "0.78"
 log = "0.4"
 
-styxc_ast = { path = "../styxc_ast" }
-styxc_types = { path =  "../styxc_types" }
-styxc_walker = { path =  "../styxc_walker" }
+fluxc_ast = { path = "../fluxc_ast" }
+fluxc_types = { path =  "../fluxc_types" }
+fluxc_walker = { path =  "../fluxc_walker" }

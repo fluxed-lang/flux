@@ -1,11 +1,11 @@
 use std::{error::Error, str::FromStr};
 
 use log::trace;
-use styxc_ast::{
+use fluxc_ast::{
     func::FuncCall, operations::Assignment, Block, Declaration, Expr, Literal, Node, Stmt, AST,
 };
-use styxc_types::Type;
-use styxc_walker::Walker;
+use fluxc_types::Type;
+use fluxc_walker::Walker;
 
 /// Check a function call for errors.
 fn check_func_call(

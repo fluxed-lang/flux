@@ -1,6 +1,6 @@
 # Operators
 
-Styx, like most other languages, defines two type of operation expressions:
+Flux, like most other languages, defines two type of operation expressions:
 
 - Unary expressions (e.g. `!x`, `*y`)
   - Prefix unary expressions

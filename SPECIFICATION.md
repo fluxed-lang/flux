@@ -1,6 +1,6 @@
 # Specification
 
-Styx is a general purpose, multi-paradigm programming language designed for cool people.
+Flux is a general purpose, multi-paradigm programming language designed for cool people.
 
 ## Contents
 

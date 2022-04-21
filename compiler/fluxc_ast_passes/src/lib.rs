@@ -1,7 +1,7 @@
 use std::{error::Error, time::Instant};
 
 use log::debug;
-use styxc_ast::AST;
+use fluxc_ast::AST;
 
 mod types;
 

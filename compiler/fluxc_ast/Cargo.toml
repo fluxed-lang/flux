@@ -1,5 +1,5 @@
 [package]
-name = "styxc_ast"
+name = "fluxc_ast"
 version = "0.1.0"
 authors = ["SkyezerFox <actuallyori@gmail.com>"]
 edition = "2018"
@@ -9,5 +9,5 @@ log = "0.4"
 # needed for Span
 pest = "2"
 
-styxc_span = { path =  "../styxc_span" }
-styxc_types = { path =  "../styxc_types" }
+fluxc_span = { path =  "../fluxc_span" }
+fluxc_types = { path =  "../fluxc_types" }

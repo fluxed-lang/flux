@@ -1,5 +1,5 @@
 [package]
-name = "styxc_errors"
+name = "fluxc_errors"
 version = "0.1.0"
 edition = "2018"
 
@@ -9,5 +9,5 @@ edition = "2018"
 thiserror = "1"
 pest = "2"
 
-styxc_span = { path =  "../styxc_span" }
-styxc_parser = { path =  "../styxc_parser" }
+fluxc_span = { path =  "../fluxc_span" }
+fluxc_parser = { path =  "../fluxc_parser" }

@@ -1,8 +1,8 @@
 [package]
-name = "styxc_walker"
+name = "fluxc_walker"
 version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-styxc_ast = { path = "../styxc_ast" }
-styxc_types = { path =  "../styxc_types" }
+fluxc_ast = { path = "../fluxc_ast" }
+fluxc_types = { path =  "../fluxc_types" }

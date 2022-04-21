@@ -1,8 +1,8 @@
-use styxc_ast::{
+use fluxc_ast::{
     func::{ExternFunc, FuncDecl, ParenArgument},
     Block, Declaration, Expr, Literal, Mutability, Node, Stmt,
 };
-use styxc_types::Type;
+use fluxc_types::Type;
 
 /// An enum of linkage types.
 #[derive(Debug)]

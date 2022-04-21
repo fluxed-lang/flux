@@ -7,9 +7,9 @@ use std::path::Path;
 use clap::{AppSettings, Clap};
 use log::{debug, error, LevelFilter};
 
-use styxc_main::Mode;
+use fluxc_main::Mode;
 
-/// Execute styx files using the Styx JIT compiler.
+/// Execute styx files using the Flux JIT compiler.
 #[derive(Clap)]
 #[clap(version = "1.0", author = "Skye Elliot <actuallyori@gmail.com>")]
 #[clap(setting = AppSettings::ColoredHelp)]
@@ -58,7 +58,7 @@ fn main() {
     match opts.mode.to_ascii_lowercase().as_str() {
         "jit" => {
             debug!("Compiling using JIT mode");
-            styxc_main::compile(input, Mode::JIT)
+            fluxc_main::compile(input, Mode::JIT)
                 .map_err(|e| error!("Error compiling: {:?}", e))
                 .unwrap();
         }
@@ -69,7 +69,7 @@ fn main() {
                 None => input.file_stem().unwrap().to_str().unwrap().into(),
             };
             let output = Path::new(&output_path);
-            styxc_main::compile(input, Mode::AOT(output)).unwrap();
+            fluxc_main::compile(input, Mode::AOT(output)).unwrap();
         }
         _ => {
             error!("Unrecognized compiler mode '{}'", opts.mode);

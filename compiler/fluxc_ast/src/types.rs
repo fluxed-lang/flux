@@ -1,6 +1,6 @@
 //! Contains data structures for representing Type expressions.
 
-use styxc_types::Type;
+use fluxc_types::Type;
 
 use crate::{Ident, Node};
 

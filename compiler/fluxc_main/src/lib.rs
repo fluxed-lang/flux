@@ -13,12 +13,12 @@ pub enum Mode<'i> {
 /// Compile the target input string into memory.
 pub fn compile_to_mem(input: String) -> Result<fn() -> u32, Box<dyn Error>> {
     // 1. Parse input source
-    let mut parser = styxc_parser::StyxParser::default();
+    let mut parser = fluxc_parser::FluxParser::default();
     let mut ast = parser.build(&input)?;
     // 2. Run AST validation on the AST
-    styxc_ast_passes::perform_ast_passes(&mut ast)?;
+    fluxc_ast_passes::perform_ast_passes(&mut ast)?;
     // 3. Generate IR
-    let (pointer, _) = styxc_ir::IrTranslator::default().build(ast)?;
+    let (pointer, _) = fluxc_ir::IrTranslator::default().build(ast)?;
     let code_fn;
     unsafe {
         code_fn = mem::transmute::<_, fn() -> u32>(pointer);

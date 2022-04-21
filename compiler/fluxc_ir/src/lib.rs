@@ -11,13 +11,13 @@ use cranelift::{
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataContext, Linkage, Module};
 use log::{debug, trace};
-use styxc_ast::{
+use fluxc_ast::{
     control::{If, Loop},
     func::FuncCall,
     operations::{Assignment, AssignmentKind, BinaryExpr, BinaryOp},
     Declaration, Expr, Ident, Literal, Literal, Node, Stmt, AST,
 };
-use styxc_walker::Walker;
+use fluxc_walker::Walker;
 
 /// Root-level IR translator.
 pub struct IrTranslator {
@@ -119,10 +119,10 @@ impl IrTranslator {
     // }
 }
 
-fn type_to_ir_type(module: &dyn Module, ty: styxc_types::Type) -> Option<Type> {
-    use styxc_types::Type::*;
+fn type_to_ir_type(module: &dyn Module, ty: fluxc_types::Type) -> Option<Type> {
+    use fluxc_types::Type::*;
     // return none if unit type
-    if matches!(ty, styxc_types::Type::Unit) {
+    if matches!(ty, fluxc_types::Type::Unit) {
         return None;
     }
     Some(match ty {
@@ -217,7 +217,7 @@ impl<'a> FunctionTranslator<'a> {
                 let ret_ty = type_to_ir_type(
                     self.module,
                     match extern_func.value.ty {
-                        styxc_types::Type::Func(_, ret_ty) => *ret_ty,
+                        fluxc_types::Type::Func(_, ret_ty) => *ret_ty,
                         _ => panic!("ExternFunc should have a function type"),
                     },
                 );
@@ -255,7 +255,7 @@ impl<'a> FunctionTranslator<'a> {
             BinaryExpr(bin_op) => self.translate_bin_op(bin_op.value),
             Block(_) => todo!(),
             FuncCall(func_call) => {
-                if matches!(func_call.value.return_ty, styxc_types::Type::Unit) {
+                if matches!(func_call.value.return_ty, fluxc_types::Type::Unit) {
                     panic!("")
                 }
                 self.translate_func_call(func_call.value).unwrap()
@@ -422,7 +422,7 @@ impl<'a> FunctionTranslator<'a> {
         // Add a parameter for each argument.
         let arg_tys;
         let ret_ty;
-        if let styxc_types::Type::Func(func_arg_tys, func_ret_ty) = &func.ty {
+        if let fluxc_types::Type::Func(func_arg_tys, func_ret_ty) = &func.ty {
             arg_tys = func_arg_tys.clone();
             ret_ty = *func_ret_ty.clone();
         } else {

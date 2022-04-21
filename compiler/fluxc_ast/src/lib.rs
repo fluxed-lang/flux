@@ -1,5 +1,5 @@
-//! # styxc_ast
-//! Defines AST data structures and types for representing Styx code at compile time.
+//! # fluxc_ast
+//! Defines AST data structures and types for representing Flux code at compile time.
 
 use control::{Conditional, While};
 use module::{Export, Import};
@@ -7,7 +7,7 @@ use module::{Export, Import};
 use crate::control::Loop;
 use crate::func::{ExternFunc, FuncCall, FuncDecl};
 use crate::operations::BinaryExpr;
-use styxc_span::Span;
+use fluxc_span::Span;
 
 pub mod control;
 pub mod func;
