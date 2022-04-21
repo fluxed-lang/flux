@@ -1,7 +1,6 @@
 use crate::{Operation, Primitive, Type, Typed};
 
-use Operation::*;
-use Primitive::Never;
+
 
 pub trait Intersect<B: Typed> {
     fn intersect(&self, b: &B) -> Type;

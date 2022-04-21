@@ -23,11 +23,11 @@ impl<Child: Typed, Parent: Typed> Extends<Parent> for Child {
                     (Primitive::False, Primitive::Bool) | (Primitive::Bool, Primitive::False) => {
                         Primitive::True
                     }
-					// special cases
-					// any
+                    // special cases
+                    // any
                     (_, Primitive::Any) => Primitive::True,
-					// never
-					(Primitive::Never, Primitive::Never) => Primitive::True,
+                    // never
+                    (Primitive::Never, Primitive::Never) => Primitive::True,
                     (_, Primitive::Never) | (Primitive::Never, _) => Primitive::False,
                     // two literal and non-literal primitives
                     // A extends B :- A = B
@@ -110,26 +110,26 @@ mod tests {
             Primitive::False
         );
 
-		// any extends any
-		assert_eq!(
-			Type::Primitive(Primitive::Any).extends(&Type::Primitive(Primitive::Any)),
-			Primitive::True
-		);
-		// never extends never
-		assert_eq!(
-			Type::Primitive(Primitive::Never).extends(&Type::Primitive(Primitive::Never)),
-			Primitive::True
-		);
-		// never extends any
-		assert_eq!(
-			Type::Primitive(Primitive::Never).extends(&Type::Primitive(Primitive::Any)),
-			Primitive::True
-		);
-		// any extends never
-		assert_eq!(
-			Type::Primitive(Primitive::Any).extends(&Type::Primitive(Primitive::Never)),
-			Primitive::False
-		);
+        // any extends any
+        assert_eq!(
+            Type::Primitive(Primitive::Any).extends(&Type::Primitive(Primitive::Any)),
+            Primitive::True
+        );
+        // never extends never
+        assert_eq!(
+            Type::Primitive(Primitive::Never).extends(&Type::Primitive(Primitive::Never)),
+            Primitive::True
+        );
+        // never extends any
+        assert_eq!(
+            Type::Primitive(Primitive::Never).extends(&Type::Primitive(Primitive::Any)),
+            Primitive::True
+        );
+        // any extends never
+        assert_eq!(
+            Type::Primitive(Primitive::Any).extends(&Type::Primitive(Primitive::Never)),
+            Primitive::False
+        );
     }
 
     #[test]

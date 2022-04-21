@@ -1,6 +1,9 @@
 mod extends;
 mod intersect;
+mod simplify;
 mod union;
+
+use std::fmt::Debug;
 
 pub use extends::*;
 pub use intersect::*;
@@ -78,7 +81,7 @@ impl From<bool> for Primitive {
 }
 
 /// Trait implemented by types that can be converted into a type expression.
-pub trait Typed {
+pub trait Typed: Debug {
     fn type_of(&self) -> Type;
 }
 
