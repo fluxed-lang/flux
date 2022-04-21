@@ -10,7 +10,7 @@ The Flux compiler is responsible for translating Flux source code into compiled 
 
 ```sh
 $ fluxc hello-world.stx
-# or, use the styx CLI
+# or, use the flux CLI
 $ flux build hello-world.stx
 hello world!
 ```
@@ -19,8 +19,8 @@ hello world!
 
 ```sh
 $ fluxc --binary hello-world.stx -o hello-world
-# or, use the styx CLI
-$ styx compile hello-world.stx -o hello-world
+# or, use the flux CLI
+$ flux compile hello-world.stx -o hello-world
 $ ./hello-world
 hello world!
 ```

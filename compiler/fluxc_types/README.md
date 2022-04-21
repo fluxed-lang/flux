@@ -57,7 +57,7 @@ Built-in types which can be used to construct more complex types.
 
 > Fetch the type of an array.
 >
-> ```styx
+> ```flux
 > type T = T extends U[] ? infer U : never;
 > ```
 
@@ -65,7 +65,7 @@ Built-in types which can be used to construct more complex types.
 
 > Cast the type of one object to another.
 >
-> ```styx
+> ```flux
 > let x: int64 = 2
 > let y: int32 = x as int64
 > ```

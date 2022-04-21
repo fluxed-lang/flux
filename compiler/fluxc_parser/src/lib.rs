@@ -79,7 +79,7 @@ impl FluxParser {
     /// Build the AST by parsing the source.
     pub fn build(&mut self, source: &String) -> Result<AST, Box<dyn Error>> {
         debug!("Building AST from source (len {})", source.len());
-        let mut root = Self::parse(Rule::styx, source)?;
+        let mut root = Self::parse(Rule::flux, source)?;
         // know that the first rule will be a `statements` rule.
         let stmts = root.next().unwrap().into_inner();
         let mut stmts = self.parse_statements(stmts)?;

@@ -226,4 +226,4 @@ statement_inner = {
 
 statement = @{ statement_inner ~ BLANK* ~ ";"? ~ BLANK* ~ NEWLINE* }
 
-styx = @{ SOI ~ statement* ~ EOI }
+flux = @{ SOI ~ statement* ~ EOI }

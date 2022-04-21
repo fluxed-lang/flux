@@ -9,7 +9,7 @@ use log::{debug, error, LevelFilter};
 
 use fluxc_main::Mode;
 
-/// Execute styx files using the Flux JIT compiler.
+/// Execute flux files using the Flux JIT compiler.
 #[derive(Clap)]
 #[clap(version = "1.0", author = "Skye Elliot <actuallyori@gmail.com>")]
 #[clap(setting = AppSettings::ColoredHelp)]
@@ -45,7 +45,7 @@ fn main() {
     }
     builder.init();
     // print splash
-    debug!("styxc version {}", env!("CARGO_PKG_VERSION"));
+    debug!("fluxc version {}", env!("CARGO_PKG_VERSION"));
     // lookup input path
     let input = Path::new(&opts.input);
     // check if input doesn't exist

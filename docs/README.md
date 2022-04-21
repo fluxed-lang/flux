@@ -20,7 +20,7 @@ Once the type system is up to scratch, you will be able to build more complex ty
 
 Like any other language, Flux provides a means to control the flow of your program's logic.
 
-```styx
+```flux
 if expression {
     # do something
 }
@@ -33,7 +33,7 @@ if another_expression {
 
 `if` expressions can come at any point (including as an inline statement), and `else` expressions must follow an `if` expression.
 
-```styx
+```flux
 let x = 1
 let y = if x == 1 { 1 } else { 2 }
 ```
