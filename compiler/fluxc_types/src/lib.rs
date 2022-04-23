@@ -40,6 +40,11 @@ pub enum Primitive {
     Int,
     /// The primitive int literal type.
     IntLiteral(i64),
+    /// The primitive float type. This represents the infinite union of
+    /// all floats.
+    Float,
+    /// The primitive float literal type.
+    FloatLiteral(f64),
     /// The primitive string type. This represents the infinite union of all
     /// strings.
     String,
@@ -111,11 +116,11 @@ impl Typed for Primitive {
 }
 
 impl PartialEq for Type {
-	fn eq(&self, other: &Self) -> bool {
-		match (self.simplify(), other.simplify()) {
-			(Type::Primitive(a), Type::Primitive(b)) => a == b,
-			(Type::Operation(a), Type::Operation(b)) => a == b,
-			_ => false,
-		}
-	}
+    fn eq(&self, other: &Self) -> bool {
+        match (self.simplify(), other.simplify()) {
+            (Type::Primitive(a), Type::Primitive(b)) => a == b,
+            (Type::Operation(a), Type::Operation(b)) => a == b,
+            _ => false,
+        }
+    }
 }

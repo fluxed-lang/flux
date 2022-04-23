@@ -1,4 +1,4 @@
-use crate::{Operation, Primitive, Type, Typed};
+use crate::{Intersect, Operation, Primitive, Type, Typed, Union};
 
 // Trait for simplifying a type tree.
 pub trait Simplify: Typed {
@@ -12,6 +12,8 @@ impl<S: Typed> Simplify for S {
         // T & T = T
         // T & any = T
         // T & never = never
+        // T & (A | B) = (T & A) | (T & B)
+        // (A | B) & (C | D) = (A & C) | (A & D) | (B & C) | (B & D)
         // T | T = T
         // T | any = any
         // T | never = T
@@ -22,22 +24,44 @@ impl<S: Typed> Simplify for S {
                     let rhs = rhs.simplify();
                     // T & T = T
                     if lhs == rhs {
-                        lhs
+                        return lhs;
                     }
                     // T & any = T
-                    else if lhs == Type::Primitive(Primitive::Any) {
-                        rhs
-                    } else if rhs == Type::Primitive(Primitive::Any) {
-                        lhs
+                    if lhs == Type::Primitive(Primitive::Any) {
+                        return rhs;
+                    }
+                    if rhs == Type::Primitive(Primitive::Any) {
+                        return lhs;
                     }
                     // T & never = never
-                    else if lhs == Type::Primitive(Primitive::Never) {
-                        Type::Primitive(Primitive::Never)
-                    } else if rhs == Type::Primitive(Primitive::Never) {
-						Type::Primitive(Primitive::Never)
-                    } else {
-                        Type::Operation(Operation::Intersection(lhs.into(), rhs.into()))
+                    if lhs == Type::Primitive(Primitive::Never) {
+                        return Type::Primitive(Primitive::Never);
                     }
+                    if rhs == Type::Primitive(Primitive::Never) {
+                        return Type::Primitive(Primitive::Never);
+                    }
+
+                    match (&lhs, &rhs) {
+                        // (A | B) & (C | D) = (A & C) | (A & D) | (B & C) | (B & D)
+                        (
+                            Type::Operation(Operation::Union(a, b)),
+                            Type::Operation(Operation::Union(c, d)),
+                        ) => {
+                            return a
+                                .intersect(&c)
+                                .union(&a.intersect(&d))
+                                .union(&b.intersect(&c))
+                                .union(&b.intersect(&d))
+                                .simplify();
+                        }
+                        // T & (A | B) = (T & A) | (T & B)
+                        (t, Type::Operation(Operation::Union(a, b))) => {
+                            return a.intersect(&t).union(&b.intersect(&t)).simplify();
+                        }
+                        _ => (),
+                    }
+
+                    Type::Operation(Operation::Intersection(lhs.into(), rhs.into()))
                 }
                 Operation::Union(lhs, rhs) => {
                     let lhs = lhs.simplify();
@@ -70,77 +94,85 @@ impl<S: Typed> Simplify for S {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Operation, Primitive, Type, simplify::Simplify};
+    use crate::{simplify::Simplify, Operation, Primitive, Type};
 
     #[test]
     fn simplify_union() {
-		// string | string = string
+        // string | string = string
         assert_eq!(
             Type::Operation(Operation::Union(
                 Type::Primitive(Primitive::String).into(),
                 Type::Primitive(Primitive::String).into()
-            )).simplify(),
+            ))
+            .simplify(),
             Type::Primitive(Primitive::String)
         );
-		// string | any = any
-		assert_eq!(
-			Type::Operation(Operation::Union(
-				Type::Primitive(Primitive::String).into(),
-				Type::Primitive(Primitive::Any).into()
-			)).simplify(),
-			Type::Primitive(Primitive::Any)
-		);
-		// string | never = string
-		assert_eq!(
-			Type::Operation(Operation::Union(
-				Type::Primitive(Primitive::String).into(),
-				Type::Primitive(Primitive::Never).into()
-			)).simplify(),
-			Type::Primitive(Primitive::String)
-		);
-		// any | string = any
-		assert_eq!(
-			Type::Operation(Operation::Union(
-				Type::Primitive(Primitive::Any).into(),
-				Type::Primitive(Primitive::String).into()
-			)).simplify(),
-			Type::Primitive(Primitive::Any)
-		);
+        // string | any = any
+        assert_eq!(
+            Type::Operation(Operation::Union(
+                Type::Primitive(Primitive::String).into(),
+                Type::Primitive(Primitive::Any).into()
+            ))
+            .simplify(),
+            Type::Primitive(Primitive::Any)
+        );
+        // string | never = string
+        assert_eq!(
+            Type::Operation(Operation::Union(
+                Type::Primitive(Primitive::String).into(),
+                Type::Primitive(Primitive::Never).into()
+            ))
+            .simplify(),
+            Type::Primitive(Primitive::String)
+        );
+        // any | string = any
+        assert_eq!(
+            Type::Operation(Operation::Union(
+                Type::Primitive(Primitive::Any).into(),
+                Type::Primitive(Primitive::String).into()
+            ))
+            .simplify(),
+            Type::Primitive(Primitive::Any)
+        );
     }
 
-	#[test]
-	fn simplify_intersection() {
-		// string & string = string
-		assert_eq!(
-			Type::Operation(Operation::Intersection(
-				Type::Primitive(Primitive::String).into(),
-				Type::Primitive(Primitive::String).into()
-			)).simplify(),
-			Type::Primitive(Primitive::String)
-		);
-		// string & any = string
-		assert_eq!(
-			Type::Operation(Operation::Intersection(
-				Type::Primitive(Primitive::String).into(),
-				Type::Primitive(Primitive::Any).into()
-			)).simplify(),
-			Type::Primitive(Primitive::String)
-		);
-		// string & never = never
-		assert_eq!(
-			Type::Operation(Operation::Intersection(
-				Type::Primitive(Primitive::String).into(),
-				Type::Primitive(Primitive::Never).into()
-			)).simplify(),
-			Type::Primitive(Primitive::Never)
-		);
-		// never & string = never
-		assert_eq!(
-			Type::Operation(Operation::Intersection(
-				Type::Primitive(Primitive::Never).into(),
-				Type::Primitive(Primitive::String).into()
-			)).simplify(),
-			Type::Primitive(Primitive::Never)
-		);
-	}
+    #[test]
+    fn simplify_intersection() {
+        // string & string = string
+        assert_eq!(
+            Type::Operation(Operation::Intersection(
+                Type::Primitive(Primitive::String).into(),
+                Type::Primitive(Primitive::String).into()
+            ))
+            .simplify(),
+            Type::Primitive(Primitive::String)
+        );
+        // string & any = string
+        assert_eq!(
+            Type::Operation(Operation::Intersection(
+                Type::Primitive(Primitive::String).into(),
+                Type::Primitive(Primitive::Any).into()
+            ))
+            .simplify(),
+            Type::Primitive(Primitive::String)
+        );
+        // string & never = never
+        assert_eq!(
+            Type::Operation(Operation::Intersection(
+                Type::Primitive(Primitive::String).into(),
+                Type::Primitive(Primitive::Never).into()
+            ))
+            .simplify(),
+            Type::Primitive(Primitive::Never)
+        );
+        // never & string = never
+        assert_eq!(
+            Type::Operation(Operation::Intersection(
+                Type::Primitive(Primitive::Never).into(),
+                Type::Primitive(Primitive::String).into()
+            ))
+            .simplify(),
+            Type::Primitive(Primitive::Never)
+        );
+    }
 }
