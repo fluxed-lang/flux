@@ -84,10 +84,7 @@ impl Extends<Operation> for Operation {
 
 impl Extends<Union> for Union {
     fn extends(&self, b: &Union) -> Primitive {
-        match self {
-            Operation::Union(a) => a.extends(b),
-            _ => Primitive::False,
-        }
+		todo!()
     }
 }
 

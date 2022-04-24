@@ -3,8 +3,8 @@ use crate::{Operation, Primitive, Simplify, Type};
 /// Represents the union of two types.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Union {
-    lhs: Box<Type>,
-    rhs: Box<Type>,
+    pub lhs: Box<Type>,
+    pub rhs: Box<Type>,
 }
 
 impl Union {
