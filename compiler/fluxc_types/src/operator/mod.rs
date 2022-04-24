@@ -12,7 +12,7 @@ pub use union::*;
 use crate::{Operation, Type};
 
 impl Into<Type> for Operation {
-	fn into(self) -> Type {
-		Type::Operation(self)
-	}
+    fn into(self) -> Type {
+        Type::Operation(self)
+    }
 }

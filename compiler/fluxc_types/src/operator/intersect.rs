@@ -128,7 +128,7 @@ impl Simplify for Intersection {
 }
 #[cfg(test)]
 mod tests {
-    use crate::{Intersect, Operation, Primitive, Simplify, Type};
+    use crate::{Intersect, Intersection, Operation, Primitive, Simplify, Type, Union};
 
     #[test]
     fn test_primitive_intersection() {
@@ -160,18 +160,18 @@ mod tests {
     fn test_union_intersection() {
         // (string | int) & (int | float) = int
         assert_eq!(
-            Type::Operation(Operation::Intersection(
-                Type::Operation(Operation::Union(
+            Type::Operation(Operation::Intersection(Intersection::of(
+                Type::Operation(Operation::Union(Union::of(
                     Type::Primitive(Primitive::String).into(),
                     Type::Primitive(Primitive::Int).into()
-                ))
+                )))
                 .into(),
-                Type::Operation(Operation::Union(
+                Type::Operation(Operation::Union(Union::of(
                     Type::Primitive(Primitive::Int).into(),
                     Type::Primitive(Primitive::Float).into()
-                ))
+                )))
                 .into()
-            ))
+            )))
             .simplify(),
             Type::Primitive(Primitive::Int)
         );

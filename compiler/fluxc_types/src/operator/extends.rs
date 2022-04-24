@@ -36,35 +36,64 @@ impl Extends<Primitive> for Primitive {
 impl Extends<Type> for Type {
     fn extends(&self, parent: &Type) -> Primitive {
         match (self, parent) {
-            // primitives
             (Type::Primitive(a), Type::Primitive(b)) => a.extends(b),
             // primitive and an operation
             (Type::Primitive(a), Type::Operation(b)) | (Type::Operation(b), Type::Primitive(a)) => {
-                match &b {
-                    // A extends B :- A = B
-                    Operation::Union(Union { lhs, rhs }) => {
-                        if a.extends(&lhs) == Primitive::True {
-                            Primitive::True
-                        } else if a.extends(&rhs) == Primitive::True {
-                            Primitive::True
-                        } else {
-                            Primitive::False
-                        }
-                    }
-                    _ => Primitive::False,
-                }
+                b.extends(a)
             }
             // two opereations
-            (Type::Operation(a), Type::Operation(b)) => match (&a, &b) {
-                _ => (a == b).into(),
-            },
+            (Type::Operation(a), Type::Operation(b)) => a.extends(b),
+        }
+    }
+}
+
+impl Extends<Primitive> for Type {
+    fn extends(&self, b: &Primitive) -> Primitive {
+        match self {
+            Type::Primitive(a) => a.extends(b),
+            Type::Operation(a) => a.extends(b),
+        }
+    }
+}
+
+impl Extends<Primitive> for Operation {
+    fn extends(&self, b: &Primitive) -> Primitive {
+        match self {
+            Operation::Union(Union { lhs, rhs }) => {
+                if lhs.extends(b) == Primitive::True {
+                    Primitive::True
+                } else if rhs.extends(b) == Primitive::True {
+                    Primitive::True
+                } else {
+                    Primitive::False
+                }
+            }
+            _ => Primitive::False,
+        }
+    }
+}
+
+impl Extends<Operation> for Operation {
+    fn extends(&self, b: &Operation) -> Primitive {
+        match (self, b) {
+            (Operation::Union(a), Operation::Union(b)) => a.extends(b),
+            _ => Primitive::False,
+        }
+    }
+}
+
+impl Extends<Union> for Union {
+    fn extends(&self, b: &Union) -> Primitive {
+        match self {
+            Operation::Union(a) => a.extends(b),
+            _ => Primitive::False,
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{Operation, Primitive, Type, Union};
+    use crate::{Extends, Operation, Primitive, Type, Union};
 
     #[test]
     fn primitive_extends_primitive() {
