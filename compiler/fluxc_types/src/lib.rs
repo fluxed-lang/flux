@@ -1,14 +1,10 @@
-mod extends;
-mod intersect;
-mod simplify;
-mod union;
+mod operator;
+mod primitive;
 
 use std::fmt::Debug;
 
-pub use extends::*;
-pub use intersect::*;
-pub use simplify::*;
-pub use union::*;
+pub use operator::*;
+pub use primitive::*;
 
 /// The root-level type expression enumeration
 #[derive(Debug, Clone)]
@@ -24,94 +20,27 @@ pub enum Type {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Operation {
     /// An intersection type.
-    Intersection(Box<Type>, Box<Type>),
+    Intersection(Intersection),
     /// A union type.
-    Union(Box<Type>, Box<Type>),
+    Union(Union),
     /// An array type.
     Array(Box<Type>, Option<usize>),
 }
 
-/// An enumeration of primitive types. This enum represents all primitive types,
-/// including the `never` type.
-#[derive(Debug, Clone, PartialEq)]
-pub enum Primitive {
-    /// The primitive integer type. This represents the infinite union of
-    /// all integers.
-    Int,
-    /// The primitive int literal type.
-    IntLiteral(i64),
-    /// The primitive float type. This represents the infinite union of
-    /// all floats.
-    Float,
-    /// The primitive float literal type.
-    FloatLiteral(f64),
-    /// The primitive string type. This represents the infinite union of all
-    /// strings.
-    String,
-    /// The primitive string literal type.
-    StringLiteral(String),
-    /// The primitive boolean type.
-    Bool,
-    /// The primitive boolean literal type, `true`.
-    True,
-    /// The primitive boolean literal type, `false`.
-    False,
-    /// The primitive unit type.
-    Unit,
-    /// The `any` type. This type represents the set of all types.
-    Any,
-    /// The `never` type. This type represents the empty set.
-    Never,
-}
-
-impl From<String> for Primitive {
-    fn from(s: String) -> Self {
-        Primitive::StringLiteral(s)
-    }
-}
-
-impl From<i64> for Primitive {
-    fn from(i: i64) -> Self {
-        Primitive::IntLiteral(i)
-    }
-}
-
-impl From<bool> for Primitive {
-    fn from(b: bool) -> Self {
-        if b {
-            Primitive::True
-        } else {
-            Primitive::False
-        }
-    }
-}
-
 /// Trait implemented by types that can be converted into a type expression.
-pub trait Typed: Debug {
-    fn type_of(&self) -> Type;
+pub trait AsType: Debug {
+    fn as_type(&self) -> Type;
 }
 
-impl<T: Typed> Typed for &T {
-    fn type_of(&self) -> Type {
-        (*self).type_of()
+impl<T: AsType> AsType for &T {
+    fn as_type(&self) -> Type {
+        (*self).as_type()
     }
 }
 
-impl<T: Typed> Typed for Box<T> {
-    fn type_of(&self) -> Type {
-        (**self).type_of()
-    }
-}
-
-impl Typed for Type {
-    fn type_of(&self) -> Type {
-        self.clone()
-    }
-}
-
-impl Typed for Primitive {
-    fn type_of(&self) -> Type {
-        Type::Primitive(self.clone())
+impl<T: AsType> AsType for Box<T> {
+    fn as_type(&self) -> Type {
+        (**self).as_type()
     }
 }
 

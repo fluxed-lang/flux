@@ -1,44 +1,48 @@
-use crate::{Operation, Primitive, Type, Typed};
+use crate::{Operation, Primitive, Type, Union};
 
 /// Trait for type extension.
-pub trait Extends<Parent: Typed>: Typed {
+pub trait Extends<B> {
     /// Returns `true` if this type is a subtype of the given parent type.
-    fn extends(&self, b: &Parent) -> Primitive;
+    fn extends(&self, b: &B) -> Primitive;
 }
 
-impl<Child: Typed, Parent: Typed> Extends<Parent> for Child {
-    fn extends(&self, parent: &Parent) -> Primitive {
-        match (self.type_of(), parent.type_of()) {
+impl Extends<Primitive> for Primitive {
+    fn extends(&self, b: &Primitive) -> Primitive {
+        match (self, b) {
             // primitives
-            (Type::Primitive(a), Type::Primitive(b)) => {
-                match (&a, &b) {
-                    // a literal primitive and a non-literal primitive
-                    (Primitive::IntLiteral(_), Primitive::Int)
-                    | (Primitive::Int, Primitive::IntLiteral(_)) => Primitive::True,
-                    (Primitive::StringLiteral(_), Primitive::String)
-                    | (Primitive::String, Primitive::StringLiteral(_)) => Primitive::True,
-                    (Primitive::True, Primitive::Bool) | (Primitive::Bool, Primitive::True) => {
-                        Primitive::True
-                    }
-                    (Primitive::False, Primitive::Bool) | (Primitive::Bool, Primitive::False) => {
-                        Primitive::True
-                    }
-                    // special cases
-                    // any
-                    (_, Primitive::Any) => Primitive::True,
-                    // never
-                    (Primitive::Never, Primitive::Never) => Primitive::True,
-                    (_, Primitive::Never) | (Primitive::Never, _) => Primitive::False,
-                    // two literal and non-literal primitives
-                    // A extends B :- A = B
-                    _ => (a == b).into(),
-                }
+            (Primitive::IntLiteral(_), Primitive::Int)
+            | (Primitive::Int, Primitive::IntLiteral(_)) => Primitive::True,
+            (Primitive::StringLiteral(_), Primitive::String)
+            | (Primitive::String, Primitive::StringLiteral(_)) => Primitive::True,
+            (Primitive::True, Primitive::Bool) | (Primitive::Bool, Primitive::True) => {
+                Primitive::True
             }
+            (Primitive::False, Primitive::Bool) | (Primitive::Bool, Primitive::False) => {
+                Primitive::True
+            }
+            // special cases
+            // any
+            (_, Primitive::Any) => Primitive::True,
+            // never
+            (Primitive::Never, Primitive::Never) => Primitive::True,
+            (_, Primitive::Never) | (Primitive::Never, _) => Primitive::False,
+            // two literal and non-literal primitives
+            // A extends B :- A = B
+            _ => (self == b).into(),
+        }
+    }
+}
+
+impl Extends<Type> for Type {
+    fn extends(&self, parent: &Type) -> Primitive {
+        match (self, parent) {
+            // primitives
+            (Type::Primitive(a), Type::Primitive(b)) => a.extends(b),
             // primitive and an operation
             (Type::Primitive(a), Type::Operation(b)) | (Type::Operation(b), Type::Primitive(a)) => {
                 match &b {
                     // A extends B :- A = B
-                    Operation::Union(lhs, rhs) => {
+                    Operation::Union(Union { lhs, rhs }) => {
                         if a.extends(&lhs) == Primitive::True {
                             Primitive::True
                         } else if a.extends(&rhs) == Primitive::True {
@@ -60,11 +64,11 @@ impl<Child: Typed, Parent: Typed> Extends<Parent> for Child {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Extends, Operation::*, Primitive, Type};
+    use crate::{Operation, Primitive, Type, Union};
 
     #[test]
     fn primitive_extends_primitive() {
-        use crate::{Extends, Primitive, Type};
+        use crate::{Primitive, Type};
         // int extends int
         assert_eq!(
             Type::Primitive(Primitive::Int).extends(&Type::Primitive(Primitive::Int)),
@@ -136,18 +140,18 @@ mod tests {
     fn primitive_extends_union() {
         // int extends int | string
         assert_eq!(
-            Type::Primitive(Primitive::Int).extends(&Type::Operation(Union(
+            Type::Primitive(Primitive::Int).extends(&Type::Operation(Operation::Union(Union::of(
                 Type::Primitive(Primitive::Int).into(),
                 Type::Primitive(Primitive::String).into()
-            ))),
+            )))),
             Primitive::True
         );
         // int extends string | bool
         assert_eq!(
-            Type::Primitive(Primitive::Int).extends(&Type::Operation(Union(
+            Type::Primitive(Primitive::Int).extends(&Type::Operation(Operation::Union(Union::of(
                 Type::Primitive(Primitive::String).into(),
                 Type::Primitive(Primitive::Bool).into()
-            ))),
+            )))),
             Primitive::False
         );
     }
