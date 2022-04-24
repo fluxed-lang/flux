@@ -128,10 +128,12 @@ impl Simplify for Intersection {
 }
 #[cfg(test)]
 mod tests {
-    use crate::{Intersect, Intersection, Operation, Primitive, Simplify, Type, Union};
+    use pretty_assertions::assert_eq;
+
+    use crate::{Intersect, Primitive, Type};
 
     #[test]
-    fn test_primitive_intersection() {
+    fn primitive_intersection() {
         // string & string = string
         assert_eq!(
             Type::Primitive(Primitive::String).intersect(&Type::Primitive(Primitive::String)),
@@ -153,27 +155,6 @@ mod tests {
                 Primitive::StringLiteral("hello".to_string())
             )),
             Type::Primitive(Primitive::StringLiteral("hello".to_string()))
-        );
-    }
-
-    #[test]
-    fn test_union_intersection() {
-        // (string | int) & (int | float) = int
-        assert_eq!(
-            Type::Operation(Operation::Intersection(Intersection::of(
-                Type::Operation(Operation::Union(Union::of(
-                    Type::Primitive(Primitive::String).into(),
-                    Type::Primitive(Primitive::Int).into()
-                )))
-                .into(),
-                Type::Operation(Operation::Union(Union::of(
-                    Type::Primitive(Primitive::Int).into(),
-                    Type::Primitive(Primitive::Float).into()
-                )))
-                .into()
-            )))
-            .simplify(),
-            Type::Primitive(Primitive::Int)
         );
     }
 }

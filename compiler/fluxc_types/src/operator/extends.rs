@@ -84,12 +84,14 @@ impl Extends<Operation> for Operation {
 
 impl Extends<Union> for Union {
     fn extends(&self, b: &Union) -> Primitive {
-		todo!()
+        todo!()
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::assert_eq;
+
     use crate::{Extends, Operation, Primitive, Type, Union};
 
     #[test]
