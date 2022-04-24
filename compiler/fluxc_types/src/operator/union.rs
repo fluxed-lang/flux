@@ -41,22 +41,32 @@ impl Simplify for Union {
         let rhs = self.rhs.simplify();
         // T | T = T
         if lhs == rhs {
-            lhs
+            return lhs;
         }
-        // T | any = any
-        else if lhs == Type::Primitive(Primitive::Any) {
-            Type::Primitive(Primitive::Any)
-        } else if rhs == Type::Primitive(Primitive::Any) {
-            Type::Primitive(Primitive::Any)
-        }
-        // T | never = T
-        else if lhs == Type::Primitive(Primitive::Never) {
-            rhs
-        } else if rhs == Type::Primitive(Primitive::Never) {
-            lhs
-        } else {
-            Type::Operation(Operation::Union(Union::of(lhs.into(), rhs.into())))
-        }
+        match (&lhs, &rhs) {
+            // T | any = any
+            (Type::Primitive(Primitive::Any), _) => return Type::Primitive(Primitive::Never),
+            (_, Type::Primitive(Primitive::Any)) => return Type::Primitive(Primitive::Never),
+            // T | never = T
+            (Type::Primitive(Primitive::Never), _) => return rhs,
+            (_, Type::Primitive(Primitive::Never)) => return lhs,
+            // (A | B) | A = A | B
+            (
+                Type::Operation(Operation::Union(Union {
+                    lhs: lhs_lhs,
+                    rhs: lhs_rhs,
+                })),
+                lhs,
+            ) if lhs == lhs_lhs.as_ref() => {
+                return Type::Operation(Operation::Union(Union {
+                    lhs: lhs_lhs.clone(),
+                    rhs: lhs_rhs.clone(),
+                }))
+            }
+            _ => {}
+        };
+        // (A | B) | A = T
+        Type::Operation(Operation::Union(Union::of(lhs.into(), rhs.into())))
     }
 }
 
