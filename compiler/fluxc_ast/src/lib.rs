@@ -13,7 +13,6 @@ pub mod control;
 pub mod func;
 pub mod module;
 pub mod operations;
-pub mod types;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Node<T> {

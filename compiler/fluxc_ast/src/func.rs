@@ -1,4 +1,6 @@
-use crate::{types::TypeExpr, Block, Expr, Ident, Node};
+use fluxc_types::Type;
+
+use crate::{Block, Expr, Ident, Node};
 
 /// A function declaration.
 #[derive(Debug, PartialEq)]
@@ -26,7 +28,7 @@ pub struct ParenArgument {
     /// The identifier representing the AST node.
     pub ident: Ident,
     /// The identifier representing the type of this argument.
-    pub type_expr: Node<TypeExpr>,
+    pub ty: Node<Type>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -36,5 +38,5 @@ pub struct ExternFunc {
     /// The arguments this function requires.
     pub args: Vec<Node<ParenArgument>>,
     /// The identifier representing the return type of the function.
-    pub ret_type_expr: Node<TypeExpr>,
+    pub ret_ty: Node<Type>,
 }
