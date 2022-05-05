@@ -27,20 +27,21 @@ pub enum Operation {
     Array(Box<Type>, Option<usize>),
 }
 
-/// Trait implemented by types that can be converted into a type expression.
-pub trait AsType: Debug {
-    fn as_type(&self) -> Type;
+/// Trait implemented by structures that have or represent a Flux type.
+pub trait Typed: Debug {
+	/// Converts this object into a flux type.
+    fn into_type(&self) -> Type;
 }
 
-impl<T: AsType> AsType for &T {
-    fn as_type(&self) -> Type {
-        (*self).as_type()
+impl<T: Typed> Typed for &T {
+    fn into_type(&self) -> Type {
+        (*self).into_type()
     }
 }
 
-impl<T: AsType> AsType for Box<T> {
-    fn as_type(&self) -> Type {
-        (**self).as_type()
+impl<T: Typed> Typed for Box<T> {
+    fn into_type(&self) -> Type {
+        (**self).into_type()
     }
 }
 
