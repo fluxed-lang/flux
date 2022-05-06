@@ -1,6 +1,6 @@
 //! Provides implementations of `Typed` for various AST structures.
 
-use fluxc_types::{Intersect, Primitive, Type, Typed, Unify};
+use fluxc_types::{Intersect, Operation, Primitive, Type, Typed, Unify};
 
 use crate::{Block, Expr, Literal, Node};
 
@@ -28,7 +28,7 @@ impl Typed for Expr {
                     .else_ifs
                     .iter()
                     .for_each(|else_if| ty = ty.unify(&else_if.1.type_of()));
-                match node.value.else_stmt {
+                match &node.value.else_stmt {
                     Some(node) => {
                         ty = ty.unify(&node.type_of());
                     }
@@ -38,6 +38,7 @@ impl Typed for Expr {
             }
             Expr::Loop(_) => todo!(),
             Expr::While(_) => todo!(),
+            Expr::Literal(node) => node.type_of(),
         }
     }
 }
@@ -53,7 +54,15 @@ impl Typed for Literal {
                 true => Primitive::True,
                 false => Primitive::False,
             }),
-            Literal::Array(items) => todo!(),
+            Literal::Array(items) => Type::Operation(Operation::Array(
+                items
+                    .iter()
+                    .map(|item| item.type_of())
+                    .reduce(|out, ty| out.unify(&ty))
+                    .unwrap()
+                    .into(),
+                Some(items.len()),
+            )),
         }
     }
 }
