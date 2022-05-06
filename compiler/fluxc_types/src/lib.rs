@@ -30,18 +30,12 @@ pub enum Operation {
 /// Trait implemented by structures that have or represent a Flux type.
 pub trait Typed: Debug {
 	/// Converts this object into a flux type.
-    fn into_type(&self) -> Type;
-}
-
-impl<T: Typed> Typed for &T {
-    fn into_type(&self) -> Type {
-        (*self).into_type()
-    }
+    fn type_of(&self) -> Type;
 }
 
 impl<T: Typed> Typed for Box<T> {
-    fn into_type(&self) -> Type {
-        (**self).into_type()
+    fn type_of(&self) -> Type {
+        (**self).type_of()
     }
 }
 
