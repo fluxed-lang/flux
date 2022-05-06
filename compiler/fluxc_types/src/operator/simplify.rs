@@ -1,4 +1,4 @@
-use crate::{Operation, Type};
+use crate::{Operation, Primitive, Type};
 
 // Trait for simplifying a type tree.
 pub trait Simplify {
@@ -16,11 +16,23 @@ impl Simplify for Operation {
     }
 }
 
+impl Simplify for Primitive {
+    fn simplify(&self) -> Type {
+        match self {
+            Primitive::Tuple(tuple) => {
+                let inner_types: Vec<_> = tuple.iter().map(|ty| ty.simplify()).collect();
+                Type::Primitive(Primitive::Tuple(inner_types))
+            }
+            _ => Type::Primitive(self.clone()),
+        }
+    }
+}
+
 impl Simplify for Type {
     fn simplify(&self) -> Type {
         match self {
             Type::Operation(op) => op.simplify(),
-            s => s.clone(),
+            Type::Primitive(primitive) => primitive.simplify(),
         }
     }
 }

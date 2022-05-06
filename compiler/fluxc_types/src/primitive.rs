@@ -21,10 +21,12 @@ pub enum Primitive {
     String,
     /// The primitive string literal type.
     StringLiteral(String),
-	/// The primitive char type.
-	Char,
-	/// The primitive char literal type.
-	CharLiteral(char),
+    /// The primitive char type.
+    Char,
+    /// The primitive char literal type.
+    CharLiteral(char),
+    /// A literal tuple type.
+    Tuple(Vec<Type>),
     /// The primitive boolean type.
     Bool,
     /// The primitive boolean literal type, `true`.
