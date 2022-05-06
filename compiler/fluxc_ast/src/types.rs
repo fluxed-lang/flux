@@ -2,7 +2,7 @@
 
 use fluxc_types::{Intersect, Operation, Primitive, Type, Typed, Unify};
 
-use crate::{Block, Expr, Literal, Node};
+use crate::{control::Conditional, Block, Expr, Literal, Node, Stmt};
 
 impl<T: Typed> Typed for Node<T> {
     fn type_of(&self) -> Type {
@@ -21,21 +21,7 @@ impl Typed for Expr {
                 .intersect(&node.value.rhs.type_of()),
             Expr::Block(node) => node.type_of(),
             Expr::FuncCall(_) => todo!(),
-            Expr::Conditional(node) => {
-                let mut ty = node.value.if_stmt.1.type_of();
-                // create union of all branches
-                node.value
-                    .else_ifs
-                    .iter()
-                    .for_each(|else_if| ty = ty.unify(&else_if.1.type_of()));
-                match &node.value.else_stmt {
-                    Some(node) => {
-                        ty = ty.unify(&node.type_of());
-                    }
-                    _ => (),
-                }
-                ty
-            }
+            Expr::Conditional(node) => node.type_of(),
             Expr::Loop(_) => todo!(),
             Expr::While(_) => todo!(),
             Expr::Literal(node) => node.type_of(),
@@ -69,6 +55,29 @@ impl Typed for Literal {
 
 impl Typed for Block {
     fn type_of(&self) -> Type {
-        todo!()
+        match self.stmts.last() {
+            Some(stmt) => match &stmt.value {
+                Stmt::Expr(node) => node.type_of(),
+                _ => Type::Primitive(Primitive::Unit),
+            },
+            None => Type::Primitive(Primitive::Unit),
+        }
+    }
+}
+
+impl Typed for Conditional {
+    fn type_of(&self) -> Type {
+        let mut ty = self.if_stmt.1.type_of();
+        // create union of all branches
+        self.else_ifs
+            .iter()
+            .for_each(|else_if| ty = ty.unify(&else_if.1.type_of()));
+        match &self.else_stmt {
+            Some(node) => {
+                ty = ty.unify(&node.type_of());
+            }
+            _ => (),
+        }
+        ty
     }
 }
