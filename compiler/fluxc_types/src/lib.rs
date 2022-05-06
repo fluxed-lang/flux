@@ -29,7 +29,7 @@ pub enum Operation {
 
 /// Trait implemented by structures that have or represent a Flux type.
 pub trait Typed: Debug {
-	/// Converts this object into a flux type.
+    /// Converts this object into a flux type.
     fn type_of(&self) -> Type;
 }
 
