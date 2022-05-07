@@ -5,8 +5,10 @@ use crate::{Ident, Node};
 /// An imported symbol.
 #[derive(Debug, PartialEq)]
 pub struct ImportedSymbol {
-	pub name: Ident,
-	pub alias: Option<Ident>
+    /// The name of the imported symbol.
+    pub name: Ident,
+    /// The alias this symbol is given in this module.
+    pub alias: Option<Ident>,
 }
 
 /// An `import` statement.

@@ -39,8 +39,8 @@ pub enum Primitive {
     Any,
     /// The `never` type. This type represents the empty set.
     Never,
-	/// A literal reference to another type.
-	Ref(String)
+    /// A literal reference to another type.
+    Ref(String),
 }
 
 impl From<String> for Primitive {

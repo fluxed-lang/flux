@@ -3,8 +3,8 @@ mod primitive;
 
 use std::fmt::Debug;
 
-pub use primitive::*;
 pub use operator::*;
+pub use primitive::*;
 
 /// The root-level type expression enumeration
 #[derive(Debug, Clone)]
@@ -13,10 +13,10 @@ pub enum Type {
     Primitive(Primitive),
     /// A type operation.
     Operation(Operation),
-	/// A type to be inferred from the type tree.
-	Infer(String),
-	/// A circular type reference.
-	Circular(Box<Type>),
+    /// A type to be inferred from the type tree.
+    Infer(String),
+    /// A circular type reference.
+    Circular(Box<Type>),
 }
 
 /// Trait implemented by structures that have or represent a Flux type.
