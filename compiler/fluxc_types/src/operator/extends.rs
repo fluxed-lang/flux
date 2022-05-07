@@ -1,4 +1,4 @@
-use crate::{Operation, Primitive, Type, Union};
+use crate::{Operation, Primitive, Type, Union, Simplify};
 
 /// Trait for type extension.
 pub trait Extends<B> {
@@ -73,6 +73,15 @@ impl Extends<Primitive> for Operation {
     }
 }
 
+impl Extends<Operation> for Type {
+	fn extends(&self, b: &Operation) -> Primitive {
+		match (self, b) {
+			(Type::Primitive(primitive), op) => primitive.extends(op),
+			(Type::Operation(lhs), rhs) => lhs.extends(rhs),
+		}
+	}
+}
+
 impl Extends<Operation> for Operation {
     fn extends(&self, b: &Operation) -> Primitive {
         match (self, b) {
@@ -80,6 +89,15 @@ impl Extends<Operation> for Operation {
             _ => Primitive::False,
         }
     }
+}
+
+impl Extends<Operation> for Primitive {
+	fn extends(&self, b: &Operation) -> Primitive {
+		match (self, b.simplify()) {
+			(lhs, Type::Primitive(rhs)) => lhs.extends(&rhs),
+			(_, Type::Operation(_)) => todo!("primitive extends unsimplifiable operation"),
+		} 
+	}
 }
 
 impl Extends<Union> for Union {
