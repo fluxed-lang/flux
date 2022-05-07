@@ -1,119 +1,83 @@
-//! Contains data structures for representing Type expressions.
+//! Provides implementations of `Typed` for various AST structures.
 
-use fluxc_types::Type;
+use fluxc_types::{Intersect, Operation, Primitive, Type, Typed, Unify};
 
-use crate::{Ident, Node};
+use crate::{control::Conditional, Block, Expr, Literal, Node, Stmt};
 
-/// An enum of type literals.
-#[derive(Debug, PartialEq, Clone)]
-pub enum TypeLiteral {
-    /// The unit type, `()`.
-    Unit,
-    /// The boolean type, `bool`.
-    Bool,
-    /// The integer type, `int`.
-    Int,
-    /// The floating-point type, `float`.
-    Float,
-    /// The character type, `char`.
-    Char,
-    /// The string type, `string`.
-    String,
+impl<T: Typed> Typed for Node<T> {
+    fn type_of(&self) -> Type {
+        self.value.type_of()
+    }
 }
 
-impl From<TypeLiteral> for Type {
-    fn from(lit: TypeLiteral) -> Self {
-        match lit {
-            TypeLiteral::Unit => Type::Unit,
-            TypeLiteral::Bool => Type::Bool,
-            TypeLiteral::Int => Type::Int,
-            TypeLiteral::Float => Type::Float,
-            TypeLiteral::Char => Type::Char,
-            TypeLiteral::String => Type::String,
+impl Typed for Expr {
+    fn type_of(&self) -> Type {
+        match self {
+            Expr::Ident(_) => todo!(),
+            Expr::BinaryExpr(node) => node
+                .value
+                .lhs
+                .type_of()
+                .intersect(&node.value.rhs.type_of()),
+            Expr::Block(node) => node.type_of(),
+            Expr::FuncCall(_) => todo!(),
+            Expr::Conditional(node) => node.type_of(),
+            Expr::Loop(_) => todo!(),
+            Expr::While(_) => todo!(),
+            Expr::Literal(node) => node.type_of(),
         }
     }
 }
 
-/// The kind of a type unary expression.
-#[derive(Debug, PartialEq, Clone)]
-pub enum TypeUnaryExprOpKind {
-    /// The array operator, `[]`.
-    Array,
-}
-
-/// A type unary expression.
-#[derive(Debug, PartialEq, Clone)]
-pub struct TypeUnaryExpr {
-    /// The operator of this unary expression.
-    pub op: TypeUnaryExprOpKind,
-    /// The operand of this unary expression.
-    pub operand: Box<TypeExpr>,
-}
-
-impl From<TypeUnaryExpr> for Type {
-    fn from(expr: TypeUnaryExpr) -> Self {
-        match expr.op {
-            TypeUnaryExprOpKind::Array => Type::Array(Box::new(expr.operand.into())),
+impl Typed for Literal {
+    fn type_of(&self) -> Type {
+        match self {
+            Literal::Int(val) => Type::Primitive(Primitive::IntLiteral(*val)),
+            Literal::Float(val) => Type::Primitive(Primitive::FloatLiteral(*val)),
+            Literal::String(val) => Type::Primitive(Primitive::StringLiteral((*val).clone())),
+            Literal::Char(val) => Type::Primitive(Primitive::CharLiteral(*val)),
+            Literal::Bool(val) => Type::Primitive(match val {
+                true => Primitive::True,
+                false => Primitive::False,
+            }),
+            Literal::Array(items) => Type::Operation(Operation::Array(
+                items
+                    .iter()
+                    .map(|item| item.type_of())
+                    .reduce(|out, ty| out.unify(&ty))
+                    .unwrap()
+                    .into(),
+                Some(items.len()),
+            )),
         }
     }
 }
 
-/// The kind of a type binary expression operator.
-#[derive(Debug, PartialEq, Clone)]
-pub enum TypeBinaryExprOpKind {
-    /// The `&` type operator, intersect.
-    Intersect,
-    /// The `|` type operator, union.
-    Union,
+impl Typed for Block {
+    fn type_of(&self) -> Type {
+        match self.stmts.last() {
+            Some(stmt) => match &stmt.value {
+                Stmt::Expr(node) => node.type_of(),
+                _ => Type::Primitive(Primitive::Unit),
+            },
+            None => Type::Primitive(Primitive::Unit),
+        }
+    }
 }
 
-/// A type binary expression.
-#[derive(Debug, PartialEq, Clone)]
-pub struct TypeBinaryExpr {
-    /// The left-hand side of the binary expression.
-    pub lhs: Box<TypeExpr>,
-    /// The operator of the binary expression.
-    pub operator: TypeBinaryExprOpKind,
-    /// The right-hand side of the binary expression.
-    pub rhs: Box<TypeExpr>,
-}
-
-impl From<TypeBinaryExpr> for Type {
-    fn from(expr: TypeBinaryExpr) -> Self {
-        match expr.operator {
-            TypeBinaryExprOpKind::Intersect => {
-                Type::Intersection(vec![expr.lhs.into(), expr.rhs.into()])
+impl Typed for Conditional {
+    fn type_of(&self) -> Type {
+        let mut ty = self.if_stmt.1.type_of();
+        // create union of all branches
+        self.else_ifs
+            .iter()
+            .for_each(|else_if| ty = ty.unify(&else_if.1.type_of()));
+        match &self.else_stmt {
+            Some(node) => {
+                ty = ty.unify(&node.type_of());
             }
-            TypeBinaryExprOpKind::Union => Type::Union(vec![expr.lhs.into(), expr.rhs.into()]),
+            _ => (),
         }
-    }
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum TypeExpr {
-    /// A type literal.
-    Literal(Node<TypeLiteral>),
-    /// A type unary expression.
-    Unary(Node<TypeUnaryExpr>),
-    /// A type binary expression.
-    Binary(Node<TypeBinaryExpr>),
-    /// An identifier.
-    Ident(Node<Ident>),
-}
-
-impl From<TypeExpr> for Type {
-    fn from(expr: TypeExpr) -> Self {
-        match expr {
-            TypeExpr::Literal(lit) => lit.value.into(),
-            TypeExpr::Unary(unary) => unary.value.into(),
-            TypeExpr::Binary(binary) => binary.value.into(),
-            TypeExpr::Ident(_) => Type::Infer,
-        }
-    }
-}
-
-impl From<Box<TypeExpr>> for Type {
-    fn from(expr: Box<TypeExpr>) -> Self {
-        expr.into()
+        ty
     }
 }

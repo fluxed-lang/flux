@@ -1,16 +1,6 @@
-use crate::{types::TypeExpr, Block, Expr, Ident, Node};
+use fluxc_types::Type;
 
-/// A function declaration.
-#[derive(Debug, PartialEq)]
-pub struct FuncDecl {
-    /// The identifier representing the function.
-    pub ident: Ident,
-    /// The arguments this function requires.
-    pub args: Vec<Node<ParenArgument>>,
-    /// The body of the function.
-    pub body: Node<Block>,
-}
-
+use crate::{Block, Expr, Ident, Node};
 /// A function call.
 #[derive(Debug, PartialEq)]
 pub struct FuncCall {
@@ -26,15 +16,38 @@ pub struct ParenArgument {
     /// The identifier representing the AST node.
     pub ident: Ident,
     /// The identifier representing the type of this argument.
-    pub type_expr: Node<TypeExpr>,
+    pub ty: Node<Type>,
 }
 
+/// An enum of function declaration types.
 #[derive(Debug, PartialEq)]
-pub struct ExternFunc {
-    /// The identifier representing the external function.
-    pub ident: Ident,
-    /// The arguments this function requires.
-    pub args: Vec<Node<ParenArgument>>,
-    /// The identifier representing the return type of the function.
-    pub ret_type_expr: Node<TypeExpr>,
+pub enum FuncDecl {
+	Local {
+		/// The identifier representing the function.
+		ident: Ident,
+		/// The arguments this function requires.
+		args: Vec<Node<ParenArgument>>,
+		/// The body of the function.
+		body: Node<Block>,
+		/// The identifier representing the return type of the function.
+		ret_ty: Node<Type>,
+	},
+	Export {
+		/// The identifier representing the function.
+		ident: Ident,
+		/// The arguments this function requires.
+		args: Vec<Node<ParenArgument>>,
+		/// The body of the function.
+		body: Node<Block>,
+		/// The identifier representing the return type of the function.
+    	ret_ty: Node<Type>,
+	},
+	External {
+		/// The identifier representing the function.
+		ident: Ident,
+		/// The arguments this function requires.
+		args: Vec<Node<ParenArgument>>,
+		/// The identifier representing the return type of the function.
+    	ret_ty: Node<Type>,
+	}
 }

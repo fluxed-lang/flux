@@ -5,7 +5,7 @@ use control::{Conditional, While};
 use module::{Export, Import};
 
 use crate::control::Loop;
-use crate::func::{ExternFunc, FuncCall, FuncDecl};
+use crate::func::{FuncDecl, FuncCall};
 use crate::operations::BinaryExpr;
 use fluxc_span::Span;
 
@@ -84,8 +84,6 @@ pub enum Stmt {
     Declaration(Vec<Node<Declaration>>),
     /// A function declaration.
     FuncDecl(Node<FuncDecl>),
-    /// An external function declaration.
-    ExternFunc(Node<ExternFunc>),
     /// A function return statement.
     Return(Expr),
     /// A loop break statement.

@@ -11,19 +11,12 @@ pub struct Conditional {
     pub else_stmt: Option<Block>,
 }
 
-/// A match result, either a single expression or a block.
-pub enum MatchResult {
-    /// A single expression.
-    Single(Node<Expr>),
-    /// A block expression.
-    Block(Node<Block>),
-}
 /// A match expression.
 pub struct Match {
     /// The expression being matched.
     pub expr: Box<Expr>,
     /// The list of cases being tested.
-    pub cases: Vec<(Node<Literal>, MatchResult)>,
+    pub cases: Vec<(Node<Literal>, Node<Expr>)>,
 }
 
 #[derive(Debug, PartialEq)]
