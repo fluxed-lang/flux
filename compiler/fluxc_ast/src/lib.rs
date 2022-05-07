@@ -29,25 +29,6 @@ impl<T> Node<T> {
 /// The identifier type.
 pub type Ident = Node<String>;
 
-/// Enum of possible statement kinds.
-#[derive(Debug, PartialEq)]
-pub enum Stmt {
-    /// A declaration.
-    Declaration(Vec<Node<Declaration>>),
-    /// A function declaration.
-    FuncDecl(Node<FuncDecl>),
-    /// A function return statement.
-    Return(Expr),
-    /// A loop break statement.
-    Break(Expr),
-    /// An import statement.
-    Import(Node<Import>),
-    /// An export statement.
-    Export(Node<Export>),
-    /// A generic expression.
-    Expr(Node<Expr>),
-}
-
 /// The root AST instance.
 #[derive(Debug, PartialEq)]
 pub struct AST {
