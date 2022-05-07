@@ -10,7 +10,6 @@ use cranelift::{
 };
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataContext, Linkage, Module};
-use log::{debug, trace};
 use fluxc_ast::{
     control::{If, Loop},
     func::FuncCall,
@@ -18,6 +17,7 @@ use fluxc_ast::{
     Declaration, Expr, Ident, Literal, Literal, Node, Stmt, AST,
 };
 use fluxc_walker::Walker;
+use log::{debug, trace};
 
 /// Root-level IR translator.
 pub struct IrTranslator {

@@ -6,13 +6,6 @@ extern crate log;
 
 use std::error::Error;
 
-use lazy_static::lazy_static;
-use log::{debug, trace};
-use pest::{
-    iterators::{Pair, Pairs},
-    prec_climber::{Assoc, Operator, PrecClimber},
-    Parser,
-};
 use fluxc_ast::{
     control::Loop,
     func::{ExternFunc, FuncCall, ParenArgument},
@@ -20,6 +13,13 @@ use fluxc_ast::{
     Block, Declaration, Expr, Ident, Literal, Mutability, Node, Stmt, AST,
 };
 use fluxc_types::Type;
+use lazy_static::lazy_static;
+use log::{debug, trace};
+use pest::{
+    iterators::{Pair, Pairs},
+    prec_climber::{Assoc, Operator, PrecClimber},
+    Parser,
+};
 
 #[derive(Parser)]
 #[grammar = "./grammar.pest"]
