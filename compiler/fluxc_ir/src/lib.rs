@@ -11,7 +11,7 @@ use cranelift::{
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataContext, Linkage, Module};
 use fluxc_ast::{
-    control::{If, Loop},
+    _control::{If, Loop},
     func::FuncCall,
     operations::{Assignment, AssignmentKind, BinaryExpr, BinaryOp},
     Declaration, Expr, Ident, Literal, Literal, Node, Stmt, AST,

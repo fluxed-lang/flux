@@ -7,7 +7,7 @@ extern crate log;
 use std::error::Error;
 
 use fluxc_ast::{
-    control::Loop,
+    _control::Loop,
     func::{ExternFunc, FuncCall, ParenArgument},
     operations::{Assignment, AssignmentKind, BinaryExpr, BinaryOp},
     Block, Declaration, Expr, Ident, Literal, Mutability, Node, Stmt, AST,
@@ -486,7 +486,7 @@ impl FluxParser {
                 for decl in decls {
                     decl.id = self.next_id();
                     decl.value.ident.id = self.next_id();
-                    if let Some(ty_ident) = &mut decl.value.ty_ident {
+                    if let Some(ty_ident) = &mut decl.value.explicit_ty {
                         ty_ident.id = self.next_id();
                     }
                     self.correct_expr_ids(&mut decl.value.value);

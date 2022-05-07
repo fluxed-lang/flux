@@ -1,8 +1,8 @@
 use fluxc_ast::{
-    func::{ExternFunc, FuncDecl, ParenArgument},
+    func::{FuncDecl, ParenArgument},
     Block, Declaration, Expr, Literal, Mutability, Node, Stmt,
 };
-use fluxc_types::Type;
+use fluxc_types::{Intersect, Primitive, Type, Typed};
 
 /// An enum of linkage types.
 #[derive(Debug)]
@@ -22,12 +22,8 @@ pub struct Function {
     pub name: String,
     /// The arguments of the function.
     pub args: Vec<ParenArgument>,
-    /// The linkage type of this function.
-    pub linkage: Linkage,
     /// The return type of this function.
-    pub ret_type: Type,
-    /// The type of this function.
-    pub ty: Type,
+    pub ret_ty: Type,
 }
 
 #[derive(Debug)]
@@ -144,7 +140,6 @@ impl Walker {
         for stmt in stmts {
             match &stmt.value {
                 Stmt::FuncDecl(func) => self.declare_function(&func.value),
-                Stmt::ExternFunc(func) => self.declare_external_function(&func.value),
                 _ => (),
             }
         }
@@ -152,34 +147,47 @@ impl Walker {
 
     /// Declare a function.
     pub fn declare_function(&mut self, func: &FuncDecl) {
-        self.functions.push(Function {
-            name: func.ident.value.clone(),
-            args: func.args.iter().map(|arg| arg.value.clone()).collect(),
-            ty: func.ty.clone(),
-            linkage: Linkage::Local,
-        })
-    }
+        let (name, args, ret_ty): (String, Vec<ParenArgument>, Type) = match func {
+            FuncDecl::Local {
+                ident,
+                args,
+                body,
+                ret_ty,
+            } => (
+                ident.value.clone(),
+                args.iter().map(|arg| arg.value.clone()).collect(),
+                ret_ty.value.clone(),
+            ),
+            FuncDecl::Export {
+                ident,
+                args,
+                body,
+                ret_ty,
+            } => (
+                ident.value.clone(),
+                args.iter().map(|arg| arg.value.clone()).collect(),
+                ret_ty.value.clone(),
+            ),
+            FuncDecl::External {
+                ident,
+                args,
+                ret_ty,
+            } => (
+                ident.value.clone(),
+                args.iter().map(|arg| arg.value.clone()).collect(),
+                ret_ty.value.clone(),
+            ),
+        };
 
-    /// Declare an external function.
-    pub fn declare_external_function(&mut self, extern_func: &ExternFunc) {
-        self.functions.push(Function {
-            name: extern_func.ident.value.clone(),
-            args: extern_func
-                .args
-                .iter()
-                .map(|arg| arg.value.clone())
-                .collect(),
-            ty: extern_func.ty.clone(),
-            linkage: Linkage::External,
-        })
+        self.functions.push(Function { args, name, ret_ty });
     }
 
     /// Declare a variable.
     pub fn declare_variable(&mut self, decl: &Declaration) {
         self.variables.push(Variable {
-            name: decl.ident.value.inner.clone(),
+            name: decl.ident.value.clone(),
             mutability: decl.mutability,
-            ty: decl.ty.clone(),
+            ty: decl.explicit_ty.clone().unwrap_or(decl.value.type_of()),
         });
     }
 
@@ -220,9 +228,9 @@ impl Walker {
             Expr::BinaryExpr(bin_op) => {
                 let lhs = self.get_expr_type(&bin_op.value.lhs.value);
                 let rhs = self.get_expr_type(&bin_op.value.lhs.value);
-                lhs.intersect(rhs)
+                lhs.intersect(&rhs)
             }
-            Expr::Block(_) => Type::Unit,
+            Expr::Block(_) => Type::Primitive(Primitive::Unit),
             Expr::FuncCall(func_call) => func_call.value.return_ty.clone(),
         }
     }
@@ -236,7 +244,6 @@ impl Walker {
                 }
             }
             Stmt::FuncDecl(func) => self.declare_function(&func.value),
-            Stmt::ExternFunc(extern_func) => self.declare_external_function(&extern_func.value),
             _ => (),
         }
     }
