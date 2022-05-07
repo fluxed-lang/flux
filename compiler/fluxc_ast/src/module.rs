@@ -1,16 +1,19 @@
 //! Contains data structures for representing imports and exports.
 
-use crate::Ident;
+use crate::{Ident, Node};
 
-/// An external, imported module.
-#[derive(Debug, PartialEq, Clone)]
-pub struct Module {}
+/// An imported symbol.
+#[derive(Debug, PartialEq)]
+pub struct ImportedSymbol {
+	pub name: Ident,
+	pub alias: Option<Ident>
+}
 
 /// An `import` statement.
 #[derive(Debug, PartialEq)]
 pub struct Import {
     /// A list of imported symbols.
-    pub symbols: Vec<(Ident, Option<Ident>)>,
+    pub symbols: Vec<Node<ImportedSymbol>>,
     /// The path to the module being imported.
     pub path: String,
 }
