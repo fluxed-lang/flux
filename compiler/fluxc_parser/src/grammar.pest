@@ -207,7 +207,7 @@ const_decl = !{ "const" ~ ident ~ type_expr? ~ "=" ~ expr }
 export_block = !{ "{" ~ (ident ~ ",")* ~ ident? ~ "}" }
 export_stmt = !{ "export" ~ ((class_decl | interface_decl | func_decl | const_decl) | export_block) }
 
-statement_inner = {
+statement_inner = _{
 	conditional_stmt
 	| loop_stmt
 	| while_stmt
@@ -224,6 +224,6 @@ statement_inner = {
     | expr
 }
 
-statement = @{ statement_inner ~ BLANK* ~ ";"? ~ BLANK* ~ NEWLINE* }
+statement = ${ statement_inner ~ BLANK* ~ ";"? ~ BLANK* ~ NEWLINE* }
 
 flux = @{ SOI ~ statement* ~ EOI }
