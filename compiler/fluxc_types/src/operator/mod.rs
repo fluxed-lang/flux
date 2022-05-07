@@ -1,10 +1,10 @@
-mod extends;
+// mod extends;
 mod intersect;
 mod simplify;
 mod union;
 
 // export all types
-pub use extends::*;
+// pub use extends::*;
 pub use intersect::*;
 pub use simplify::*;
 pub use union::*;

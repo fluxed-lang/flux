@@ -3,8 +3,8 @@ mod primitive;
 
 use std::fmt::Debug;
 
-pub use operator::*;
 pub use primitive::*;
+pub use operator::*;
 
 /// The root-level type expression enumeration
 #[derive(Debug, Clone)]
