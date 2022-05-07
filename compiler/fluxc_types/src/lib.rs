@@ -13,6 +13,10 @@ pub enum Type {
     Primitive(Primitive),
     /// A type operation.
     Operation(Operation),
+	/// A type to be inferred from the type tree.
+	Infer(String),
+	/// A circular type reference.
+	Circular(Box<Type>),
 }
 
 /// Trait implemented by structures that have or represent a Flux type.

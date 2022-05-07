@@ -43,6 +43,7 @@ impl Extends<Type> for Type {
             }
             // two opereations
             (Type::Operation(a), Type::Operation(b)) => a.extends(b),
+			
         }
     }
 }
