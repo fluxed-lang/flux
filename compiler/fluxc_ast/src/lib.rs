@@ -41,6 +41,16 @@ impl<T> Node<T> {
     }
 }
 
+trait IntoNode: Sized {
+    fn into_node(self, id: usize, span: Span) -> Node<Self>;
+}
+
+impl<T> IntoNode for T {
+    fn into_node(self, id: usize, span: Span) -> Node<Self> {
+        Node::new(id, span, self)
+    }
+}
+
 // generic implemetation of typed for all nodes
 impl<T: Typed> Typed for Node<T> {
     fn type_of(&self) -> Type {

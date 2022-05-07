@@ -13,7 +13,7 @@ pub enum Mode<'i> {
 /// Compile the target input string into memory.
 pub fn compile_to_mem(input: String) -> Result<fn() -> u32, Box<dyn Error>> {
     // 1. Parse input source
-    let mut parser = fluxc_parser::FluxParser::default();
+    let mut parser = fluxc_parser::ParserContext::default();
     let mut ast = parser.build(&input)?;
     // 2. Run AST validation on the AST
     fluxc_ast_passes::perform_ast_passes(&mut ast)?;
