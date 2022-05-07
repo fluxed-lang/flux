@@ -3,8 +3,8 @@ mod primitive;
 
 use std::fmt::Debug;
 
-pub use operator::*;
 pub use primitive::*;
+pub use operator::*;
 
 /// The root-level type expression enumeration
 #[derive(Debug, Clone)]
@@ -13,18 +13,10 @@ pub enum Type {
     Primitive(Primitive),
     /// A type operation.
     Operation(Operation),
-}
-
-/// The operation enumeration. This enum represents all possible type operations
-/// that can be performed on one or more types.
-#[derive(Debug, Clone, PartialEq)]
-pub enum Operation {
-    /// An intersection type.
-    Intersection(Intersection),
-    /// A union type.
-    Union(Union),
-    /// An array type.
-    Array(Box<Type>, Option<usize>),
+	/// A type to be inferred from the type tree.
+	Infer(String),
+	/// A circular type reference.
+	Circular(Box<Type>),
 }
 
 /// Trait implemented by structures that have or represent a Flux type.

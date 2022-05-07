@@ -33,6 +33,8 @@ impl Simplify for Type {
         match self {
             Type::Operation(op) => op.simplify(),
             Type::Primitive(primitive) => primitive.simplify(),
+			Type::Circular(inner) => Type::Circular(inner.simplify().into()),
+			t => t.clone(),
         }
     }
 }
