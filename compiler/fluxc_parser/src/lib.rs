@@ -82,6 +82,10 @@ impl Context {
         self.next_id += 1;
         node
     }
+    /// Create an empty node.
+    pub fn new_empty(&mut self, span: Span) -> Node<()> {
+        self.new_node(span, ())
+    }
 }
 
 fn map_pest_error(error: pest::error::Error<Rule>) -> CompilerError {

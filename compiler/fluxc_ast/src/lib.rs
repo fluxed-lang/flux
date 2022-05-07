@@ -39,6 +39,17 @@ impl<T> Node<T> {
     pub fn new(id: usize, span: Span, value: T) -> Self {
         Self { id, span, value }
     }
+    /// Create an empty node with no value.
+    pub fn empty(id: usize, span: Span) -> Node<()> {
+        Node { id, span, value: () }
+    }
+}
+
+impl Node<()> {
+    /// Hydrate this node with the given value.
+    pub fn hydrate<T>(self, value: T) -> Node<T> {
+        Node { id: self.id, span: self.span, value }
+    }
 }
 
 trait IntoNode: Sized {
