@@ -1,5 +1,5 @@
-/// Small struct for indexing AST nodes to a particular slice within the source code.
-/// The span is byte-indexed, rather than character-indexed.
+/// Small struct for indexing AST nodes to a particular slice within the source
+/// code. The span is byte-indexed, rather than character-indexed.
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Span {
     /// The start byte position of the span.

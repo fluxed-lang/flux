@@ -103,8 +103,8 @@ impl IrTranslator {
     }
 
     // /// Create a zero-initialized data section.
-    // fn create_data(&mut self, name: &str, contents: Vec<u8>) -> Result<&[u8], String> {
-    //     self.data_ctx.define(contents.into_boxed_slice());
+    // fn create_data(&mut self, name: &str, contents: Vec<u8>) -> Result<&[u8],
+    // String> {     self.data_ctx.define(contents.into_boxed_slice());
     //     let id = self
     //         .module
     //         .declare_data(name, Linkage::Export, true, false)
@@ -158,7 +158,8 @@ struct FunctionTranslator<'a> {
 }
 
 impl<'a> FunctionTranslator<'a> {
-    /// Create a new function translator using the specified Cranelift function builder and JIT module.
+    /// Create a new function translator using the specified Cranelift function
+    /// builder and JIT module.
     pub fn new(
         builder: FunctionBuilder<'a>,
         module: &'a mut JITModule,

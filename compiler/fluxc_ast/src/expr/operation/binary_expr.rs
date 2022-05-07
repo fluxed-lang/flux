@@ -1,8 +1,11 @@
-use std::{str::FromStr, error::Error};
+use std::{error::Error, str::FromStr};
 
-use crate::{Associativity, Node, Expr};
+use crate::{Associativity, Expr, Node};
 
 /// A binary expression.
+///
+/// This struct represents a binary operation that takes two operands and
+/// returns a result.
 #[derive(Debug, PartialEq)]
 pub struct BinaryExpr {
     /// The left hand side of the binary expression.
@@ -13,6 +16,7 @@ pub struct BinaryExpr {
     pub kind: BinaryOp,
 }
 
+/// An enumeration of possible binary operations.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum BinaryOp {
     /// The addition operator, `+`.
@@ -75,7 +79,6 @@ pub enum BinaryOp {
     ShrEq,
 }
 
-
 impl FromStr for BinaryOp {
     type Err = Box<dyn Error>;
 
@@ -115,7 +118,7 @@ impl FromStr for BinaryOp {
 }
 
 impl BinaryOp {
-    /// Fetch the precedence of this binary operator.
+    /// Get the precedence of this binary operator.
     pub const fn precedence(&self) -> usize {
         match self {
             BinaryOp::Mul | BinaryOp::Div | BinaryOp::Mod => 5,
@@ -132,7 +135,7 @@ impl BinaryOp {
         }
     }
 
-    /// Fetch the associativity of this binary operator.
+    /// Get the associativity of this binary operator.
     pub const fn associativity(&self) -> Associativity {
         match self {
             _ => Associativity::Ltr,

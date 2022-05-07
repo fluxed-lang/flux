@@ -1,12 +1,14 @@
-pub mod declaration;
-pub mod func_decl;
-pub mod module;
+//! Contains the statement AST data structures.
+
+pub(crate) mod declaration;
+pub(crate) mod func_decl;
+pub(crate) mod module;
 
 pub use declaration::*;
 pub use func_decl::*;
 pub use module::*;
 
-use crate::{Node, Expr};
+use crate::{Expr, Node};
 
 /// Enum of possible statement kinds.
 #[derive(Debug, PartialEq)]

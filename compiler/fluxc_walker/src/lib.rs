@@ -94,7 +94,8 @@ impl<T> Stack<T> {
         None
     }
 
-    /// Find an item in the stack using the given predicate, returning a mutable reference to the item.
+    /// Find an item in the stack using the given predicate, returning a mutable
+    /// reference to the item.
     pub fn find_mut<F: Fn(&T) -> bool>(&mut self, predicate: F) -> Option<&mut T> {
         for item in self.contents.iter_mut().rev() {
             if predicate(item) {
@@ -196,7 +197,8 @@ impl Walker {
         self.variables.find(|v| v.name == name.as_ref())
     }
 
-    /// Lookup a variable available in the current scope, returning a mutable reference to the variable.
+    /// Lookup a variable available in the current scope, returning a mutable
+    /// reference to the variable.
     pub fn lookup_variable_mut<S: AsRef<str>>(&mut self, name: S) -> Option<&mut Variable> {
         self.variables.find_mut(|v| v.name == name.as_ref())
     }

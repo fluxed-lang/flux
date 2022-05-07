@@ -1,4 +1,4 @@
-use fluxc_types::{Type, Primitive, Operation, Typed};
+use fluxc_types::{Operation, Primitive, Type, Typed, Unify};
 
 use crate::Expr;
 
@@ -7,7 +7,8 @@ use crate::Expr;
 pub enum Literal {
     /// An integer literal (e.g. `1234`, `0x1234`, `0o1234`, `0b1001`).
     Int(i64),
-    /// A floating-point literal (e.g. `1234.5`, `0x1234.5`, `0o1234.5`, `0b0110.1`).
+    /// A floating-point literal (e.g. `1234.5`, `0x1234.5`, `0o1234.5`,
+    /// `0b0110.1`).
     Float(f64),
     /// A string literal (e.g. `"hello"`, `"hello world"`).
     String(String),
