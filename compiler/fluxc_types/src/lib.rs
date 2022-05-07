@@ -15,18 +15,6 @@ pub enum Type {
     Operation(Operation),
 }
 
-/// The operation enumeration. This enum represents all possible type operations
-/// that can be performed on one or more types.
-#[derive(Debug, Clone, PartialEq)]
-pub enum Operation {
-    /// An intersection type.
-    Intersection(Intersection),
-    /// A union type.
-    Union(Union),
-    /// An array type.
-    Array(Box<Type>, Option<usize>),
-}
-
 /// Trait implemented by structures that have or represent a Flux type.
 pub trait Typed: Debug {
     /// Converts this object into a flux type.
