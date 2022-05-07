@@ -1,4 +1,5 @@
 use fluxc_ast::{Node, Stmt, AST};
+use fluxc_errors::CompilerError;
 use lazy_static::lazy_static;
 use pest::{
     iterators::Pair,
@@ -6,8 +7,6 @@ use pest::{
     Parser, Span,
 };
 use pest_derive::Parser;
-
-use fluxc_errors::CompilerError;
 
 mod expr;
 mod stmt;

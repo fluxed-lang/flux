@@ -1,9 +1,8 @@
 //! Contains the expression AST data structures.
 
-use pest::iterators::Pair;
-
 use fluxc_ast::{Expr, Node};
 use fluxc_errors::CompilerError;
+use pest::iterators::Pair;
 
 pub(crate) mod block_expr;
 pub(crate) mod control;

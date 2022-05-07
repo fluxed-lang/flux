@@ -4,9 +4,8 @@ extern crate log;
 use std::{env, path::Path};
 
 use clap::{AppSettings, Clap};
-use log::{debug, error, LevelFilter};
-
 use fluxc_main::Mode;
+use log::{debug, error, LevelFilter};
 
 /// Execute flux files using the Flux JIT compiler.
 #[derive(Clap)]

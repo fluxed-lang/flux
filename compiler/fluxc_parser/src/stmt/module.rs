@@ -1,9 +1,8 @@
 //! Contains data structures for representing imports and exports.
 
-use pest::iterators::Pair;
-
 use fluxc_ast::{Export, Import, ImportedSymbol};
 use fluxc_errors::CompilerError;
+use pest::iterators::Pair;
 
 use crate::{Context, Node, Parse, Rule};
 

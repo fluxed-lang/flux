@@ -1,7 +1,6 @@
-use pest::iterators::Pair;
-
 use fluxc_ast::{Literal, Node};
 use fluxc_errors::CompilerError;
+use pest::iterators::Pair;
 
 use crate::{Context, Parse, Rule};
 

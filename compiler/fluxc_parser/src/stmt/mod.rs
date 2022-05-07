@@ -1,17 +1,16 @@
-use pest::iterators::Pair;
-
 use fluxc_ast::{Declaration, Node, Stmt};
 use fluxc_errors::CompilerError;
+use pest::iterators::Pair;
 
 pub(crate) mod declaration;
 pub(crate) mod func_decl;
 pub(crate) mod module;
 
-use crate::{Context, Parse, Rule};
-
 pub use declaration::*;
 pub use func_decl::*;
 pub use module::*;
+
+use crate::{Context, Parse, Rule};
 
 impl Parse for Stmt {
     fn parse<'i>(

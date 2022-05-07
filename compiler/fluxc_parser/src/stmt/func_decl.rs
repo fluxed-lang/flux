@@ -4,10 +4,9 @@
 //! - Local function declarations
 //! - External function declarations
 
-use pest::iterators::Pair;
-
 use fluxc_ast::{FuncCall, FuncDecl, Node, ParenArgument};
 use fluxc_errors::CompilerError;
+use pest::iterators::Pair;
 
 use crate::{Context, Parse};
 
