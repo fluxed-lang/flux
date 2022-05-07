@@ -1,8 +1,7 @@
 extern crate clap;
 extern crate log;
 
-use std::env;
-use std::path::Path;
+use std::{env, path::Path};
 
 use clap::{AppSettings, Clap};
 use log::{debug, error, LevelFilter};

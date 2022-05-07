@@ -3,7 +3,7 @@ use pest::iterators::Pair;
 use fluxc_ast::Assignment;
 use fluxc_errors::CompilerError;
 
-use crate::{Node, Parse, Context, Rule};
+use crate::{Context, Node, Parse, Rule};
 
 impl Parse for Assignment {
     fn parse<'i>(

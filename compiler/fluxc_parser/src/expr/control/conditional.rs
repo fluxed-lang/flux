@@ -3,7 +3,7 @@ use pest::iterators::Pair;
 use fluxc_ast::{Conditional, Node};
 use fluxc_errors::CompilerError;
 
-use crate::{Parse, Rule, Context};
+use crate::{Context, Parse, Rule};
 
 impl Parse for Conditional {
     fn parse<'i>(

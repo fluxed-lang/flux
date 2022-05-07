@@ -5,10 +5,10 @@ use crate::{Associativity, Expr};
 /// A unary expression.
 #[derive(Debug, PartialEq)]
 pub struct UnaryExpr {
-	/// The kind of unary expression.
-	pub op: UnaryOp,
-	/// The operand of the unary expression.
-	pub expr: Box<Expr>,
+    /// The kind of unary expression.
+    pub op: UnaryOp,
+    /// The operand of the unary expression.
+    pub expr: Box<Expr>,
 }
 
 /// Enum representing unary operator types.

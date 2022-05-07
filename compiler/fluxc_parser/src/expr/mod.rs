@@ -10,7 +10,7 @@ pub(crate) mod control;
 pub(crate) mod literal;
 pub(crate) mod operation;
 
-use crate::{Rule, Parse, Context};
+use crate::{Context, Parse, Rule};
 
 impl Parse for Expr {
     fn parse<'i>(

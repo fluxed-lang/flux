@@ -14,7 +14,7 @@ use fluxc_ast::{
     _control::{If, Loop},
     func::FuncCall,
     operations::{Assignment, AssignmentKind, BinaryExpr, BinaryOp},
-    Declaration, Expr, Ident, Literal, Literal, Node, Stmt, AST,
+    Declaration, Expr, Ident, Literal, Node, Stmt, AST,
 };
 use fluxc_walker::Walker;
 use log::{debug, trace};
@@ -196,9 +196,9 @@ impl<'a> FunctionTranslator<'a> {
         trace!("TRANSLATE Stmt");
         use Stmt::*;
         match stmt {
-            Declaration(decl) => decl
-                .into_iter()
-                .for_each(|decl| self.translate_declaration(decl.value)),
+            Declaration(decl) => {
+                decl.into_iter().for_each(|decl| self.translate_declaration(decl.value))
+            }
             Assignment(assign) => self.translate_assignment(assign.value),
             Loop(loop_node) => self.translate_loop(loop_node.value),
             If(if_stmt) => self.translate_if(if_stmt.value),
@@ -250,9 +250,7 @@ impl<'a> FunctionTranslator<'a> {
         use Expr::*;
         match expr {
             Literal(literal) => self.translate_literal(literal.value),
-            Ident(ident) => self
-                .builder
-                .use_var(*self.variables.get(&ident.value.inner).unwrap()),
+            Ident(ident) => self.builder.use_var(*self.variables.get(&ident.value.inner).unwrap()),
             BinaryExpr(bin_op) => self.translate_bin_op(bin_op.value),
             Block(_) => todo!(),
             FuncCall(func_call) => {
@@ -268,10 +266,7 @@ impl<'a> FunctionTranslator<'a> {
         trace!("TRANSLATE Literal");
         use Literal::*;
         match literal.kind {
-            Int(val) => self
-                .builder
-                .ins()
-                .iconst(self.module.target_config().pointer_type(), val),
+            Int(val) => self.builder.ins().iconst(self.module.target_config().pointer_type(), val),
             Float(val) => self.builder.ins().f64const(val),
             String(contents) => {
                 // define the data in the context
@@ -298,8 +293,7 @@ impl<'a> FunctionTranslator<'a> {
         self.index += 1;
         self.variables.insert(decl.ident.value.inner, var);
         let val = self.translate_expr(decl.value.value);
-        self.builder
-            .declare_var(var, type_to_ir_type(self.module, decl.ty).unwrap());
+        self.builder.declare_var(var, type_to_ir_type(self.module, decl.ty).unwrap());
         self.builder.def_var(var, val)
     }
 
@@ -379,14 +373,8 @@ impl<'a> FunctionTranslator<'a> {
             Ne => self.builder.ins().icmp(IntCC::NotEqual, lhs, rhs),
             Lt => self.builder.ins().icmp(IntCC::SignedLessThan, lhs, rhs),
             Gt => self.builder.ins().icmp(IntCC::SignedGreaterThan, lhs, rhs),
-            Le => self
-                .builder
-                .ins()
-                .icmp(IntCC::SignedLessThanOrEqual, lhs, rhs),
-            Ge => self
-                .builder
-                .ins()
-                .icmp(IntCC::SignedGreaterThanOrEqual, lhs, rhs),
+            Le => self.builder.ins().icmp(IntCC::SignedLessThanOrEqual, lhs, rhs),
+            Ge => self.builder.ins().icmp(IntCC::SignedGreaterThanOrEqual, lhs, rhs),
             _ => panic!("bad icmp type"),
         }
     }
@@ -415,10 +403,7 @@ impl<'a> FunctionTranslator<'a> {
 
     fn translate_func_call(&mut self, call: FuncCall) -> Option<Value> {
         let mut sig = self.module.make_signature();
-        let func = self
-            .walker
-            .lookup_function(&call.ident.value.inner)
-            .unwrap();
+        let func = self.walker.lookup_function(&call.ident.value.inner).unwrap();
 
         // Add a parameter for each argument.
         let arg_tys;
@@ -431,8 +416,7 @@ impl<'a> FunctionTranslator<'a> {
         }
         // iterate over arguments and add to signature
         for arg in arg_tys {
-            sig.params
-                .push(AbiParam::new(type_to_ir_type(self.module, arg).unwrap()));
+            sig.params.push(AbiParam::new(type_to_ir_type(self.module, arg).unwrap()));
         }
         // push return signature if there is one
         if let Some(ret_ty) = type_to_ir_type(self.module, ret_ty) {
@@ -443,9 +427,7 @@ impl<'a> FunctionTranslator<'a> {
             .module
             .declare_function(&call.ident.value.inner, Linkage::Import, &sig)
             .expect("problem declaring function");
-        let local_callee = self
-            .module
-            .declare_func_in_func(callee, &mut self.builder.func);
+        let local_callee = self.module.declare_func_in_func(callee, &mut self.builder.func);
 
         let mut arg_values = Vec::new();
         for arg in call.args {

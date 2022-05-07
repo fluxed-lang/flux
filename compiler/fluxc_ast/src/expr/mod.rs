@@ -37,9 +37,7 @@ pub enum Expr {
         /// The inner binary expression type.
         Node<BinaryExpr>,
     ),
-	UnaryExpr(
-		Node<UnaryExpr>
-	),
+    UnaryExpr(Node<UnaryExpr>),
     /// A block of code (e.g. `{ /* ... */ }`).
     Block(
         /// The inner block type.
@@ -66,7 +64,7 @@ impl Typed for Expr {
             Expr::Conditional(_) => todo!(),
             Expr::Loop(_) => todo!(),
             Expr::While(_) => todo!(),
-			Expr::UnaryExpr(_) => todo!(),
+            Expr::UnaryExpr(_) => todo!(),
         }
     }
 }

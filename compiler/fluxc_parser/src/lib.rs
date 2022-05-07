@@ -1,4 +1,4 @@
-use fluxc_ast::{Declaration, Expr, Mutability, Node, Stmt, AST};
+use fluxc_ast::{Node, Stmt, AST};
 use lazy_static::lazy_static;
 use pest::{
     iterators::Pair,
@@ -6,15 +6,11 @@ use pest::{
     Parser, Span,
 };
 use pest_derive::Parser;
-use tracing::{debug, trace};
 
 use fluxc_errors::CompilerError;
 
 mod expr;
 mod stmt;
-
-pub use expr::*;
-pub use stmt::*;
 
 lazy_static! {
     /// The precedence climber for parsing binary expressions. Since binary expressions are recursive, and the precedence
@@ -81,7 +77,7 @@ impl Default for Context {
 
 impl Context {
     /// Create a new node from the given pair.
-    fn new_node<T>(&mut self, span: Span, value: T) -> Node<T> {
+    pub fn new_node<T>(&mut self, span: Span, value: T) -> Node<T> {
         let node = Node::new(self.next_id, span.into(), value);
         self.next_id += 1;
         node
@@ -90,10 +86,7 @@ impl Context {
 
 fn map_pest_error(error: pest::error::Error<Rule>) -> CompilerError {
     match error.variant {
-        pest::error::ErrorVariant::ParsingError {
-            positives,
-            negatives,
-        } => todo!(),
+        pest::error::ErrorVariant::ParsingError { positives, negatives } => todo!(),
         pest::error::ErrorVariant::CustomError { message } => todo!(),
     }
 }
@@ -103,47 +96,12 @@ pub fn parse(input: &str) -> Result<AST, CompilerError> {
     // create the parser context
     let mut context = Context { next_id: 0 };
     // call the pest parser
-    let root = FluxParser::parse(Rule::flux, &input)
-        .map_err(map_pest_error)?
-        .next()
-        .unwrap()
-        .into_inner();
+    let root =
+        FluxParser::parse(Rule::flux, &input).map_err(map_pest_error)?.next().unwrap().into_inner();
     // parse top-level statements
-    let stmts: Result<Vec<_>, _> = root.map(|rule| parse_stmt(rule, &mut context)).collect();
+    let stmts: Result<Vec<_>, _> = root.map(|rule| Stmt::parse(rule, &mut context)).collect();
     // create and return stmts
     Ok(AST { stmts: stmts? })
-}
-
-/// Parse a single statement.
-fn parse_stmt<'i>(
-    input: Pair<'i, Rule>,
-    context: &mut Context,
-) -> Result<Node<Stmt>, CompilerError> {
-    debug_assert_eq!(input.as_rule(), Rule::statement);
-    let span = input.as_span();
-    let stmt = match input.as_rule() {
-        Rule::let_declaration => Stmt::Declaration(parse_let_declaration(input, context)?),
-        _ => unreachable!(),
-    };
-    Ok(context.new_node(span, stmt))
-}
-
-/// Parse a declaration.
-fn parse_let_declaration<'i>(
-    input: Pair<'i, Rule>,
-    context: &mut Context,
-) -> Result<Node<Declaration>, CompilerError> {
-    debug_assert_eq!(input.as_rule(), Rule::declaration);
-    let span = input.as_span();
-    Ok(context.new_node(
-        span,
-        Declaration {
-            explicit_ty: None,
-            ident: todo!(),
-            mutability: Mutability::Immutable,
-            value: todo!(),
-        },
-    ))
 }
 
 /// Trait implemented by AST types that can be parsed from the Pest grammar AST.

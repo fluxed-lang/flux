@@ -1,9 +1,9 @@
 use pest::iterators::Pair;
 
-use fluxc_ast::{Node, Literal};
+use fluxc_ast::{Literal, Node};
 use fluxc_errors::CompilerError;
 
-use crate::{Parse, Rule, Context};
+use crate::{Context, Parse, Rule};
 
 impl Parse for Literal {
     fn parse<'i>(
