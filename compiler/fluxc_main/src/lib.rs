@@ -18,7 +18,7 @@ pub fn compile_to_mem(input: String) -> Result<fn() -> u32, Box<dyn Error>> {
     // 2. Run AST validation on the AST
     fluxc_ast_passes::perform_ast_passes(&mut ast)?;
     // 3. Generate IR
-    let (pointer, _) = fluxc_ir::IrTranslator::default().build(ast)?;
+    let (pointer, _) = fluxc_codegen::IrTranslator::default().build(ast)?;
     let code_fn;
     unsafe {
         code_fn = mem::transmute::<_, fn() -> u32>(pointer);

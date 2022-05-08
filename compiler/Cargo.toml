@@ -1,13 +1,13 @@
 [workspace]
 members = [
-    "fluxc_ast",
 	"fluxc_ast_passes",
 	"fluxc_errors",
 	"fluxc_span",
 	"fluxc_tests",
-    "fluxc_ir",
+	"fluxc_walker",
+    "fluxc_ast",
+    "fluxc_codegen",
     "fluxc_parser",
     "fluxc_types",
-	"fluxc_walker",
     "fluxc"
 ]

@@ -1,16 +1,16 @@
 [package]
-name = "fluxc_ir"
+name = "fluxc_codegen"
 version = "0.1.0"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cranelift = "0.78"
-cranelift-module = "0.78"
-cranelift-jit = "0.78"
-cranelift-native = "0.78"
-log = "0.4"
+cranelift = "0.83"
+cranelift-module = "0.83"
+cranelift-jit = "0.83"
+cranelift-native = "0.83"
+tracing = "0.1"
 
 fluxc_ast = { path = "../fluxc_ast" }
 fluxc_types = { path =  "../fluxc_types" }

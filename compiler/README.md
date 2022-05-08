@@ -38,7 +38,7 @@ hello world!
 - [`fluxc_ast_passes`](./fluxc_ast_passes) - Defines the AST parses for the pre-IR generation phase.
 - [`fluxc_ast`](./fluxc_ast) - Contains type definitions and handles the semantic analysis of the AST.
 - [`fluxc_errors`](./fluxc_errors) - Error handling and message reporting crate.
-- [`fluxc_ir`](./fluxc_ir) - Handles the generation of LLVM IR using the Cranelift IR generator from the AST.
+- [`fluxc_codegen`](./fluxc_codegen) - Handles the generation of LLVM IR using the Cranelift IR generator from the AST.
 - [`fluxc_main`](./fluxc_main) - The compiler entrypoint and step execution logic.
 - [`fluxc_parser`](./fluxc_parser) - Parses a `TokenStream` into an AST.
 - [`fluxc_span`](./fluxc_span) - Defines the `Span` type used in the compiler.
