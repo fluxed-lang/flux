@@ -2,10 +2,11 @@
 
 use fluxc_ast::{Ident, Node, Stmt, AST};
 use fluxc_errors::CompilerError;
+use fluxc_span::Span;
 use pest::{
     error::{Error, ErrorVariant},
     iterators::Pair,
-    Parser, Span,
+    Parser,
 };
 
 mod expr;
@@ -38,13 +39,13 @@ impl Default for Context {
 
 impl Context {
     /// Create a new node from the given pair.
-    pub fn new_node<T>(&mut self, span: Span, value: T) -> Node<T> {
+    pub fn new_node<S: Into<Span>, T>(&mut self, span: S, value: T) -> Node<T> {
         let node = Node::new(self.next_id, span.into(), value);
         self.next_id += 1;
         node
     }
     /// Create an empty node.
-    pub fn new_empty(&mut self, span: Span) -> Node<()> {
+    pub fn new_empty<S: Into<Span>>(&mut self, span: S) -> Node<()> {
         self.new_node(span, ())
     }
 }

@@ -73,6 +73,10 @@ pub enum BinaryOp {
     BitwiseOrEq,
     /// The assignment operator, `^=`.
     BitwiseXorEq,
+	/// The assignment operator `&&=`.
+	LogicalAndEq,
+	/// The assignment operator `||=`.
+	LogicalOrEq,
     /// The assignment operator, `<<=`.
     ShlEq,
     /// The assignment operator, `>>=`.

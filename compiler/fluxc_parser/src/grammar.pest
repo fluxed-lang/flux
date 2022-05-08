@@ -142,7 +142,7 @@ binary_op_mod = { "%" }
 binary_op_mul = { "*" }
 binary_op_plus = { "+" }
 
-binary_op = {
+binary_op = _{
 	binary_op_lshift_eq
 	| binary_op_rshift_eq
 	| binary_op_logical_and_eq
@@ -178,7 +178,9 @@ binary_op = {
     | binary_op_assign
 }
 
-binary_expr = !{ ("(" ~ expr ~ ")" | ident) ~ (binary_op ~ expr)+ }
+// escape binary expr left-recursive issue by matching any.
+binary_expr_term = _{ literal | ident | "(" ~ expr ~ ")"}
+binary_expr = !{ binary_expr_term ~ (binary_op ~ binary_expr_term)+ }
 
 match_branch = !{ expr ~ "->" ~ expr }
 match_expr = !{ "match" ~ expr ~ "{" ~ (match_branch ~ ",")* ~ match_branch? ~ "}"}

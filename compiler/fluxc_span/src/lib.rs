@@ -3,9 +3,9 @@
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Span {
     /// The start byte position of the span.
-    start: usize,
+    pub start: usize,
     /// The end byte position of the span, inclusive.
-    end: usize,
+    pub end: usize,
 }
 
 impl Span {

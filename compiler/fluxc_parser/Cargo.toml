@@ -12,8 +12,8 @@ tracing = "0.1"
 
 fluxc_ast = { path =  "../fluxc_ast" }
 fluxc_types = { path = "../fluxc_types" }
+fluxc_span = { path =  "../fluxc_span" }
 fluxc_errors = { path = "../fluxc_errors" }
 
 [dev-dependencies]
-fluxc_span = { path = "../fluxc_span" }
 pretty_assertions = "1"

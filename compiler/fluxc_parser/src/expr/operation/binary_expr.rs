@@ -1,5 +1,8 @@
-use fluxc_ast::{BinaryExpr, Node};
+use std::sync::Mutex;
+
+use fluxc_ast::{BinaryExpr, BinaryOp, Expr, Ident, Literal, Node};
 use fluxc_errors::CompilerError;
+use fluxc_span::Span;
 use lazy_static::lazy_static;
 use pest::{
     iterators::Pair,
@@ -58,10 +61,152 @@ lazy_static! {
 
 impl Parse for BinaryExpr {
     #[tracing::instrument]
-    fn parse<'i>(
-        input: Pair<'i, Rule>,
-        context: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
-        todo!()
+    fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> Result<Node<Self>, CompilerError> {
+        debug_assert_eq!(input.as_rule(), Rule::binary_expr);
+        let inner = input.into_inner();
+        let ctx = Mutex::new(ctx);
+        // run the precedence climber
+        let out = BIN_EXP_CLIMBER.climb(
+            inner,
+            |pair: Pair<Rule>| {
+                let mut ctx = ctx.lock().unwrap();
+                let node = ctx.new_empty(pair.as_span());
+                Ok(match pair.as_rule() {
+                    Rule::literal => {
+                        node.fill(Expr::Literal(Literal::parse(pair, &mut ctx)?))
+                    }
+                    Rule::ident => node.fill(Expr::Ident(Ident::parse(pair, &mut ctx)?)),
+                    Rule::expr => Expr::parse(pair, &mut ctx)?,
+                    r => unreachable!("{:?}", r),
+                })
+            },
+            |lhs: Result<Node<Expr>, CompilerError>, op: Pair<Rule>, rhs: Result<Node<Expr>, CompilerError>| {
+				let lhs = lhs?;
+				let rhs = rhs?;
+
+                let kind = match op.as_rule() {
+                    Rule::binary_op_assign => BinaryOp::Assign,
+                    Rule::binary_op_bitwise_and => BinaryOp::BitwiseAnd,
+                    Rule::binary_op_bitwise_and_eq => BinaryOp::BitwiseAndEq,
+                    Rule::binary_op_bitwise_or => BinaryOp::BitwiseOr,
+                    Rule::binary_op_bitwise_or_eq => BinaryOp::BitwiseOrEq,
+                    Rule::binary_op_bitwise_xor => BinaryOp::BitwiseXor,
+                    Rule::binary_op_bitwise_xor_eq => BinaryOp::BitwiseXorEq,
+                    Rule::binary_op_div => BinaryOp::Div,
+                    Rule::binary_op_div_eq => BinaryOp::DivEq,
+                    Rule::binary_op_eq => BinaryOp::Eq,
+                    Rule::binary_op_ge => BinaryOp::Ge,
+                    Rule::binary_op_gt => BinaryOp::Gt,
+                    Rule::binary_op_le => BinaryOp::Le,
+                    Rule::binary_op_logical_and => BinaryOp::LogicalAnd,
+                    Rule::binary_op_logical_and_eq => BinaryOp::LogicalAndEq,
+                    Rule::binary_op_logical_or => BinaryOp::LogicalOr,
+                    Rule::binary_op_logical_or_eq => BinaryOp::LogicalOrEq,
+                    Rule::binary_op_lshift => BinaryOp::Shl,
+                    Rule::binary_op_lshift_eq => BinaryOp::ShlEq,
+                    Rule::binary_op_lt => BinaryOp::Lt,
+                    Rule::binary_op_minus => BinaryOp::Minus,
+                    Rule::binary_op_minus_eq => BinaryOp::MinusEq,
+                    Rule::binary_op_mod => BinaryOp::Mod,
+                    Rule::binary_op_mod_eq => BinaryOp::ModEq,
+                    Rule::binary_op_mul => BinaryOp::Mul,
+                    Rule::binary_op_mul_eq => BinaryOp::MulEq,
+                    Rule::binary_op_ne => BinaryOp::Ne,
+                    Rule::binary_op_plus => BinaryOp::Plus,
+                    Rule::binary_op_plus_eq => BinaryOp::PlusEq,
+                    Rule::binary_op_rshift => BinaryOp::Shr,
+                    Rule::binary_op_rshift_eq => BinaryOp::ShrEq,
+                    _ => unreachable!(),
+                };
+                // acquire lock and create nodes
+                let (expr_node, bin_expr_node) = {
+                    let mut ctx = ctx.lock().unwrap();
+                    (
+                        ctx.new_empty(Span::new(lhs.span.start, rhs.span.end)),
+                        ctx.new_empty(Span::new(lhs.span.start, rhs.span.end)),
+                    )
+                };
+                Ok(expr_node.fill(Expr::BinaryExpr(bin_expr_node.fill(BinaryExpr {
+                    kind,
+                    lhs: Box::new(lhs),
+                    rhs: Box::new(rhs),
+                }))))
+            },
+        );
+
+
+        match out?.value {
+            Expr::BinaryExpr(mut node) => { 
+				// correct binary expression id
+				node.id -= 1;
+				ctx.lock().unwrap().next_id -= 1;
+				Ok(node)
+			},
+            r => unreachable!("{:?}", r),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use fluxc_ast::{BinaryExpr, BinaryOp, Expr, Literal, Node};
+    use fluxc_span::Span;
+    use pest::Parser;
+    use pretty_assertions::assert_eq;
+
+    use crate::{parser::FluxParser, Context, Parse, Rule};
+
+    #[test]
+    fn parse_literal_binary_expr() {
+        let mut context = Context::default();
+        // 1 * 2 + 3
+        let expected = Node {
+            id: 8,
+            span: Span::new(0, 8),
+            value: BinaryExpr {
+                kind: BinaryOp::Plus,
+                lhs: Box::new(Node {
+                    id: 4,
+                    span: Span::new(0, 4),
+                    value: Expr::BinaryExpr(Node {
+                        id: 5,
+                        span: Span::new(0, 4),
+                        value: BinaryExpr {
+                            kind: BinaryOp::Mul,
+                            lhs: Box::new(Node {
+                                id: 0,
+                                span: Span::new(0, 0),
+                                value: Expr::Literal(Node {
+                                    id: 1,
+                                    span: Span::new(0, 0),
+                                    value: Literal::Int(1),
+                                }),
+                            }),
+                            rhs: Box::new(Node {
+                                id: 2,
+                                span: Span::new(4, 4),
+                                value: Expr::Literal(Node {
+                                    id: 3,
+                                    span: Span::new(4, 4),
+                                    value: Literal::Int(2),
+                                }),
+                            }),
+                        },
+                    }),
+                }),
+                rhs: Box::new(Node {
+                    id: 6,
+                    span: Span::new(8, 8),
+                    value: Expr::Literal(Node {
+                        id: 7,
+                        span: Span::new(8, 8),
+                        value: Literal::Int(3),
+                    }),
+                }),
+            },
+        };
+        let result = FluxParser::parse(Rule::binary_expr, "1 * 2 + 3").unwrap().next().unwrap();
+        let result = BinaryExpr::parse(result, &mut context).unwrap();
+        assert_eq!(expected, result);
     }
 }

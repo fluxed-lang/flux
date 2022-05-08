@@ -19,7 +19,7 @@ impl Parse for While {
 
 #[cfg(test)]
 mod tests {
-    use fluxc_ast::{Block, Expr, Literal, Node, While, Stmt};
+    use fluxc_ast::{Block, Expr, Literal, Node, Stmt, While};
     use fluxc_span::Span;
     use pest::Parser;
     use pretty_assertions::assert_eq;
@@ -79,8 +79,8 @@ mod tests {
                             id: 4,
                             span: Span::new(10, 24),
                             value: Stmt::Expr(Node {
-								id: 5,
-								span: Span::new(10, 23),
+                                id: 5,
+                                span: Span::new(10, 23),
                                 value: Expr::Literal(Node {
                                     id: 6,
                                     span: Span::new(10, 23),
