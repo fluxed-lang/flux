@@ -15,6 +15,5 @@ fluxc_types = { path = "../fluxc_types" }
 fluxc_errors = { path = "../fluxc_errors" }
 
 [dev-dependencies]
-tracing-subscriber = "0.3"
-tracing-test = "0.2"
 fluxc_span = { path = "../fluxc_span" }
+pretty_assertions = "1"
