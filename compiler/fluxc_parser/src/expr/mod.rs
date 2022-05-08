@@ -1,6 +1,6 @@
 //! Contains the expression AST data structures.
 
-use fluxc_ast::{Expr, Literal, Node};
+use fluxc_ast::{Expr, Ident, Literal, Node};
 use fluxc_errors::CompilerError;
 use pest::iterators::Pair;
 
@@ -24,6 +24,7 @@ impl Parse for Expr {
         // match rule
         let expr = match inner.as_rule() {
             Rule::literal => Expr::Literal(Literal::parse(inner, context)?),
+            Rule::ident => Expr::Ident(Ident::parse(inner, context)?),
             _ => unreachable!(),
         };
         Ok(node.fill(expr))

@@ -180,8 +180,8 @@ binary_op = {
 
 binary_expr = !{ ("(" ~ expr ~ ")" | ident) ~ (binary_op ~ expr)+ }
 
-match_body = !{ (literal ~ "->" ~ expr)* }
-match_expr = !{ "match" ~ expr ~ "{" ~ match_body ~"}"}
+match_branch = !{ expr ~ "->" ~ expr }
+match_expr = !{ "match" ~ expr ~ "{" ~ (match_branch ~ ",")* ~ match_branch? ~ "}"}
 
 // func_decl_generics = !{ "<" ~ (ident ~ ("extends" ~ ident)? ~ ",")* ~ ident ~ ("extends" ~ type_expr)? ~ ">" }
 func_decl_param = !{ ident ~ ":" ~ type_expr }
