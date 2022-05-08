@@ -1,5 +1,6 @@
-use crate::{Node, Ident, Expr};
+use crate::{Expr, Ident, Node};
 
+/// An enumeration of assignment types.
 #[derive(Debug, PartialEq)]
 pub enum AssignmentKind {
     /// The assignment operator, `=`.
@@ -27,6 +28,14 @@ pub enum AssignmentKind {
 }
 
 ///  A variable assignment.
+///
+/// This struct represents a variable assignment that takes a value and assigns
+/// it to a variable. ```flux
+/// let x = 1
+/// x = 2 // this is an assignment
+/// ```
+/// Assignments to immutable variables are invalid and will cause a compiler
+/// error.
 #[derive(Debug, PartialEq)]
 
 pub struct Assignment {

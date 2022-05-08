@@ -132,8 +132,9 @@ impl FluxParser {
 
     /// Parse a declaration.
     ///
-    /// The way this method achieves this is incredibly dumb and needs to be fixed at some point - there is far too much
-    /// moving and suspicious data wrangling going on.
+    /// The way this method achieves this is incredibly dumb and needs to be
+    /// fixed at some point - there is far too much moving and suspicious
+    /// data wrangling going on.
     fn parse_declaration(
         &mut self,
         pair: Pair<Rule>,

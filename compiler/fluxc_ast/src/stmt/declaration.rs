@@ -1,8 +1,22 @@
 use fluxc_types::Type;
 
-use crate::{Ident, Expr};
+use crate::{Expr, Ident};
 
 /// A declaration of a variable.
+///
+/// This structure handles the declaration of variables in Flux source code. A
+/// declaration looks something like:
+/// ```flx
+/// let x = 1
+/// ```
+/// Declarations can be either immutable or mutable, depending on if the `mut`
+/// keyword is specified.
+/// ```flx
+/// let x = 1
+/// x = 2 // error!
+/// let mut x = 1
+/// x = 2 // ok
+/// ```
 #[derive(Debug, PartialEq)]
 pub struct Declaration {
     /// The explicit type of this declaration if it exists.
@@ -16,13 +30,17 @@ pub struct Declaration {
 }
 
 /// An enum representing variable mutability.
+///
+/// This enum is used in the [`Declaration`](#declaration) struct to determine
+/// its mutability.
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Mutability {
     /// A mutable variable.
     Mutable,
     /// An immutable variable.
     Immutable,
-    /// A constant. Unlike an immutable variable, the type of a constant must be defined at compile time, such
-    /// that the size of the constant is known.
+    /// A constant. Unlike an immutable variable, the type of a constant must be
+    /// defined at compile time, such that the size of the constant is
+    /// known.
     Constant,
 }

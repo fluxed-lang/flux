@@ -1,26 +1,47 @@
+//! Contains the expression AST data structures.
 
-pub mod block_expr;
-pub mod control;
-pub mod literal;
-pub mod operation;
+use fluxc_types::{Type, Typed};
+
+pub(crate) mod block_expr;
+pub(crate) mod control;
+pub(crate) mod literal;
+pub(crate) mod operation;
 
 pub use block_expr::*;
 pub use control::*;
 pub use literal::*;
 pub use operation::*;
 
-use crate::{Node, FuncCall, Ident};
+use crate::{FuncCall, Ident, Node};
 
+/// The enumeration of possible expression types.
+///
+/// This enum holds the different kinds of expressions that can occur in Flux
+/// source code. Every expression wraps a `Node` which holds the actual data
+/// that represents the expression, as well as the span of the source code that
+/// the expression represents.
 #[derive(Debug, PartialEq)]
 pub enum Expr {
     /// A literal expression.
-    Literal(Node<Literal>),
+    Literal(
+        /// The inner literal type.
+        Node<Literal>,
+    ),
     /// An identifier expression.
-    Ident(Ident),
+    Ident(
+        /// The inner identifier type.
+        Ident,
+    ),
     /// A binary operation expression.
-    BinaryExpr(Node<BinaryExpr>),
-    /// A block (e.g. `{ /* ... */ }`).
-    Block(Node<Block>),
+    BinaryExpr(
+        /// The inner binary expression type.
+        Node<BinaryExpr>,
+    ),
+    /// A block of code (e.g. `{ /* ... */ }`).
+    Block(
+        /// The inner block type.
+        Node<Block>,
+    ),
     /// A function call expression.
     FuncCall(Node<FuncCall>),
     /// A conditional expression.
@@ -29,4 +50,19 @@ pub enum Expr {
     Loop(Node<Loop>),
     /// A conditional loop expression.
     While(Node<While>),
+}
+
+impl Typed for Expr {
+    fn type_of(&self) -> Type {
+        match self {
+            Expr::Literal(literal) => literal.type_of(),
+            Expr::Ident(_) => todo!(),
+            Expr::BinaryExpr(_) => todo!(),
+            Expr::Block(_) => todo!(),
+            Expr::FuncCall(_) => todo!(),
+            Expr::Conditional(_) => todo!(),
+            Expr::Loop(_) => todo!(),
+            Expr::While(_) => todo!(),
+        }
+    }
 }

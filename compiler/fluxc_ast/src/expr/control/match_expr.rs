@@ -1,4 +1,4 @@
-use crate::{Expr, Node, Literal};
+use crate::{Expr, Literal, Node};
 
 /// A match expression.
 pub struct Match {

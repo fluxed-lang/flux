@@ -1,11 +1,11 @@
-use std::{str::FromStr, error::Error};
+use std::{error::Error, str::FromStr};
 
 use crate::{Associativity, Expr};
 
-
 /// Enum representing unary operator types.
 ///
-/// Unary operators are operators that act on a single argument, such as `x++`, or `!x`.
+/// Unary operators are operators that act on a single argument, such as `x++`,
+/// or `!x`.
 #[derive(Debug, PartialEq)]
 pub enum UnaryExprKind {
     /// The suffix increment operator, `++`.

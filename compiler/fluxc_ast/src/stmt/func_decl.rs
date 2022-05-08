@@ -1,3 +1,9 @@
+//! Contains the function declaration AST data structures.
+//!
+//! This module handles:
+//! - Local function declarations
+//! - External function declarations
+
 use fluxc_types::Type;
 
 use crate::{Block, Expr, Ident, Node};

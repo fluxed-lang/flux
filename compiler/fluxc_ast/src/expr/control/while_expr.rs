@@ -1,4 +1,4 @@
-use crate::{Expr, Node, Block};
+use crate::{Block, Expr, Node};
 
 /// A `while` loop.
 #[derive(Debug, PartialEq)]
