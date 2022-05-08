@@ -5,6 +5,7 @@ use pest::iterators::Pair;
 use crate::{Context, Parse, Rule};
 
 impl Parse for BinaryExpr {
+    #[tracing::instrument]
     fn parse<'i>(
         input: Pair<'i, Rule>,
         context: &mut Context,

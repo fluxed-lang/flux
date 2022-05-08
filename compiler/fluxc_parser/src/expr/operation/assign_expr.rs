@@ -5,6 +5,7 @@ use pest::iterators::Pair;
 use crate::{Context, Node, Parse, Rule};
 
 impl Parse for Assignment {
+    #[tracing::instrument]
     fn parse<'i>(
         input: Pair<'i, Rule>,
         context: &mut Context,

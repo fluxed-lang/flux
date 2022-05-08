@@ -1,12 +1,14 @@
-use fluxc_ast::{Node, Stmt, AST};
+//! Defines the parser for Flux code.
+
+use fluxc_ast::{Ident, Node, Stmt, AST};
 use fluxc_errors::CompilerError;
 use lazy_static::lazy_static;
 use pest::{
+    error::{Error, ErrorVariant},
     iterators::Pair,
     prec_climber::{Assoc, Operator, PrecClimber},
     Parser, Span,
 };
-use pest_derive::Parser;
 
 mod expr;
 mod stmt;
@@ -59,11 +61,21 @@ lazy_static! {
     ]);
 }
 
-#[derive(Parser)]
-#[grammar = "./grammar.pest"]
-struct FluxParser {}
+/// Internal moduel to prevent leakage of the `Rule` type to external
+/// crates.
+mod parser {
+    use pest_derive::Parser;
+
+    /// The Pest parser for Flux code.
+    #[derive(Parser)]
+    #[grammar = "./grammar.pest"]
+    pub struct FluxParser {}
+}
+
+pub(crate) use parser::*;
 
 /// The parser context.
+#[derive(Debug)]
 struct Context {
     next_id: usize,
 }
@@ -87,14 +99,15 @@ impl Context {
     }
 }
 
-fn map_pest_error(error: pest::error::Error<Rule>) -> CompilerError {
+fn map_pest_error(error: Error<Rule>) -> CompilerError {
     match error.variant {
-        pest::error::ErrorVariant::ParsingError { positives, negatives } => todo!(),
-        pest::error::ErrorVariant::CustomError { message } => todo!(),
+        ErrorVariant::ParsingError { positives, negatives } => todo!(),
+        ErrorVariant::CustomError { message } => todo!(),
     }
 }
 
 /// Parse an input string into an instance of the Flux `AST`.
+#[tracing::instrument]
 pub fn parse(input: &str) -> Result<AST, CompilerError> {
     // create the parser context
     let mut context = Context { next_id: 0 };
@@ -114,12 +127,26 @@ trait Parse: Sized {
         -> Result<Node<Self>, CompilerError>;
 }
 
+impl Parse for Ident {
+    #[tracing::instrument]
+    fn parse<'i>(
+        input: Pair<'i, Rule>,
+        context: &mut Context,
+    ) -> Result<Node<Self>, CompilerError> {
+        Ok(context.new_node(input.as_span(), input.as_str().into()))
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use tracing::Level;
+    use tracing_subscriber::fmt::format::{FmtSpan, self};
+
     use crate::parse;
 
     #[test]
     fn test_parse_stmt() {
+
         assert_eq!(parse("let x = 1").unwrap().stmts, vec![]);
     }
 }

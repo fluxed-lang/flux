@@ -1,4 +1,4 @@
-use fluxc_ast::{Declaration, Node, Stmt};
+use fluxc_ast::{Declaration, FuncDecl, Node, Stmt};
 use fluxc_errors::CompilerError;
 use pest::iterators::Pair;
 
@@ -13,6 +13,7 @@ pub use module::*;
 use crate::{Context, Parse, Rule};
 
 impl Parse for Stmt {
+    #[tracing::instrument]
     fn parse<'i>(
         input: Pair<'i, Rule>,
         context: &mut Context,
@@ -25,9 +26,10 @@ impl Parse for Stmt {
         // match rule type
         let stmt = match inner.as_rule() {
             Rule::let_declaration => Stmt::Declaration(Declaration::parse(inner, context)?),
-            _ => unreachable!(),
+            Rule::func_decl => Stmt::FuncDecl(FuncDecl::parse(inner, context)?),
+            _ => todo!("{:?}", inner.as_rule()),
         };
         // create node and return
-        Ok(node.hydrate(stmt))
+        Ok(node.fill(stmt))
     }
 }

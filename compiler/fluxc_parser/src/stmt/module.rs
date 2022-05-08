@@ -7,6 +7,7 @@ use pest::iterators::Pair;
 use crate::{Context, Node, Parse, Rule};
 
 impl Parse for ImportedSymbol {
+    #[tracing::instrument]
     fn parse<'i>(
         input: Pair<'i, Rule>,
         context: &mut Context,
@@ -16,6 +17,7 @@ impl Parse for ImportedSymbol {
 }
 
 impl Parse for Import {
+    #[tracing::instrument]
     fn parse<'i>(
         input: Pair<'i, Rule>,
         context: &mut Context,
@@ -25,6 +27,7 @@ impl Parse for Import {
 }
 
 impl Parse for Export {
+    #[tracing::instrument]
     fn parse<'i>(
         input: Pair<'i, Rule>,
         context: &mut Context,

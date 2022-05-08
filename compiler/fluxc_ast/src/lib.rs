@@ -47,22 +47,12 @@ impl<T> Node<T> {
 
 impl Node<()> {
     /// Hydrate this node with the given value.
-    pub fn hydrate<T>(self, value: T) -> Node<T> {
+    pub fn fill<T>(self, value: T) -> Node<T> {
         Node { id: self.id, span: self.span, value }
     }
 }
 
-trait IntoNode: Sized {
-    fn into_node(self, id: usize, span: Span) -> Node<Self>;
-}
-
-impl<T> IntoNode for T {
-    fn into_node(self, id: usize, span: Span) -> Node<Self> {
-        Node::new(id, span, self)
-    }
-}
-
-// generic implemetation of typed for all nodes
+/// Generic implemetation of typed for all nodes
 impl<T: Typed> Typed for Node<T> {
     fn type_of(&self) -> Type {
         self.value.type_of()
@@ -77,7 +67,7 @@ impl<T: Typed> Typed for Node<T> {
 /// ```regex
 /// [A-z_][0-9A-z_]*
 /// ```
-pub type Ident = Node<String>;
+pub type Ident = String;
 
 /// The root AST instance.
 ///

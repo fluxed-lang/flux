@@ -11,6 +11,7 @@ use pest::iterators::Pair;
 use crate::{Context, Parse};
 
 impl Parse for FuncCall {
+    #[tracing::instrument]
     fn parse<'i>(
         input: Pair<'i, crate::Rule>,
         context: &mut Context,
@@ -20,6 +21,7 @@ impl Parse for FuncCall {
 }
 
 impl Parse for ParenArgument {
+    #[tracing::instrument]
     fn parse<'i>(
         input: Pair<'i, crate::Rule>,
         context: &mut Context,
@@ -29,6 +31,7 @@ impl Parse for ParenArgument {
 }
 
 impl Parse for FuncDecl {
+    #[tracing::instrument]
     fn parse<'i>(
         input: Pair<'i, crate::Rule>,
         context: &mut Context,

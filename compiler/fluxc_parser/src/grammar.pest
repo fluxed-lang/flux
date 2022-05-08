@@ -66,9 +66,10 @@ expr = ${
 }
 
 mut_token = { "mut" }
-let_declaration = !{ "let" ~ (mut_token? ~ ident ~ ",")* ~ mut_token? ~ ident ~ "=" ~ (expr ~ ",")* ~ expr }
-mut_declaration = !{ mut_token ~ (ident? ~ ",")* ~ ident ~ "=" ~ (expr ~ ",")* ~ expr }
-declaration = _{ let_declaration | mut_declaration }
+// let_declaration = !{ "let" ~ (mut_token? ~ ident ~ ",")* ~ mut_token? ~ ident ~ "=" ~ (expr ~ ",")* ~ expr }
+// mut_declaration = !{ mut_token ~ (ident? ~ ",")* ~ ident ~ "=" ~ (expr ~ ",")* ~ expr }
+let_declaration = !{ "let" ~ mut_token ~ ident ~ "=" ~ expr }
+declaration = _{ let_declaration }
 
 block = !{ "{" ~ statement* ~ "}" }
 

@@ -12,6 +12,7 @@ pub(crate) mod operation;
 use crate::{Context, Parse, Rule};
 
 impl Parse for Expr {
+    #[tracing::instrument]
     fn parse<'i>(
         input: Pair<'i, Rule>,
         context: &mut Context,
