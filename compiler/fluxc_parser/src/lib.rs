@@ -136,17 +136,3 @@ impl Parse for Ident {
         Ok(context.new_node(input.as_span(), input.as_str().into()))
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use tracing::Level;
-    use tracing_subscriber::fmt::format::{FmtSpan, self};
-
-    use crate::parse;
-
-    #[test]
-    fn test_parse_stmt() {
-
-        assert_eq!(parse("let x = 1").unwrap().stmts, vec![]);
-    }
-}

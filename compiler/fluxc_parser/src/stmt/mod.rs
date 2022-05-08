@@ -1,4 +1,4 @@
-use fluxc_ast::{Declaration, FuncDecl, Node, Stmt};
+use fluxc_ast::{Declaration, Expr, FuncDecl, Node, Stmt};
 use fluxc_errors::CompilerError;
 use pest::iterators::Pair;
 
@@ -27,6 +27,7 @@ impl Parse for Stmt {
         let stmt = match inner.as_rule() {
             Rule::let_declaration => Stmt::Declaration(Declaration::parse(inner, context)?),
             Rule::func_decl => Stmt::FuncDecl(FuncDecl::parse(inner, context)?),
+            Rule::expr => Stmt::Expr(Expr::parse(inner, context)?),
             _ => todo!("{:?}", inner.as_rule()),
         };
         // create node and return

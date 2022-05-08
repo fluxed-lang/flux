@@ -4,7 +4,7 @@
 pub struct Span {
     /// The start byte position of the span.
     start: usize,
-    /// The end byte position of the span, exclusive.
+    /// The end byte position of the span, inclusive.
     end: usize,
 }
 
@@ -32,6 +32,7 @@ impl Span {
 
 impl From<pest::Span<'_>> for Span {
     fn from(span: pest::Span) -> Self {
-        Span::new(span.start(), span.end())
+		// -1 here to ensure that the end is inclusive
+        Span::new(span.start(), span.end() - 1)
     }
 }
