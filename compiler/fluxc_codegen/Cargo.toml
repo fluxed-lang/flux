@@ -13,5 +13,6 @@ cranelift-native = "0.83"
 tracing = "0.1"
 
 fluxc_ast = { path = "../fluxc_ast" }
+fluxc_errors = { path =  "../fluxc_errors" }
 fluxc_types = { path =  "../fluxc_types" }
-fluxc_walker = { path =  "../fluxc_walker" }
+# fluxc_walker = { path =  "../fluxc_walker" }

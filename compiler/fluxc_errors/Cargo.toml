@@ -7,7 +7,5 @@ edition = "2018"
 
 [dependencies]
 thiserror = "1"
-pest = "2"
 
 fluxc_span = { path =  "../fluxc_span" }
-fluxc_parser = { path =  "../fluxc_parser" }
