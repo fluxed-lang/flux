@@ -11,8 +11,8 @@ pub struct Match {
 /// A match branch case.
 #[derive(Debug, PartialEq)]
 pub struct MatchBranch {
-	/// The pattern being matched.
-	pub pattern: Node<Expr>,
-	/// The value to return if the pattern is matched.
-	pub value: Node<Expr>,
+    /// The pattern being matched.
+    pub pattern: Node<Expr>,
+    /// The value to return if the pattern is matched.
+    pub value: Node<Expr>,
 }
