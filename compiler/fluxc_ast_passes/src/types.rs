@@ -13,9 +13,7 @@ fn check_func_call(
     func_call: &mut Node<FuncCall>,
 ) -> Result<(), Box<dyn Error>> {
     // lookup function in walker
-    let func = walker
-        .lookup_function(&func_call.value.ident.value.inner)
-        .unwrap();
+    let func = walker.lookup_function(&func_call.value.ident.value.inner).unwrap();
     // need to clone to avoid borrowing twice
     let func_ty = func.ty.clone();
     // ensure arguments match
@@ -67,7 +65,7 @@ fn check_expr(walker: &mut Walker, expr: &mut Expr) -> Result<Type, Box<dyn Erro
             Some(var) => var.ty.clone(),
             None => {
                 return Err(
-                    format!("variable with name {} does not exist", ident.value.inner).into(),
+                    format!("variable with name {} does not exist", ident.value.inner).into()
                 )
             }
         },
@@ -93,10 +91,7 @@ fn check_declaration(walker: &mut Walker, decl: &mut Declaration) -> Result<(), 
     // fetch the rhs expression type and put the information into the AST
     decl.ty = check_expr(walker, &mut decl.value.value)?;
     // set the variable type in the walker
-    walker
-        .lookup_variable_mut(&decl.ident.value.inner)
-        .unwrap()
-        .ty = decl.ty.clone();
+    walker.lookup_variable_mut(&decl.ident.value.inner).unwrap().ty = decl.ty.clone();
     Ok(())
 }
 
@@ -105,11 +100,9 @@ fn check_assignment(walker: &mut Walker, assign: &mut Assignment) -> Result<(), 
     let var = walker.lookup_variable(&assign.ident.value.inner);
     // check if variable is none
     if let None = var {
-        return Err(format!(
-            "variable with name {} does not exist",
-            assign.ident.value.inner
-        )
-        .into());
+        return Err(
+            format!("variable with name {} does not exist", assign.ident.value.inner).into()
+        );
     }
     // need to clone here to avoid borrowing twice
     let var_ty = var.unwrap().ty.clone();
@@ -156,13 +149,7 @@ fn check_stmt(walker: &mut Walker, stmt: &mut Node<Stmt>) -> Result<(), Box<dyn 
             // check stmts in function
             check_block(walker, &mut func_decl.value.body.value)?;
             // ensure last statement is a return of the correct type
-            let last_stmt = func_decl
-                .value
-                .body
-                .value
-                .stmts
-                .last_mut()
-                .map(|node| &mut node.value);
+            let last_stmt = func_decl.value.body.value.stmts.last_mut().map(|node| &mut node.value);
             // ensure the last statement exists
             if let None = last_stmt {
                 if func_decl.value.return_ty != Type::Unit {
@@ -214,16 +201,12 @@ fn check_stmt(walker: &mut Walker, stmt: &mut Node<Stmt>) -> Result<(), Box<dyn 
             };
             extern_func.value.ty = Type::Func(arg_tys, ret_ty.into());
             // lookup function in walker
-            let func = walker
-                .lookup_function_mut(&extern_func.value.ident.value.inner)
-                .unwrap();
+            let func = walker.lookup_function_mut(&extern_func.value.ident.value.inner).unwrap();
             func.ty = extern_func.value.ty.clone();
         }
         Stmt::FuncCall(func_call) => {
             // lookup function in walker
-            let func = walker
-                .lookup_function(&func_call.value.ident.value.name)
-                .unwrap();
+            let func = walker.lookup_function(&func_call.value.ident.value.name).unwrap();
             // need to clone to avoid borrowing twice
             let func_ty = func.ty.clone();
             // ensure arguments match

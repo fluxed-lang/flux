@@ -30,13 +30,14 @@ pub enum Expr {
     /// An identifier expression.
     Ident(
         /// The inner identifier type.
-        Ident,
+        Node<Ident>,
     ),
     /// A binary operation expression.
     BinaryExpr(
         /// The inner binary expression type.
         Node<BinaryExpr>,
     ),
+    UnaryExpr(Node<UnaryExpr>),
     /// A block of code (e.g. `{ /* ... */ }`).
     Block(
         /// The inner block type.
@@ -50,6 +51,8 @@ pub enum Expr {
     Loop(Node<Loop>),
     /// A conditional loop expression.
     While(Node<While>),
+	/// A match expression.
+	Match(Node<Match>),
 }
 
 impl Typed for Expr {
@@ -63,6 +66,8 @@ impl Typed for Expr {
             Expr::Conditional(_) => todo!(),
             Expr::Loop(_) => todo!(),
             Expr::While(_) => todo!(),
+            Expr::UnaryExpr(_) => todo!(),
+			Expr::Match(_) => todo!()
         }
     }
 }

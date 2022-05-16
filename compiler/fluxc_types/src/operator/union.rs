@@ -10,10 +10,7 @@ pub struct Union {
 impl Union {
     /// Creates a new union of two types.
     pub fn of(lhs: Type, rhs: Type) -> Self {
-        Self {
-            lhs: Box::new(lhs),
-            rhs: Box::new(rhs),
-        }
+        Self { lhs: Box::new(lhs), rhs: Box::new(rhs) }
     }
 }
 
@@ -137,11 +134,8 @@ mod tests {
                 Type::Primitive(Primitive::Int),
             )))),
             Type::Operation(Operation::Union(Union::of(
-                Union::of(
-                    Type::Primitive(Primitive::String),
-                    Type::Primitive(Primitive::Int),
-                )
-                .into(),
+                Union::of(Type::Primitive(Primitive::String), Type::Primitive(Primitive::Int),)
+                    .into(),
                 Type::Primitive(Primitive::Float),
             )))
         );

@@ -66,9 +66,10 @@ expr = ${
 }
 
 mut_token = { "mut" }
-let_declaration = !{ "let" ~ (mut_token? ~ ident ~ ",")* ~ mut_token? ~ ident ~ "=" ~ (expr ~ ",")* ~ expr }
-mut_declaration = !{ mut_token ~ (ident? ~ ",")* ~ ident ~ "=" ~ (expr ~ ",")* ~ expr }
-declaration = _{ let_declaration | mut_declaration }
+// let_declaration = !{ "let" ~ (mut_token? ~ ident ~ ",")* ~ mut_token? ~ ident ~ "=" ~ (expr ~ ",")* ~ expr }
+// mut_declaration = !{ mut_token ~ (ident? ~ ",")* ~ ident ~ "=" ~ (expr ~ ",")* ~ expr }
+let_declaration = !{ "let" ~ mut_token? ~ ident ~ "=" ~ expr }
+declaration = _{ let_declaration }
 
 block = !{ "{" ~ statement* ~ "}" }
 
@@ -81,22 +82,30 @@ loop_stmt = !{ "loop" ~ ident? ~ block }
 while_stmt = !{ "while" ~ expr ~ block }
 break_stmt = !{ "break" ~ ident? }
 
+unary_op_postfix_decrement = { "--" }
+unary_op_postfix_increment = { "++" }
+
+unary_op_postfix = {
+	unary_op_postfix_decrement
+	| unary_op_postfix_increment
+}
+
+unary_op_prefix_bitwise_not = { "~" }
+unary_op_prefix_dereference = { "*" }
+unary_op_prefix_logical_not= { "!" }
+unary_op_prefix_reference = { "&" }
+
 unary_op_prefix = {
-	"~"
-	| "!"
-	| "&"
-	| "*"
+	unary_op_prefix_bitwise_not
+	| unary_op_prefix_dereference
+	| unary_op_prefix_logical_not
+	| unary_op_prefix_reference 
 }
 
-unary_op_suffix = {
-	"++"
-	| "--"
-}
-
-unary_expr_inner = _{ ("(" ~ expr ~ ")") | literal | ident }
-unary_expr = !{ 
-	(unary_op_prefix? ~ unary_expr_inner ~ unary_op_suffix) 
-	| (unary_op_prefix ~ unary_expr_inner ~ unary_op_suffix?) 
+unary_expr_term = _{ literal | ident | ("(" ~ expr ~ ")")  }
+unary_expr = @{ 
+	(unary_op_prefix* ~ unary_expr_term ~ unary_op_postfix+) 
+	| (unary_op_prefix+ ~ unary_expr_term ~ unary_op_postfix*) 
 }
 
 // define all binary operation rules
@@ -141,7 +150,7 @@ binary_op_mod = { "%" }
 binary_op_mul = { "*" }
 binary_op_plus = { "+" }
 
-binary_op = {
+binary_op = _{
 	binary_op_lshift_eq
 	| binary_op_rshift_eq
 	| binary_op_logical_and_eq
@@ -177,10 +186,12 @@ binary_op = {
     | binary_op_assign
 }
 
-binary_expr = !{ ("(" ~ expr ~ ")" | ident) ~ (binary_op ~ expr)+ }
+// escape binary expr left-recursive issue by matching any.
+binary_expr_term = _{ literal | ident | "(" ~ expr ~ ")"}
+binary_expr = !{ binary_expr_term ~ (binary_op ~ binary_expr_term)+ }
 
-match_body = !{ (literal ~ "->" ~ expr)* }
-match_expr = !{ "match" ~ expr ~ "{" ~ match_body ~"}"}
+match_branch = !{ expr ~ "->" ~ expr }
+match_expr = !{ "match" ~ expr ~ "{" ~ (match_branch ~ ",")* ~ match_branch? ~ "}"}
 
 // func_decl_generics = !{ "<" ~ (ident ~ ("extends" ~ ident)? ~ ",")* ~ ident ~ ("extends" ~ type_expr)? ~ ">" }
 func_decl_param = !{ ident ~ ":" ~ type_expr }
@@ -207,7 +218,7 @@ const_decl = !{ "const" ~ ident ~ type_expr? ~ "=" ~ expr }
 export_block = !{ "{" ~ (ident ~ ",")* ~ ident? ~ "}" }
 export_stmt = !{ "export" ~ ((class_decl | interface_decl | func_decl | const_decl) | export_block) }
 
-statement_inner = {
+statement_inner = _{
 	conditional_stmt
 	| loop_stmt
 	| while_stmt
@@ -224,6 +235,6 @@ statement_inner = {
     | expr
 }
 
-statement = @{ statement_inner ~ BLANK* ~ ";"? ~ BLANK* ~ NEWLINE* }
+statement = ${ statement_inner ~ BLANK* ~ ";"? ~ BLANK* ~ NEWLINE* }
 
 flux = @{ SOI ~ statement* ~ EOI }

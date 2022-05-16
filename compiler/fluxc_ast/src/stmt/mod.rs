@@ -14,13 +14,13 @@ use crate::{Expr, Node};
 #[derive(Debug, PartialEq)]
 pub enum Stmt {
     /// A declaration.
-    Declaration(Vec<Node<Declaration>>),
+    Declaration(Node<Declaration>),
     /// A function declaration.
     FuncDecl(Node<FuncDecl>),
     /// A function return statement.
-    Return(Expr),
+    Return(Node<Expr>),
     /// A loop break statement.
-    Break(Expr),
+    Break(Node<Expr>),
     /// An import statement.
     Import(Node<Import>),
     /// An export statement.

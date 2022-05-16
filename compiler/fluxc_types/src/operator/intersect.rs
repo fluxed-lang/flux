@@ -8,10 +8,7 @@ pub struct Intersection {
 
 impl Intersection {
     pub fn of(lhs: Type, rhs: Type) -> Self {
-        Self {
-            lhs: Box::new(lhs),
-            rhs: Box::new(rhs),
-        }
+        Self { lhs: Box::new(lhs), rhs: Box::new(rhs) }
     }
 }
 
@@ -120,10 +117,7 @@ impl Simplify for Intersection {
             _ => (),
         }
 
-        Type::Operation(Operation::Intersection(Intersection::of(
-            lhs.into(),
-            rhs.into(),
-        )))
+        Type::Operation(Operation::Intersection(Intersection::of(lhs.into(), rhs.into())))
     }
 }
 #[cfg(test)]
@@ -151,9 +145,8 @@ mod tests {
         );
         // string & "hello" = "hello"
         assert_eq!(
-            Type::Primitive(Primitive::String).intersect(&Type::Primitive(
-                Primitive::StringLiteral("hello".to_string())
-            )),
+            Type::Primitive(Primitive::String)
+                .intersect(&Type::Primitive(Primitive::StringLiteral("hello".to_string()))),
             Type::Primitive(Primitive::StringLiteral("hello".to_string()))
         );
     }
