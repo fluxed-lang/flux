@@ -10,6 +10,9 @@ use cranelift_jit::JITModule;
 use cranelift_module::DataContext;
 use fluxc_errors::CompilerError;
 
+mod expr;
+mod stmt;
+
 /// The code generation handler.
 struct CodeGenerator {
     builder_ctx: FunctionBuilderContext,
@@ -19,13 +22,13 @@ struct CodeGenerator {
 }
 
 /// The context in which code generation is occuring.
-struct TranslationContext<'a> {
+pub struct TranslationContext<'a> {
     pub builder: FunctionBuilder<'a>,
     pub module: &'a mut JITModule,
 }
 
 /// Trait implemented by types that can generate code.
-trait Translate {
+pub trait Translate {
     /// Emit code for this type.
     fn translate<'a>(&self, ctx: &mut TranslationContext<'a>) -> Result<(), CompilerError>;
 }
