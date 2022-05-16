@@ -82,22 +82,30 @@ loop_stmt = !{ "loop" ~ ident? ~ block }
 while_stmt = !{ "while" ~ expr ~ block }
 break_stmt = !{ "break" ~ ident? }
 
+unary_op_postfix_decrement = { "--" }
+unary_op_postfix_increment = { "++" }
+
+unary_op_postfix = {
+	unary_op_postfix_decrement
+	| unary_op_postfix_increment
+}
+
+unary_op_prefix_bitwise_not = { "~" }
+unary_op_prefix_dereference = { "*" }
+unary_op_prefix_logical_not= { "!" }
+unary_op_prefix_reference = { "&" }
+
 unary_op_prefix = {
-	"~"
-	| "!"
-	| "&"
-	| "*"
+	unary_op_prefix_bitwise_not
+	| unary_op_prefix_dereference
+	| unary_op_prefix_logical_not
+	| unary_op_prefix_reference 
 }
 
-unary_op_suffix = {
-	"++"
-	| "--"
-}
-
-unary_expr_inner = _{ ("(" ~ expr ~ ")") | literal | ident }
-unary_expr = !{ 
-	(unary_op_prefix? ~ unary_expr_inner ~ unary_op_suffix) 
-	| (unary_op_prefix ~ unary_expr_inner ~ unary_op_suffix?) 
+unary_expr_term = _{ literal | ident | ("(" ~ expr ~ ")")  }
+unary_expr = @{ 
+	(unary_op_prefix* ~ unary_expr_term ~ unary_op_postfix+) 
+	| (unary_op_prefix+ ~ unary_expr_term ~ unary_op_postfix*) 
 }
 
 // define all binary operation rules

@@ -72,17 +72,17 @@ impl Parse for BinaryExpr {
                 let mut ctx = ctx.lock().unwrap();
                 let node = ctx.new_empty(pair.as_span());
                 Ok(match pair.as_rule() {
-                    Rule::literal => {
-                        node.fill(Expr::Literal(Literal::parse(pair, &mut ctx)?))
-                    }
+                    Rule::literal => node.fill(Expr::Literal(Literal::parse(pair, &mut ctx)?)),
                     Rule::ident => node.fill(Expr::Ident(Ident::parse(pair, &mut ctx)?)),
                     Rule::expr => Expr::parse(pair, &mut ctx)?,
                     r => unreachable!("{:?}", r),
                 })
             },
-            |lhs: Result<Node<Expr>, CompilerError>, op: Pair<Rule>, rhs: Result<Node<Expr>, CompilerError>| {
-				let lhs = lhs?;
-				let rhs = rhs?;
+            |lhs: Result<Node<Expr>, CompilerError>,
+             op: Pair<Rule>,
+             rhs: Result<Node<Expr>, CompilerError>| {
+                let lhs = lhs?;
+                let rhs = rhs?;
 
                 let kind = match op.as_rule() {
                     Rule::binary_op_assign => BinaryOp::Assign,
@@ -134,14 +134,13 @@ impl Parse for BinaryExpr {
             },
         );
 
-
         match out?.value {
-            Expr::BinaryExpr(mut node) => { 
-				// correct binary expression id
-				node.id -= 1;
-				ctx.lock().unwrap().next_id -= 1;
-				Ok(node)
-			},
+            Expr::BinaryExpr(mut node) => {
+                // correct binary expression id
+                node.id -= 1;
+                ctx.lock().unwrap().next_id -= 1;
+                Ok(node)
+            }
             r => unreachable!("{:?}", r),
         }
     }

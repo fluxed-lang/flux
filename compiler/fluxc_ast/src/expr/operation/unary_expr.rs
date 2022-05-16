@@ -1,21 +1,21 @@
 use std::{error::Error, str::FromStr};
 
-use crate::{Associativity, Expr};
+use crate::{Associativity, Expr, Node};
 
 /// A unary expression.
 #[derive(Debug, PartialEq)]
 pub struct UnaryExpr {
     /// The kind of unary expression.
-    pub op: UnaryOp,
+    pub kind: UnaryOp,
     /// The operand of the unary expression.
-    pub expr: Box<Expr>,
+    pub expr: Box<Node<Expr>>,
 }
 
 /// Enum representing unary operator types.
 ///
 /// Unary operators are operators that act on a single argument, such as `x++`,
 /// or `!x`.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum UnaryOp {
     /// The suffix increment operator, `++`.
     Increment,
@@ -25,7 +25,7 @@ pub enum UnaryOp {
     /// The index operator, `[n]`
     Index(u64),
     /// The address-of operator, `&`.
-    AddressOf,
+    Reference,
     /// The bitwise not operator, `~`.
     BitwiseNot,
     /// The logical not operator, `!`.
@@ -33,9 +33,7 @@ pub enum UnaryOp {
     /// The de-reference operator, `*`.
     Dereference,
     /// The negation operator, `-`.
-    Negation,
-    /// The call operator, `()`.
-    Call(Vec<Expr>),
+    Negation
 }
 
 impl FromStr for UnaryOp {
@@ -57,7 +55,7 @@ impl FromStr for UnaryOp {
         match s {
             "++" => Ok(Increment),
             "--" => Ok(Decrement),
-            "&" => Ok(AddressOf),
+            "&" => Ok(Reference),
             "~" => Ok(BitwiseNot),
             "!" => Ok(LogicalNot),
             "*" => Ok(Dereference),
