@@ -1,3 +1,4 @@
+use fluxc_ast::UnaryExpr;
 use fluxc_errors::CompilerError;
 
 use crate::{TranslationContext, Translate};
