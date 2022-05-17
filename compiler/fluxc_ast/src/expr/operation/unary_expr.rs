@@ -33,7 +33,7 @@ pub enum UnaryOp {
     /// The de-reference operator, `*`.
     Dereference,
     /// The negation operator, `-`.
-    Negation
+    Negation,
 }
 
 impl FromStr for UnaryOp {

@@ -32,7 +32,7 @@ impl Span {
 
 impl From<pest::Span<'_>> for Span {
     fn from(span: pest::Span) -> Self {
-		// -1 here to ensure that the end is inclusive
+        // -1 here to ensure that the end is inclusive
         Span::new(span.start(), span.end() - 1)
     }
 }

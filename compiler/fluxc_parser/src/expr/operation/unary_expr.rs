@@ -51,16 +51,16 @@ impl Parse for UnaryExpr {
         Ok(node.fill(UnaryExpr {
             kind: match &prefix {
                 Some(kind) => (*kind).clone(),
-                None => postfix.unwrap(),
+                None => postfix.clone().unwrap(),
             },
             expr: match &prefix {
-                Some(_) => Box::new(ctx.new_node(
-                    Span::new(0, 0),
-                    Expr::UnaryExpr(ctx.new_node(
+                Some(_) => {
+                    let unary_expr_node = ctx.new_node(
                         Span::new(0, 0),
                         UnaryExpr { kind: postfix.unwrap(), expr: Box::new(expr) },
-                    )),
-                )),
+                    );
+                    Box::new(ctx.new_node(Span::new(0, 0), Expr::UnaryExpr(unary_expr_node)))
+                }
                 None => Box::new(expr),
             },
         }))

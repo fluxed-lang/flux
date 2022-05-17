@@ -16,8 +16,8 @@ pub struct Conditional {
 /// A conditional `if` statement.
 #[derive(Debug, PartialEq)]
 pub struct IfStmt {
-	/// The condition to test.
-	pub condition: Box<Node<Expr>>,
-	/// The value to return if the condition is true.
-	pub value: Node<Block>,
+    /// The condition to test.
+    pub condition: Box<Node<Expr>>,
+    /// The value to return if the condition is true.
+    pub value: Node<Block>,
 }

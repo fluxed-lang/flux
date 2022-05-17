@@ -51,8 +51,8 @@ pub enum Expr {
     Loop(Node<Loop>),
     /// A conditional loop expression.
     While(Node<While>),
-	/// A match expression.
-	Match(Node<Match>),
+    /// A match expression.
+    Match(Node<Match>),
 }
 
 impl Typed for Expr {
@@ -67,7 +67,7 @@ impl Typed for Expr {
             Expr::Loop(_) => todo!(),
             Expr::While(_) => todo!(),
             Expr::UnaryExpr(_) => todo!(),
-			Expr::Match(_) => todo!()
+            Expr::Match(_) => todo!(),
         }
     }
 }
