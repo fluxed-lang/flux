@@ -1,3 +1,2 @@
-//! Contains definitions for HIR datatypes of Flux classes.
-
+/// HIR datatype representing a Flux class.
 pub struct Class {}

@@ -4,4 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+fluxc_ast = { path = "../fluxc_ast" }
 fluxc_types = { path = "../fluxc_types" }

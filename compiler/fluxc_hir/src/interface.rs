@@ -1,1 +1,2 @@
-//! Contains definitions for HIR datatypes of Flux interfaces.
+/// Defines the HIR datatype for a Flux interface.
+pub struct Interface {}

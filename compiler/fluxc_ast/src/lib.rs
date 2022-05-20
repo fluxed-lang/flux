@@ -41,6 +41,13 @@ impl<T> Node<T> {
     }
 }
 
+impl<T: Clone> Node<T> {
+    /// This method clones the inner value of the node and returns it.
+    pub fn clone_inner(&self) -> T {
+        self.value.clone()
+    }
+}
+
 // generic implemetation of typed for all nodes
 impl<T: Typed> Typed for Node<T> {
     fn type_of(&self) -> Type {
