@@ -6,8 +6,6 @@ edition = "2018"
 
 [dependencies]
 log = "0.4"
-# needed for Span
-pest = "2"
 
 fluxc_span = { path =  "../fluxc_span" }
 fluxc_types = { path =  "../fluxc_types" }
