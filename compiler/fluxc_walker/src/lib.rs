@@ -54,9 +54,7 @@ pub struct Stack<T> {
 impl<T> Stack<T> {
     /// Creates a new, empty stack.
     pub fn new() -> Stack<T> {
-        Stack {
-            contents: Vec::new(),
-        }
+        Stack { contents: Vec::new() }
     }
 
     /// Return the size of the stack.
@@ -116,11 +114,7 @@ pub struct Walker {
 impl Walker {
     /// Create a new walker.
     pub fn new() -> Self {
-        Walker {
-            current_function: None,
-            variables: Stack::new(),
-            functions: Stack::new(),
-        }
+        Walker { current_function: None, variables: Stack::new(), functions: Stack::new() }
     }
 
     /// Return the current function. This clones the stored function.
@@ -149,31 +143,17 @@ impl Walker {
     /// Declare a function.
     pub fn declare_function(&mut self, func: &FuncDecl) {
         let (name, args, ret_ty): (String, Vec<ParenArgument>, Type) = match func {
-            FuncDecl::Local {
-                ident,
-                args,
-                body,
-                ret_ty,
-            } => (
+            FuncDecl::Local { ident, args, body, ret_ty } => (
                 ident.value.clone(),
                 args.iter().map(|arg| arg.value.clone()).collect(),
                 ret_ty.value.clone(),
             ),
-            FuncDecl::Export {
-                ident,
-                args,
-                body,
-                ret_ty,
-            } => (
+            FuncDecl::Export { ident, args, body, ret_ty } => (
                 ident.value.clone(),
                 args.iter().map(|arg| arg.value.clone()).collect(),
                 ret_ty.value.clone(),
             ),
-            FuncDecl::External {
-                ident,
-                args,
-                ret_ty,
-            } => (
+            FuncDecl::External { ident, args, ret_ty } => (
                 ident.value.clone(),
                 args.iter().map(|arg| arg.value.clone()).collect(),
                 ret_ty.value.clone(),

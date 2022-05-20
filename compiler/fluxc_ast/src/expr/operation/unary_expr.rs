@@ -1,13 +1,22 @@
 use std::{error::Error, str::FromStr};
 
-use crate::{Associativity, Expr};
+use crate::{Associativity, Expr, Node};
+
+/// A unary expression.
+#[derive(Debug, PartialEq)]
+pub struct UnaryExpr {
+    /// The kind of unary expression.
+    pub kind: UnaryOp,
+    /// The operand of the unary expression.
+    pub expr: Box<Node<Expr>>,
+}
 
 /// Enum representing unary operator types.
 ///
 /// Unary operators are operators that act on a single argument, such as `x++`,
 /// or `!x`.
-#[derive(Debug, PartialEq)]
-pub enum UnaryExprKind {
+#[derive(Debug, PartialEq, Clone)]
+pub enum UnaryOp {
     /// The suffix increment operator, `++`.
     Increment,
     /// The suffix decrement operator, `--`.
@@ -16,7 +25,7 @@ pub enum UnaryExprKind {
     /// The index operator, `[n]`
     Index(u64),
     /// The address-of operator, `&`.
-    AddressOf,
+    Reference,
     /// The bitwise not operator, `~`.
     BitwiseNot,
     /// The logical not operator, `!`.
@@ -25,15 +34,13 @@ pub enum UnaryExprKind {
     Dereference,
     /// The negation operator, `-`.
     Negation,
-    /// The call operator, `()`.
-    Call(Vec<Expr>),
 }
 
-impl FromStr for UnaryExprKind {
+impl FromStr for UnaryOp {
     type Err = Box<dyn Error>;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use UnaryExprKind::*;
+        use UnaryOp::*;
 
         // match index operator
         if s.starts_with("[") && s.ends_with("]") {
@@ -48,7 +55,7 @@ impl FromStr for UnaryExprKind {
         match s {
             "++" => Ok(Increment),
             "--" => Ok(Decrement),
-            "&" => Ok(AddressOf),
+            "&" => Ok(Reference),
             "~" => Ok(BitwiseNot),
             "!" => Ok(LogicalNot),
             "*" => Ok(Dereference),
@@ -57,10 +64,10 @@ impl FromStr for UnaryExprKind {
     }
 }
 
-impl UnaryExprKind {
+impl UnaryOp {
     /// Fetch the precedence of this unary operator.
     pub const fn precedence(&self) -> usize {
-        use UnaryExprKind::*;
+        use UnaryOp::*;
         match self {
             Increment | Decrement | Index(_) => 1,
             _ => 2,
@@ -70,7 +77,7 @@ impl UnaryExprKind {
     /// Fetch the associativity of this unary operator.
 
     pub const fn associativity(&self) -> Associativity {
-        use UnaryExprKind::*;
+        use UnaryOp::*;
         match self {
             Increment | Decrement | Index(_) => Associativity::Ltr,
             _ => Associativity::Rtl,

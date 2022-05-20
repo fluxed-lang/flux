@@ -39,9 +39,20 @@ impl<T> Node<T> {
     pub fn new(id: usize, span: Span, value: T) -> Self {
         Self { id, span, value }
     }
+    /// Create an empty node with no value.
+    pub fn empty(id: usize, span: Span) -> Node<()> {
+        Node { id, span, value: () }
+    }
 }
 
-// generic implemetation of typed for all nodes
+impl Node<()> {
+    /// Hydrate this node with the given value.
+    pub fn fill<T>(self, value: T) -> Node<T> {
+        Node { id: self.id, span: self.span, value }
+    }
+}
+
+/// Generic implemetation of typed for all nodes
 impl<T: Typed> Typed for Node<T> {
     fn type_of(&self) -> Type {
         self.value.type_of()
@@ -56,7 +67,7 @@ impl<T: Typed> Typed for Node<T> {
 /// ```regex
 /// [A-z_][0-9A-z_]*
 /// ```
-pub type Ident = Node<String>;
+pub type Ident = String;
 
 /// The root AST instance.
 ///

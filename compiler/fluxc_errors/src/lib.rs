@@ -16,6 +16,7 @@ pub enum ErrorKind {
 }
 
 /// A fatal error thrown by the compiler.
+#[derive(Debug, Clone)]
 pub struct FatalError {
     /// The error kind.
     pub kind: ErrorKind,
@@ -24,6 +25,7 @@ pub struct FatalError {
 }
 
 /// An enum of possible error types.
+#[derive(Debug)]
 pub enum CompilerError {
     Fatal(FatalError),
 }

@@ -4,7 +4,7 @@ use crate::{Block, Expr, Node};
 #[derive(Debug, PartialEq)]
 pub struct While {
     /// The loop condition.
-    pub condition: Box<Expr>,
+    pub condition: Box<Node<Expr>>,
     /// The block executed every time this loop is executed.
     pub block: Node<Block>,
 }
