@@ -10,7 +10,6 @@ use log::{debug, error, LevelFilter};
 /// Execute flux files using the Flux JIT compiler.
 #[derive(Parser, Debug)]
 #[clap(version = "1.0", author = "Skye Elliot <actuallyori@gmail.com>")]
-#[clap(setting = AppSettings::ColoredHelp)]
 struct Opts {
     /// The target file to execute.
     input: String,
