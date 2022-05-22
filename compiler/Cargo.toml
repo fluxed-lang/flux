@@ -1,6 +1,5 @@
 [workspace]
 members = [
-	"fluxc_ast_passes",
 	"fluxc_errors",
 	"fluxc_hir",
 	"fluxc_span",
