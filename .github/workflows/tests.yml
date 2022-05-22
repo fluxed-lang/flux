@@ -1,8 +1,10 @@
 name: Run compiler tests
 
 on:
+  push:
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
@@ -10,7 +12,28 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir:
+          - fluxc
+          - fluxc_ast
+          - fluxc_codegen
+          - fluxc_errors
+          - fluxc_hir
+          - fluxc_main
+          - fluxc_parser
+          - fluxc_span
+          - fluxc_tests
+          - fluxc_types
+          - fluxc_walker
     steps:
-    - uses: actions/checkout@v2
-    - name: Run tests
-      run: cd compiler && cargo test --verbose
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v1
+      - name: Run crate tests
+        working-directory: compiler/${{ matrix.dir }}
+        run: cargo test --verbose
