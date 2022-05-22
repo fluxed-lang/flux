@@ -28,6 +28,11 @@ jobs:
           - fluxc_walker
     steps:
       - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v1
       - name: Run crate tests
         working-directory: compiler/${{ matrix.dir }}
         run: cargo test --verbose
