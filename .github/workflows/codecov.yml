@@ -1,7 +1,7 @@
 name: Codecov CI
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -11,10 +11,10 @@ jobs:
       image: xd009642/tarpaulin
       options: --security-opt seccomp=unconfined
     steps:
-    - uses: actions/checkout@master
-    - name: Generate code coverage
-      run: cd compiler && cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml --ignore-panics
-    - name: Upload code coverage
-      uses: codecov/codecov-action@v2
-      with:
-        fail_ci_if_error: true
+      - uses: actions/checkout@master
+      - name: Generate code coverage
+        run: cd compiler && cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml --ignore-panics
+      - name: Upload code coverage
+        uses: codecov/codecov-action@v2
+        with:
+          fail_ci_if_error: true

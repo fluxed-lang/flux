@@ -4,7 +4,11 @@ on:
   push:
     branches: [ master ]
   pull_request:
+<<<<<<< HEAD:.github/workflows/ci.yml
     branches: [ master ]
+=======
+    branches: [main]
+>>>>>>> c21e15a (ci: add matrix tests for each directory):.github/workflows/tests.yml
 
 env:
   CARGO_TERM_COLOR: always
@@ -13,8 +17,24 @@ jobs:
   test:
 
     runs-on: ubuntu-latest
+<<<<<<< HEAD:.github/workflows/ci.yml
 
+=======
+    strategy:
+      matrix: { dir: - fluxc
+            - fluxc_ast
+            - fluxc_codegen
+            - fluxc_errors
+            - fluxc_hir
+            - fluxc_main
+            - fluxc_parser
+            - fluxc_span
+            - fluxc_tests
+            - fluxc_types
+            - fluxc_walker }
+>>>>>>> c21e15a (ci: add matrix tests for each directory):.github/workflows/tests.yml
     steps:
-    - uses: actions/checkout@v2
-    - name: Run tests
-      run: cd compiler && cargo test --verbose
+      - uses: actions/checkout@v2
+      - name: Run crate tests
+        working-directory: compiler/${{ matrix.dir }}
+        run: cargo test --verbose
