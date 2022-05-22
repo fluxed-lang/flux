@@ -1,48 +1,8 @@
 use fluxc_ast::{
-    func::{FuncDecl, ParenArgument},
-    Block, Declaration, Expr, Literal, Mutability, Node, Stmt,
+    Block, Declaration, Node, Stmt, FuncDecl,
 };
-use fluxc_types::{Intersect, Primitive, Type, Typed};
-
-/// An enum of linkage types.
-#[derive(Debug)]
-pub enum Linkage {
-    /// The function is declared locally, and is not exported.
-    Local,
-    /// The function is declared in the scope of the module being compiled.
-    Module,
-    /// The function is declared externally, and has been imported.
-    External,
-}
-
-/// Represents a callable function.
-#[derive(Debug)]
-pub struct Function {
-    /// The name of the function.
-    pub name: String,
-    /// The arguments of the function.
-    pub args: Vec<ParenArgument>,
-    /// The return type of this function.
-    pub ret_ty: Type,
-}
-
-#[derive(Debug)]
-pub struct Variable {
-    /// The name of this variable.
-    pub name: String,
-    /// The mutability of this variable.
-    pub mutability: Mutability,
-    /// The type of this variable.
-    pub ty: Type,
-}
-
-/// Represents a type variable declared via the `type x = ` expression.
-pub struct TypeVariable {
-    /// The name of this type variable.
-    name: String,
-    /// The type held by this type variable.
-    ty: Type,
-}
+use fluxc_hir::{Function, Variable};
+use fluxc_types::{Type, Typed};
 
 /// Represents a stack.
 #[derive(Debug)]
@@ -142,25 +102,7 @@ impl Walker {
 
     /// Declare a function.
     pub fn declare_function(&mut self, func: &FuncDecl) {
-        let (name, args, ret_ty): (String, Vec<ParenArgument>, Type) = match func {
-            FuncDecl::Local { ident, args, body, ret_ty } => (
-                ident.value.clone(),
-                args.iter().map(|arg| arg.value.clone()).collect(),
-                ret_ty.value.clone(),
-            ),
-            FuncDecl::Export { ident, args, body, ret_ty } => (
-                ident.value.clone(),
-                args.iter().map(|arg| arg.value.clone()).collect(),
-                ret_ty.value.clone(),
-            ),
-            FuncDecl::External { ident, args, ret_ty } => (
-                ident.value.clone(),
-                args.iter().map(|arg| arg.value.clone()).collect(),
-                ret_ty.value.clone(),
-            ),
-        };
-
-        self.functions.push(Function { args, name, ret_ty });
+       	todo!("declare_function")
     }
 
     /// Declare a variable.
@@ -168,7 +110,7 @@ impl Walker {
         self.variables.push(Variable {
             name: decl.ident.value.clone(),
             mutability: decl.mutability,
-            ty: decl.explicit_ty.clone().unwrap_or(decl.value.type_of()),
+            ty: decl.explicit_ty.clone().map(|inner| inner.value).unwrap_or(decl.value.type_of()),
         });
     }
 
@@ -191,42 +133,5 @@ impl Walker {
     /// Lookup a funciton available in the current scope.
     pub fn lookup_function_mut(&mut self, name: &str) -> Option<&mut Function> {
         self.functions.find_mut(|f| f.name == name.as_ref())
-    }
-
-    /// Get the type of an expression in the current scope.
-    pub fn get_expr_type(&mut self, expr: &Expr) -> Type {
-        match expr {
-            Expr::Literal(literal) => match literal.value.kind {
-                Literal::Bool(_) => Type::Bool,
-                Literal::Int(_) => Type::Int,
-                Literal::Float(_) => Type::Float,
-                Literal::String(_) => Type::String,
-                Literal::Char(_) => Type::Char,
-            },
-            Expr::Ident(ident) => match self.lookup_variable(&ident.value.inner) {
-                Some(var) => var.ty.clone(),
-                None => Type::Infer,
-            },
-            Expr::BinaryExpr(bin_op) => {
-                let lhs = self.get_expr_type(&bin_op.value.lhs.value);
-                let rhs = self.get_expr_type(&bin_op.value.lhs.value);
-                lhs.intersect(&rhs)
-            }
-            Expr::Block(_) => Type::Primitive(Primitive::Unit),
-            Expr::FuncCall(func_call) => func_call.value.return_ty.clone(),
-        }
-    }
-
-    /// Proceed to the next statement, declaring any variables and functions.
-    pub fn next_stmt(&mut self, stmt: &Stmt) {
-        match stmt {
-            Stmt::Declaration(decls) => {
-                for decl in decls {
-                    self.declare_variable(&decl.value)
-                }
-            }
-            Stmt::FuncDecl(func) => self.declare_function(&func.value),
-            _ => (),
-        }
     }
 }
