@@ -61,28 +61,16 @@ pub trait AsFunction {
 impl AsFunction for FuncDecl {
     fn as_function(&self) -> Function {
         match self {
-            FuncDecl::Local {
-                ident,
-                args,
-                body: _,
-                ret_ty,
-            } => Function {
+            FuncDecl::Local { ident, args, body: _, ret_ty } => Function {
                 name: ident.value.clone(),
                 args: args.iter().map(|x| (&x.value).into()).collect(),
                 kind: FunctionKind::Orphan,
                 return_type: ret_ty.clone_inner(),
             },
-            FuncDecl::Export {
-                ident: _,
-                args: _,
-                body: _,
-                ret_ty: _,
-            } => todo!("remove FuncDecl::Export"),
-            FuncDecl::External {
-                ident,
-                args,
-                ret_ty,
-            } => Function {
+            FuncDecl::Export { ident: _, args: _, body: _, ret_ty: _ } => {
+                todo!("remove FuncDecl::Export")
+            }
+            FuncDecl::External { ident, args, ret_ty } => Function {
                 name: ident.value.clone(),
                 args: args.iter().map(|x| (&x.value).into()).collect(),
                 kind: FunctionKind::External,
@@ -94,9 +82,6 @@ impl AsFunction for FuncDecl {
 
 impl Into<Argument> for &ParenArgument {
     fn into(self) -> Argument {
-        Argument {
-            name: self.ident.clone_inner(),
-            ty: self.ty.clone_inner(),
-        }
+        Argument { name: self.ident.clone_inner(), ty: self.ty.clone_inner() }
     }
 }

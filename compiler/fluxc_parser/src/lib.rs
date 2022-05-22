@@ -3,11 +3,7 @@
 use fluxc_ast::{Ident, Node, Stmt, AST};
 use fluxc_errors::CompilerError;
 use fluxc_span::Span;
-use pest::{
-    error::{Error, ErrorVariant},
-    iterators::Pair,
-    Parser,
-};
+use pest::{error::Error, iterators::Pair, Parser};
 
 mod expr;
 mod stmt;
@@ -51,12 +47,12 @@ impl Context {
 }
 
 fn map_pest_error(error: Error<Rule>) -> CompilerError {
-	panic!("{}", error);
-	// TODO: proper error parsing
+    panic!("{}", error);
+    // TODO: proper error parsing
     // match error.variant {
-    //     ErrorVariant::ParsingError { positives, negatives } => todo!("map parsing error"),
-    //     ErrorVariant::CustomError { message } => todo!("map custom error"),
-    // }
+    //     ErrorVariant::ParsingError { positives, negatives } => todo!("map
+    // parsing error"),     ErrorVariant::CustomError { message } =>
+    // todo!("map custom error"), }
 }
 
 /// Parse an input string into an instance of the Flux `AST`.

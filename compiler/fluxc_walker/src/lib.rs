@@ -1,6 +1,4 @@
-use fluxc_ast::{
-    Block, Declaration, Node, Stmt, FuncDecl,
-};
+use fluxc_ast::{Block, Declaration, FuncDecl, Node, Stmt};
 use fluxc_hir::{Function, Variable};
 use fluxc_types::Typed;
 
@@ -101,8 +99,8 @@ impl Walker {
     }
 
     /// Declare a function.
-    pub fn declare_function(&mut self, func: &FuncDecl) {
-       	todo!("declare_function")
+    pub fn declare_function(&mut self, _func: &FuncDecl) {
+        todo!("declare_function")
     }
 
     /// Declare a variable.

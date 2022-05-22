@@ -1,4 +1,4 @@
-use std::{error::Error, fs::File, io::Read, mem, path::Path, time::Instant};
+use std::{error::Error, fs::File, io::Read, path::Path, time::Instant};
 
 use log::{debug, info};
 
@@ -11,7 +11,7 @@ pub enum Mode<'i> {
 }
 
 /// Compile the target input string into memory.
-pub fn compile_to_mem(input: String) -> Result<fn() -> u32, Box<dyn Error>> {
+pub fn compile_to_mem(_input: String) -> Result<fn() -> u32, Box<dyn Error>> {
     // 1. Parse input source
     // let mut parser = fluxc_parser::ParserContext::default();
     // let mut ast = parser.build(&input)?;
@@ -23,7 +23,7 @@ pub fn compile_to_mem(input: String) -> Result<fn() -> u32, Box<dyn Error>> {
     // unsafe {
     //     code_fn = mem::transmute::<_, fn() -> u32>(pointer);
     // }
-	todo!()
+    todo!()
 }
 
 /// Compile the target input string into memory and execute it immediately.

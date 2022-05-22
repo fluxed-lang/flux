@@ -3,12 +3,12 @@ extern crate log;
 
 use std::{env, path::Path};
 
-use clap::{AppSettings, Clap};
+use clap::Parser;
 use fluxc_main::Mode;
 use log::{debug, error, LevelFilter};
 
 /// Execute flux files using the Flux JIT compiler.
-#[derive(Clap)]
+#[derive(Parser, Debug)]
 #[clap(version = "1.0", author = "Skye Elliot <actuallyori@gmail.com>")]
 #[clap(setting = AppSettings::ColoredHelp)]
 struct Opts {
