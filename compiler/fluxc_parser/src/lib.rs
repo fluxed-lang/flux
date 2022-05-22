@@ -51,10 +51,12 @@ impl Context {
 }
 
 fn map_pest_error(error: Error<Rule>) -> CompilerError {
-    match error.variant {
-        ErrorVariant::ParsingError { positives, negatives } => todo!(),
-        ErrorVariant::CustomError { message } => todo!(),
-    }
+	panic!("{}", error);
+	// TODO: proper error parsing
+    // match error.variant {
+    //     ErrorVariant::ParsingError { positives, negatives } => todo!("map parsing error"),
+    //     ErrorVariant::CustomError { message } => todo!("map custom error"),
+    // }
 }
 
 /// Parse an input string into an instance of the Flux `AST`.
