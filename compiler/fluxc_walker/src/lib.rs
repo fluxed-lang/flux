@@ -2,7 +2,7 @@ use fluxc_ast::{
     Block, Declaration, Node, Stmt, FuncDecl,
 };
 use fluxc_hir::{Function, Variable};
-use fluxc_types::{Type, Typed};
+use fluxc_types::Typed;
 
 /// Represents a stack.
 #[derive(Debug)]
