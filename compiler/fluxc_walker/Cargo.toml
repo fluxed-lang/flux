@@ -6,3 +6,4 @@ edition = "2018"
 [dependencies]
 fluxc_ast = { path = "../fluxc_ast" }
 fluxc_types = { path =  "../fluxc_types" }
+fluxc_hir = { path = "../fluxc_hir" }
