@@ -2,6 +2,7 @@
 members = [
 	"fluxc_ast_passes",
 	"fluxc_errors",
+	"fluxc_hir",
 	"fluxc_span",
 	"fluxc_tests",
 	"fluxc_walker",
