@@ -7,7 +7,7 @@ members = [
 	"fluxc_tests",
 	"fluxc_walker",
     "fluxc_ast",
-    "fluxc_ir",
+    "fluxc_codegen",
     "fluxc_parser",
     "fluxc_types",
     "fluxc"
