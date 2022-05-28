@@ -85,3 +85,9 @@ impl Parse for Ident {
         Ok(context.new_node(input.as_span(), input.as_str().into()))
     }
 }
+
+/// Small unknown rule function.
+#[inline(always)]
+pub fn unexpected_rule(received: Rule, scope: Rule) -> ! {
+    panic!("unexpected rule '{:?}' received while parsing rule '{:?}'", received, scope);
+}

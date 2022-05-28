@@ -1,14 +1,15 @@
-use fluxc_ast::{Expr, Node, UnaryExpr, UnaryOp};
+use fluxc_ast::{Expr, Ident, Literal, Node, UnaryExpr, UnaryOp};
 use fluxc_errors::CompilerError;
 use fluxc_span::Span;
 use pest::iterators::Pair;
 
-use crate::{Context, Parse, Rule};
+use crate::{unexpected_rule, Context, Parse, Rule};
 
 impl Parse for UnaryExpr {
     #[tracing::instrument]
     fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> Result<Node<Self>, CompilerError> {
         debug_assert_eq!(input.as_rule(), Rule::unary_expr);
+        let outer_span = input.as_span();
         let node = ctx.new_empty(input.as_span());
         let mut inner = input.into_inner();
         // peek for prefix operator
@@ -31,7 +32,20 @@ impl Parse for UnaryExpr {
             None => None,
         };
         // get expression
-        let expr = Expr::parse(inner.next().unwrap(), ctx)?;
+        let expr = inner.next().unwrap();
+        let span = expr.as_span();
+        let expr = match expr.as_rule() {
+            Rule::literal => {
+                let value = Expr::Literal(Literal::parse(expr, ctx)?);
+                ctx.new_node(span, value)
+            }
+            Rule::ident => {
+                let value = Expr::Ident(Ident::parse(expr, ctx)?);
+                ctx.new_node(span, value)
+            }
+            Rule::expr => Expr::parse(inner.next().unwrap(), ctx)?,
+            rule => unexpected_rule(rule, Rule::unary_expr),
+        };
         // get postfix operator
         let postfix = match inner.next() {
             Some(pair) => {
@@ -42,7 +56,9 @@ impl Parse for UnaryExpr {
                     Rule::unary_op_prefix_bitwise_not => UnaryOp::BitwiseNot,
                     Rule::unary_op_prefix_reference => UnaryOp::Reference,
                     Rule::unary_op_prefix_dereference => UnaryOp::Dereference,
-                    _ => unreachable!(),
+                    Rule::unary_op_postfix_increment => UnaryOp::Increment,
+                    Rule::unary_op_postfix_decrement => UnaryOp::Decrement,
+                    rule => unexpected_rule(rule, Rule::unary_expr),
                 })
             }
             None => None,
@@ -56,10 +72,10 @@ impl Parse for UnaryExpr {
             expr: match &prefix {
                 Some(_) => {
                     let unary_expr_node = ctx.new_node(
-                        Span::new(0, 0),
+                        &outer_span,
                         UnaryExpr { kind: postfix.unwrap(), expr: Box::new(expr) },
                     );
-                    Box::new(ctx.new_node(Span::new(0, 0), Expr::UnaryExpr(unary_expr_node)))
+                    Box::new(ctx.new_node(&outer_span, Expr::UnaryExpr(unary_expr_node)))
                 }
                 None => Box::new(expr),
             },
@@ -81,16 +97,16 @@ mod tests {
         let mut ctx = Context::default();
         // x--
         let expected = Node {
-            id: 1,
+            id: 0,
             span: Span::new(0, 2),
             value: UnaryExpr {
                 kind: UnaryOp::Decrement,
                 expr: Box::new(Node {
-                    id: 1,
-                    span: Span::new(0, 1),
+                    id: 2,
+                    span: Span::new(0, 0),
                     value: Expr::Ident(Node {
-                        id: 2,
-                        span: Span::new(0, 1),
+                        id: 1,
+                        span: Span::new(0, 0),
                         value: "x".to_string(),
                     }),
                 }),
