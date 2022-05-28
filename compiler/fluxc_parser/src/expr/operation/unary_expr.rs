@@ -1,6 +1,5 @@
 use fluxc_ast::{Expr, Ident, Literal, Node, UnaryExpr, UnaryOp};
 use fluxc_errors::CompilerError;
-
 use pest::iterators::Pair;
 
 use crate::{unexpected_rule, Context, Parse, Rule};

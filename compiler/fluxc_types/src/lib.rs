@@ -14,7 +14,7 @@ pub enum Type {
     /// A type operation.
     Operation(Operation),
     /// A type to be inferred from the type tree.
-    Infer(String),
+    Infer(Option<String>),
     /// A circular type reference.
     Circular(Box<Type>),
 }

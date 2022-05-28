@@ -61,7 +61,7 @@ pub trait AsFunction {
 impl AsFunction for FuncDecl {
     fn as_function(&self) -> Function {
         match self {
-            FuncDecl::Local { ident, args, body: _, ret_ty } => Function {
+            FuncDecl::Local { ident, params: args, body: _, ret_ty } => Function {
                 name: ident.value.clone(),
                 args: args.iter().map(|x| (&x.value).into()).collect(),
                 kind: FunctionKind::Orphan,
@@ -70,7 +70,7 @@ impl AsFunction for FuncDecl {
             FuncDecl::Export { ident: _, args: _, body: _, ret_ty: _ } => {
                 todo!("remove FuncDecl::Export")
             }
-            FuncDecl::External { ident, args, ret_ty } => Function {
+            FuncDecl::External { ident, params: args, ret_ty } => Function {
                 name: ident.value.clone(),
                 args: args.iter().map(|x| (&x.value).into()).collect(),
                 kind: FunctionKind::External,

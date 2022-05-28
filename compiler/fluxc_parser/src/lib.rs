@@ -1,4 +1,5 @@
 //! Defines the parser for Flux code.
+#![feature(option_result_contains)]
 
 use fluxc_ast::{Ident, Node, Stmt, AST};
 use fluxc_errors::CompilerError;
@@ -7,6 +8,7 @@ use pest::{error::Error, iterators::Pair, Parser};
 
 mod expr;
 mod stmt;
+mod ty;
 
 /// Internal moduel to prevent leakage of the `Rule` type to external
 /// crates.
@@ -72,8 +74,7 @@ pub fn parse(input: &str) -> Result<AST, CompilerError> {
 /// Trait implemented by AST types that can be parsed from the Pest grammar AST.
 trait Parse: Sized {
     /// Parse an input Pair into an instance of this type.
-    fn parse<'i>(input: Pair<'i, Rule>, context: &mut Context)
-        -> Result<Node<Self>, CompilerError>;
+    fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> Result<Node<Self>, CompilerError>;
 }
 
 impl Parse for Ident {
