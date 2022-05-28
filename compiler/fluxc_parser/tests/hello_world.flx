@@ -1,0 +1,4 @@
+# declare the external `puts` function from libc
+extern puts x: string -> ()
+# put hello world to stdout
+puts "Hello, world!"

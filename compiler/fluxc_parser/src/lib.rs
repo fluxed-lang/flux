@@ -1,16 +1,14 @@
 //! Defines the parser for Flux code.
+#![feature(option_result_contains)]
 
 use fluxc_ast::{Ident, Node, Stmt, AST};
 use fluxc_errors::CompilerError;
 use fluxc_span::Span;
-use pest::{
-    error::{Error, ErrorVariant},
-    iterators::Pair,
-    Parser,
-};
+use pest::{error::Error, iterators::Pair, Parser};
 
 mod expr;
 mod stmt;
+mod ty;
 
 /// Internal moduel to prevent leakage of the `Rule` type to external
 /// crates.
@@ -51,10 +49,12 @@ impl Context {
 }
 
 fn map_pest_error(error: Error<Rule>) -> CompilerError {
-    match error.variant {
-        ErrorVariant::ParsingError { positives, negatives } => todo!(),
-        ErrorVariant::CustomError { message } => todo!(),
-    }
+    panic!("{}", error);
+    // TODO: proper error parsing
+    // match error.variant {
+    //     ErrorVariant::ParsingError { positives, negatives } => todo!("map
+    // parsing error"),     ErrorVariant::CustomError { message } =>
+    // todo!("map custom error"), }
 }
 
 /// Parse an input string into an instance of the Flux `AST`.
@@ -74,8 +74,7 @@ pub fn parse(input: &str) -> Result<AST, CompilerError> {
 /// Trait implemented by AST types that can be parsed from the Pest grammar AST.
 trait Parse: Sized {
     /// Parse an input Pair into an instance of this type.
-    fn parse<'i>(input: Pair<'i, Rule>, context: &mut Context)
-        -> Result<Node<Self>, CompilerError>;
+    fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> Result<Node<Self>, CompilerError>;
 }
 
 impl Parse for Ident {
@@ -86,4 +85,10 @@ impl Parse for Ident {
     ) -> Result<Node<Self>, CompilerError> {
         Ok(context.new_node(input.as_span(), input.as_str().into()))
     }
+}
+
+/// Small unknown rule function.
+#[inline(always)]
+pub fn unexpected_rule(received: Rule, scope: Rule) -> ! {
+    panic!("unexpected rule '{:?}' received while parsing rule '{:?}'", received, scope);
 }

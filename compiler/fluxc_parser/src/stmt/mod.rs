@@ -26,7 +26,9 @@ impl Parse for Stmt {
         // match rule type
         let stmt = match inner.as_rule() {
             Rule::let_declaration => Stmt::Declaration(Declaration::parse(inner, context)?),
-            Rule::func_decl => Stmt::FuncDecl(FuncDecl::parse(inner, context)?),
+            Rule::func_decl | Rule::extern_func_decl => {
+                Stmt::FuncDecl(FuncDecl::parse(inner, context)?)
+            }
             Rule::expr => Stmt::Expr(Expr::parse(inner, context)?),
             _ => todo!("{:?}", inner.as_rule()),
         };

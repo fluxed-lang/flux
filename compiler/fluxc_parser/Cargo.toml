@@ -2,7 +2,7 @@
 name = "fluxc_parser"
 version = "0.0.0"
 authors = ["SkyezerFox <actuallyori@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 lazy_static = "1"

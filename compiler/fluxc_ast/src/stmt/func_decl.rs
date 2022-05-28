@@ -32,7 +32,7 @@ pub enum FuncDecl {
         /// The identifier representing the function.
         ident: Node<Ident>,
         /// The arguments this function requires.
-        args: Vec<Node<ParenArgument>>,
+        params: Vec<Node<ParenArgument>>,
         /// The body of the function.
         body: Node<Block>,
         /// The identifier representing the return type of the function.
@@ -52,7 +52,7 @@ pub enum FuncDecl {
         /// The identifier representing the function.
         ident: Node<Ident>,
         /// The arguments this function requires.
-        args: Vec<Node<ParenArgument>>,
+        params: Vec<Node<ParenArgument>>,
         /// The identifier representing the return type of the function.
         ret_ty: Node<Type>,
     },
