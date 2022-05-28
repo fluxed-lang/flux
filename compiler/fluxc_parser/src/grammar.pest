@@ -2,8 +2,8 @@
 BLANK = _{ " " | "\t" }
 WHITESPACE = _{ BLANK | NEWLINE }
 // comments
-line_comment = { "#" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
-block_comment = { "/*" ~ ANY* ~ "*/" }
+line_comment = @{ "#" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
+block_comment = @{ "/*" ~ ANY* ~ "*/" }
 COMMENT = _{ block_comment | line_comment }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
@@ -237,4 +237,4 @@ statement_inner = _{
 
 statement = ${ statement_inner ~ BLANK* ~ ";"? ~ BLANK* ~ NEWLINE* }
 
-flux = @{ SOI ~ statement* ~ EOI }
+flux = { SOI ~ statement* ~ EOI }
