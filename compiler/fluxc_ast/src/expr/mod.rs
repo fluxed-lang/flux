@@ -1,16 +1,16 @@
 //! Contains the expression AST data structures.
 
-use fluxc_types::{Type, Typed};
-
 pub(crate) mod block_expr;
 pub(crate) mod control;
 pub(crate) mod literal;
 pub(crate) mod operation;
+pub(crate) mod types;
 
 pub use block_expr::*;
 pub use control::*;
 pub use literal::*;
 pub use operation::*;
+pub use types::*;
 
 use crate::{FuncCall, Ident, Node};
 

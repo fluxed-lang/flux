@@ -1,6 +1,6 @@
 //! Contains the primitive type definitions.
 
-use crate::Type;
+use super::Type;
 
 /// An enumeration of primitive types. This enum represents all primitive types,
 /// including the `never` type.

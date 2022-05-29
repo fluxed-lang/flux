@@ -1,12 +1,10 @@
 mod operator;
 mod primitive;
-mod table;
 
 use std::fmt::Debug;
 
 pub use operator::*;
 pub use primitive::*;
-pub use table::*;
 
 /// The root-level type expression enumeration
 #[derive(Debug, Clone)]

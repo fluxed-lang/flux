@@ -8,6 +8,7 @@ pub(crate) mod block_expr;
 pub(crate) mod control;
 pub(crate) mod literal;
 pub(crate) mod operation;
+pub(crate) mod types;
 
 use crate::{Context, Parse, Rule};
 
