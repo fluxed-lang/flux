@@ -9,7 +9,7 @@ pub use intersect::*;
 pub use simplify::*;
 pub use union::*;
 
-use crate::Type;
+use crate::TypeExpr;
 
 /// The operation enumeration. This enum represents all possible type operations
 /// that can be performed on one or more types.
@@ -20,11 +20,11 @@ pub enum Operation {
     /// A union type.
     Union(Union),
     /// An array type.
-    Array(Box<Type>, Option<usize>),
+    Array(Box<TypeExpr>, Option<usize>),
 }
 
-impl Into<Type> for Operation {
-    fn into(self) -> Type {
-        Type::Operation(self)
+impl Into<TypeExpr> for Operation {
+    fn into(self) -> TypeExpr {
+        TypeExpr::Operation(self)
     }
 }

@@ -1,6 +1,4 @@
-use fluxc_types::{Operation, Primitive, Type, Typed, Unify};
-
-use crate::Expr;
+use crate::{Expr, Operation, Primitive, TypeExpr, Typed, Unify};
 
 #[derive(Debug, PartialEq)]
 /// Enum representing the type of a literal.
@@ -21,17 +19,17 @@ pub enum Literal {
 }
 
 impl Typed for Literal {
-    fn as_type(&self) -> Type {
+    fn as_type(&self) -> TypeExpr {
         match self {
-            Literal::Int(val) => Type::Primitive(Primitive::IntLiteral(*val)),
-            Literal::Float(val) => Type::Primitive(Primitive::FloatLiteral(*val)),
-            Literal::String(val) => Type::Primitive(Primitive::StringLiteral((*val).clone())),
-            Literal::Char(val) => Type::Primitive(Primitive::CharLiteral(*val)),
-            Literal::Bool(val) => Type::Primitive(match val {
+            Literal::Int(val) => TypeExpr::Primitive(Primitive::IntLiteral(*val)),
+            Literal::Float(val) => TypeExpr::Primitive(Primitive::FloatLiteral(*val)),
+            Literal::String(val) => TypeExpr::Primitive(Primitive::StringLiteral((*val).clone())),
+            Literal::Char(val) => TypeExpr::Primitive(Primitive::CharLiteral(*val)),
+            Literal::Bool(val) => TypeExpr::Primitive(match val {
                 true => Primitive::True,
                 false => Primitive::False,
             }),
-            Literal::Array(items) => Type::Operation(Operation::Array(
+            Literal::Array(items) => TypeExpr::Operation(Operation::Array(
                 items
                     .iter()
                     .map(|item| item.as_type())

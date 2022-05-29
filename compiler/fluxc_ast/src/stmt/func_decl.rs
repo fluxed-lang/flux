@@ -4,9 +4,7 @@
 //! - Local function declarations
 //! - External function declarations
 
-use fluxc_types::Type;
-
-use crate::{Block, Expr, Ident, Node};
+use crate::{Block, Expr, Ident, Node, TypeExpr};
 /// A function call.
 #[derive(Debug, PartialEq)]
 pub struct FuncCall {
@@ -22,7 +20,7 @@ pub struct ParenArgument {
     /// The identifier representing the AST node.
     pub ident: Node<Ident>,
     /// The identifier representing the type of this argument.
-    pub ty: Node<Type>,
+    pub ty: Node<TypeExpr>,
 }
 
 /// An enum of function declaration types.
@@ -36,7 +34,7 @@ pub enum FuncDecl {
         /// The body of the function.
         body: Node<Block>,
         /// The identifier representing the return type of the function.
-        ret_ty: Node<Type>,
+        ret_ty: Node<TypeExpr>,
     },
     Export {
         /// The identifier representing the function.
@@ -46,7 +44,7 @@ pub enum FuncDecl {
         /// The body of the function.
         body: Node<Block>,
         /// The identifier representing the return type of the function.
-        ret_ty: Node<Type>,
+        ret_ty: Node<TypeExpr>,
     },
     External {
         /// The identifier representing the function.
@@ -54,6 +52,6 @@ pub enum FuncDecl {
         /// The arguments this function requires.
         params: Vec<Node<ParenArgument>>,
         /// The identifier representing the return type of the function.
-        ret_ty: Node<Type>,
+        ret_ty: Node<TypeExpr>,
     },
 }

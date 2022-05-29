@@ -1,45 +1,45 @@
 //! Integration tests for the simplification operator.
 
-use fluxc_types::{Intersection, Operation, Primitive, Simplify, Type, Union};
+use fluxc_ast::{Intersection, Operation, Primitive, Simplify, TypeExpr, Union};
 use pretty_assertions::assert_eq;
 
 #[test]
 fn simplify_union() {
     // string | string = string
     assert_eq!(
-        Type::Operation(Operation::Union(Union::of(
-            Type::Primitive(Primitive::String).into(),
-            Type::Primitive(Primitive::String).into()
+        TypeExpr::Operation(Operation::Union(Union::of(
+            TypeExpr::Primitive(Primitive::String).into(),
+            TypeExpr::Primitive(Primitive::String).into()
         )))
         .simplify(),
-        Type::Primitive(Primitive::String)
+        TypeExpr::Primitive(Primitive::String)
     );
     // string | any = any
     assert_eq!(
-        Type::Operation(Operation::Union(Union::of(
-            Type::Primitive(Primitive::String).into(),
-            Type::Primitive(Primitive::Any).into()
+        TypeExpr::Operation(Operation::Union(Union::of(
+            TypeExpr::Primitive(Primitive::String).into(),
+            TypeExpr::Primitive(Primitive::Any).into()
         )))
         .simplify(),
-        Type::Primitive(Primitive::Any)
+        TypeExpr::Primitive(Primitive::Any)
     );
     // string | never = string
     assert_eq!(
-        Type::Operation(Operation::Union(Union::of(
-            Type::Primitive(Primitive::String).into(),
-            Type::Primitive(Primitive::Never).into()
+        TypeExpr::Operation(Operation::Union(Union::of(
+            TypeExpr::Primitive(Primitive::String).into(),
+            TypeExpr::Primitive(Primitive::Never).into()
         )))
         .simplify(),
-        Type::Primitive(Primitive::String)
+        TypeExpr::Primitive(Primitive::String)
     );
     // any | string = any
     assert_eq!(
-        Type::Operation(Operation::Union(Union::of(
-            Type::Primitive(Primitive::Any).into(),
-            Type::Primitive(Primitive::String).into()
+        TypeExpr::Operation(Operation::Union(Union::of(
+            TypeExpr::Primitive(Primitive::Any).into(),
+            TypeExpr::Primitive(Primitive::String).into()
         )))
         .simplify(),
-        Type::Primitive(Primitive::Any)
+        TypeExpr::Primitive(Primitive::Any)
     );
 }
 
@@ -47,54 +47,54 @@ fn simplify_union() {
 fn simplify_intersection() {
     // string & string = string
     assert_eq!(
-        Type::Operation(Operation::Intersection(Intersection::of(
-            Type::Primitive(Primitive::String).into(),
-            Type::Primitive(Primitive::String).into()
+        TypeExpr::Operation(Operation::Intersection(Intersection::of(
+            TypeExpr::Primitive(Primitive::String).into(),
+            TypeExpr::Primitive(Primitive::String).into()
         )))
         .simplify(),
-        Type::Primitive(Primitive::String)
+        TypeExpr::Primitive(Primitive::String)
     );
     // string & any = string
     assert_eq!(
-        Type::Operation(Operation::Intersection(Intersection::of(
-            Type::Primitive(Primitive::String).into(),
-            Type::Primitive(Primitive::Any).into()
+        TypeExpr::Operation(Operation::Intersection(Intersection::of(
+            TypeExpr::Primitive(Primitive::String).into(),
+            TypeExpr::Primitive(Primitive::Any).into()
         )))
         .simplify(),
-        Type::Primitive(Primitive::String)
+        TypeExpr::Primitive(Primitive::String)
     );
     // string & never = never
     assert_eq!(
-        Type::Operation(Operation::Intersection(Intersection::of(
-            Type::Primitive(Primitive::String).into(),
-            Type::Primitive(Primitive::Never).into()
+        TypeExpr::Operation(Operation::Intersection(Intersection::of(
+            TypeExpr::Primitive(Primitive::String).into(),
+            TypeExpr::Primitive(Primitive::Never).into()
         )))
         .simplify(),
-        Type::Primitive(Primitive::Never)
+        TypeExpr::Primitive(Primitive::Never)
     );
     // never & string = never
     assert_eq!(
-        Type::Operation(Operation::Intersection(Intersection::of(
-            Type::Primitive(Primitive::Never).into(),
-            Type::Primitive(Primitive::String).into()
+        TypeExpr::Operation(Operation::Intersection(Intersection::of(
+            TypeExpr::Primitive(Primitive::Never).into(),
+            TypeExpr::Primitive(Primitive::String).into()
         )))
         .simplify(),
-        Type::Primitive(Primitive::Never)
+        TypeExpr::Primitive(Primitive::Never)
     );
 
     // string & (string | number) = string
     assert_eq!(
-        Type::Operation(Operation::Intersection(
+        TypeExpr::Operation(Operation::Intersection(
             Intersection::of(
-                Type::Primitive(Primitive::String).into(),
-                Type::Operation(Operation::Union(Union::of(
-                    Type::Primitive(Primitive::String).into(),
-                    Type::Primitive(Primitive::Int).into()
+                TypeExpr::Primitive(Primitive::String).into(),
+                TypeExpr::Operation(Operation::Union(Union::of(
+                    TypeExpr::Primitive(Primitive::String).into(),
+                    TypeExpr::Primitive(Primitive::Int).into()
                 )))
             )
             .into()
         ))
         .simplify(),
-        Type::Primitive(Primitive::String)
+        TypeExpr::Primitive(Primitive::String)
     );
 }

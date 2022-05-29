@@ -12,7 +12,6 @@
 //! into valid LLVM code.
 
 use fluxc_span::Span;
-use fluxc_types::{Type, Typed};
 
 mod expr;
 mod stmt;
@@ -62,7 +61,7 @@ impl Node<()> {
 
 /// Generic implemetation of typed for all nodes
 impl<T: Typed> Typed for Node<T> {
-    fn as_type(&self) -> Type {
+    fn as_type(&self) -> TypeExpr {
         self.value.as_type()
     }
 }

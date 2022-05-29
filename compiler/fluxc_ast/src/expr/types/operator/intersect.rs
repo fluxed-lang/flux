@@ -1,31 +1,31 @@
-use crate::{Operation, Primitive, Simplify, Type, Unify, Union};
+use crate::{Operation, Primitive, Simplify, TypeExpr, Unify, Union};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Intersection {
-    pub lhs: Box<Type>,
-    pub rhs: Box<Type>,
+    pub lhs: Box<TypeExpr>,
+    pub rhs: Box<TypeExpr>,
 }
 
 impl Intersection {
-    pub fn of(lhs: Type, rhs: Type) -> Self {
+    pub fn of(lhs: TypeExpr, rhs: TypeExpr) -> Self {
         Self { lhs: Box::new(lhs), rhs: Box::new(rhs) }
     }
 }
 
 /// A trait for type intersection.
 pub trait Intersect<B> {
-    fn intersect(&self, b: &B) -> Type;
+    fn intersect(&self, b: &B) -> TypeExpr;
 }
 
 // implement Intersect for Type
-impl Intersect<Type> for Type {
-    fn intersect(&self, b: &Type) -> Type {
+impl Intersect<TypeExpr> for TypeExpr {
+    fn intersect(&self, b: &TypeExpr) -> TypeExpr {
         Intersection::of(self.clone(), b.clone()).simplify()
     }
 }
 
-impl Into<Type> for Intersection {
-    fn into(self) -> Type {
+impl Into<TypeExpr> for Intersection {
+    fn into(self) -> TypeExpr {
         self.simplify()
     }
 }
@@ -39,7 +39,7 @@ impl Into<Type> for Intersection {
 /// - (A | B) & (C | D) = (A & C) | (A & D) | (B & C) | (B & D)
 /// These are applied in order in an attempt to simplify the tree.
 impl Simplify for Intersection {
-    fn simplify(&self) -> Type {
+    fn simplify(&self) -> TypeExpr {
         let lhs = self.lhs.simplify();
         let rhs = self.rhs.simplify();
         // T & T = T
@@ -47,18 +47,18 @@ impl Simplify for Intersection {
             return lhs;
         }
         // T & any = T
-        if lhs == Type::Primitive(Primitive::Any) {
+        if lhs == TypeExpr::Primitive(Primitive::Any) {
             return rhs;
         }
-        if rhs == Type::Primitive(Primitive::Any) {
+        if rhs == TypeExpr::Primitive(Primitive::Any) {
             return lhs;
         }
         // T & never = never
-        if lhs == Type::Primitive(Primitive::Never) {
-            return Type::Primitive(Primitive::Never);
+        if lhs == TypeExpr::Primitive(Primitive::Never) {
+            return TypeExpr::Primitive(Primitive::Never);
         }
-        if rhs == Type::Primitive(Primitive::Never) {
-            return Type::Primitive(Primitive::Never);
+        if rhs == TypeExpr::Primitive(Primitive::Never) {
+            return TypeExpr::Primitive(Primitive::Never);
         }
         if lhs == rhs {
             return lhs.into();
@@ -67,8 +67,8 @@ impl Simplify for Intersection {
         match (&lhs, &rhs) {
             // (A | B) & (C | D) = (A & C) | (A & D) | (B & C) | (B & D)
             (
-                Type::Operation(Operation::Union(Union { lhs: a, rhs: b })),
-                Type::Operation(Operation::Union(Union { lhs: c, rhs: d })),
+                TypeExpr::Operation(Operation::Union(Union { lhs: a, rhs: b })),
+                TypeExpr::Operation(Operation::Union(Union { lhs: c, rhs: d })),
             ) => {
                 return a
                     .intersect(&c)
@@ -78,11 +78,11 @@ impl Simplify for Intersection {
                     .simplify();
             }
             // T & (A | B) = (T & A) | (T & B)
-            (t, Type::Operation(Operation::Union(Union { lhs, rhs }))) => {
+            (t, TypeExpr::Operation(Operation::Union(Union { lhs, rhs }))) => {
                 return lhs.intersect(&t).unify(&rhs.intersect(&t)).simplify();
             }
             // A & B where A and B's are primitives
-            (Type::Primitive(a), Type::Primitive(b)) => {
+            (TypeExpr::Primitive(a), TypeExpr::Primitive(b)) => {
                 if a == b {
                     return a.into();
                 }
@@ -117,37 +117,39 @@ impl Simplify for Intersection {
             _ => (),
         }
 
-        Type::Operation(Operation::Intersection(Intersection::of(lhs.into(), rhs.into())))
+        TypeExpr::Operation(Operation::Intersection(Intersection::of(lhs.into(), rhs.into())))
     }
 }
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
 
-    use crate::{Intersect, Primitive, Type};
+    use crate::{Intersect, Primitive, TypeExpr};
 
     #[test]
     fn primitive_intersection() {
         // string & string = string
         assert_eq!(
-            Type::Primitive(Primitive::String).intersect(&Type::Primitive(Primitive::String)),
-            Type::Primitive(Primitive::String)
+            TypeExpr::Primitive(Primitive::String)
+                .intersect(&TypeExpr::Primitive(Primitive::String)),
+            TypeExpr::Primitive(Primitive::String)
         );
         // string & any = string
         assert_eq!(
-            Type::Primitive(Primitive::String).intersect(&Type::Primitive(Primitive::Any)),
-            Type::Primitive(Primitive::String)
+            TypeExpr::Primitive(Primitive::String).intersect(&TypeExpr::Primitive(Primitive::Any)),
+            TypeExpr::Primitive(Primitive::String)
         );
         // string & never = never
         assert_eq!(
-            Type::Primitive(Primitive::String).intersect(&Type::Primitive(Primitive::Never)),
-            Type::Primitive(Primitive::Never)
+            TypeExpr::Primitive(Primitive::String)
+                .intersect(&TypeExpr::Primitive(Primitive::Never)),
+            TypeExpr::Primitive(Primitive::Never)
         );
         // string & "hello" = "hello"
         assert_eq!(
-            Type::Primitive(Primitive::String)
-                .intersect(&Type::Primitive(Primitive::StringLiteral("hello".to_string()))),
-            Type::Primitive(Primitive::StringLiteral("hello".to_string()))
+            TypeExpr::Primitive(Primitive::String)
+                .intersect(&TypeExpr::Primitive(Primitive::StringLiteral("hello".to_string()))),
+            TypeExpr::Primitive(Primitive::StringLiteral("hello".to_string()))
         );
     }
 }

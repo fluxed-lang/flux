@@ -8,7 +8,7 @@ pub use primitive::*;
 
 /// The root-level type expression enumeration
 #[derive(Debug, Clone)]
-pub enum Type {
+pub enum TypeExpr {
     /// A primitive type.
     Primitive(Primitive),
     /// A type operation.
@@ -16,30 +16,30 @@ pub enum Type {
     /// A type to be inferred from the type tree.
     Infer,
     /// A circular type reference.
-    Circular(Box<Type>),
+    Circular(Box<TypeExpr>),
 }
 
 /// Trait implemented by structures that have or represent a Flux type.
 pub trait Typed: Debug + Sized {
     /// This method returns this object as a flux type.
-    fn as_type(&self) -> Type;
+    fn as_type(&self) -> TypeExpr;
     /// This method consumes this object and returns its type representation.
-    fn into_type(self) -> Type {
+    fn into_type(self) -> TypeExpr {
         self.as_type()
     }
 }
 
 impl<T: Typed> Typed for Box<T> {
-    fn as_type(&self) -> Type {
+    fn as_type(&self) -> TypeExpr {
         (**self).as_type()
     }
 }
 
-impl PartialEq for Type {
+impl PartialEq for TypeExpr {
     fn eq(&self, other: &Self) -> bool {
         match (self.simplify(), other.simplify()) {
-            (Type::Primitive(a), Type::Primitive(b)) => a == b,
-            (Type::Operation(a), Type::Operation(b)) => a == b,
+            (TypeExpr::Primitive(a), TypeExpr::Primitive(b)) => a == b,
+            (TypeExpr::Operation(a), TypeExpr::Operation(b)) => a == b,
             _ => false,
         }
     }

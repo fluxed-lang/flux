@@ -1,15 +1,15 @@
-use crate::{Operation, Primitive, Simplify, Type};
+use crate::{Operation, Primitive, Simplify, TypeExpr};
 
 /// Represents the union of two types.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Union {
-    pub lhs: Box<Type>,
-    pub rhs: Box<Type>,
+    pub lhs: Box<TypeExpr>,
+    pub rhs: Box<TypeExpr>,
 }
 
 impl Union {
     /// Creates a new union of two types.
-    pub fn of(lhs: Type, rhs: Type) -> Self {
+    pub fn of(lhs: TypeExpr, rhs: TypeExpr) -> Self {
         Self { lhs: Box::new(lhs), rhs: Box::new(rhs) }
     }
 }
@@ -17,23 +17,23 @@ impl Union {
 /// Trait for type union.
 pub trait Unify<B> {
     /// Find the union of two types.
-    fn unify(&self, b: &B) -> Type;
+    fn unify(&self, b: &B) -> TypeExpr;
 }
 
-impl Unify<Type> for Type {
-    fn unify(&self, b: &Type) -> Type {
-        Type::Operation(Operation::Union(Union::of(self.clone(), b.clone()))).simplify()
+impl Unify<TypeExpr> for TypeExpr {
+    fn unify(&self, b: &TypeExpr) -> TypeExpr {
+        TypeExpr::Operation(Operation::Union(Union::of(self.clone(), b.clone()))).simplify()
     }
 }
 
-impl Into<Type> for Union {
-    fn into(self) -> Type {
+impl Into<TypeExpr> for Union {
+    fn into(self) -> TypeExpr {
         self.simplify()
     }
 }
 
 impl Simplify for Union {
-    fn simplify(&self) -> Type {
+    fn simplify(&self) -> TypeExpr {
         let lhs = self.lhs.simplify();
         let rhs = self.rhs.simplify();
         // T | T = T
@@ -42,23 +42,22 @@ impl Simplify for Union {
         }
         match (&lhs, &rhs) {
             // T | any = any
-            (Type::Primitive(Primitive::Any), _) | (_, Type::Primitive(Primitive::Any)) => {
-                return Type::Primitive(Primitive::Never)
+            (TypeExpr::Primitive(Primitive::Any), _) | (_, TypeExpr::Primitive(Primitive::Any)) => {
+                return TypeExpr::Primitive(Primitive::Never)
             }
             // T | never = T
-            (Type::Primitive(Primitive::Never), _) | (_, Type::Primitive(Primitive::Never)) => {
-                return lhs
-            }
+            (TypeExpr::Primitive(Primitive::Never), _)
+            | (_, TypeExpr::Primitive(Primitive::Never)) => return lhs,
             // (A | B) | A = A | B
-            (Type::Operation(Operation::Union(Union { lhs: a, rhs: b })), c)
-            | (c, Type::Operation(Operation::Union(Union { lhs: a, rhs: b }))) => {
+            (TypeExpr::Operation(Operation::Union(Union { lhs: a, rhs: b })), c)
+            | (c, TypeExpr::Operation(Operation::Union(Union { lhs: a, rhs: b }))) => {
                 if a.as_ref() == c {
-                    return Type::Operation(Operation::Union(Union {
+                    return TypeExpr::Operation(Operation::Union(Union {
                         lhs: a.clone(),
                         rhs: c.clone().into(),
                     }));
                 } else if b.as_ref() == c {
-                    return Type::Operation(Operation::Union(Union {
+                    return TypeExpr::Operation(Operation::Union(Union {
                         lhs: c.clone().into(),
                         rhs: b.clone(),
                     }));
@@ -67,7 +66,7 @@ impl Simplify for Union {
             _ => {}
         };
         // (A | B) | A = T
-        Type::Operation(Operation::Union(Union::of(lhs.into(), rhs.into())))
+        TypeExpr::Operation(Operation::Union(Union::of(lhs.into(), rhs.into())))
     }
 }
 
@@ -75,22 +74,22 @@ impl Simplify for Union {
 mod tests {
     use pretty_assertions::assert_eq;
 
-    use crate::{Operation, Primitive, Type, Unify, Union};
+    use crate::{Operation, Primitive, TypeExpr, Unify, Union};
 
     #[test]
     fn unify_primitives() {
         // string | int = string | int
         assert_eq!(
-            Type::Primitive(Primitive::String).unify(&Type::Primitive(Primitive::Int)),
-            Type::Operation(Operation::Union(Union::of(
-                Type::Primitive(Primitive::String),
-                Type::Primitive(Primitive::Int),
+            TypeExpr::Primitive(Primitive::String).unify(&TypeExpr::Primitive(Primitive::Int)),
+            TypeExpr::Operation(Operation::Union(Union::of(
+                TypeExpr::Primitive(Primitive::String),
+                TypeExpr::Primitive(Primitive::Int),
             )))
         );
         // string | string = string
         assert_eq!(
-            Type::Primitive(Primitive::String).unify(&Type::Primitive(Primitive::String)),
-            Type::Primitive(Primitive::String)
+            TypeExpr::Primitive(Primitive::String).unify(&TypeExpr::Primitive(Primitive::String)),
+            TypeExpr::Primitive(Primitive::String)
         );
     }
 
@@ -98,45 +97,48 @@ mod tests {
     fn unify_unions() {
         // (string | int) | (string | int) = (string | int)
         assert_eq!(
-            Type::Operation(Operation::Union(Union::of(
-                Type::Operation(Operation::Union(Union::of(
-                    Type::Primitive(Primitive::String),
-                    Type::Primitive(Primitive::Int),
+            TypeExpr::Operation(Operation::Union(Union::of(
+                TypeExpr::Operation(Operation::Union(Union::of(
+                    TypeExpr::Primitive(Primitive::String),
+                    TypeExpr::Primitive(Primitive::Int),
                 ))),
-                Type::Operation(Operation::Union(Union::of(
-                    Type::Primitive(Primitive::String),
-                    Type::Primitive(Primitive::Int),
+                TypeExpr::Operation(Operation::Union(Union::of(
+                    TypeExpr::Primitive(Primitive::String),
+                    TypeExpr::Primitive(Primitive::Int),
                 ))),
             )))
-            .unify(&Type::Operation(Operation::Union(Union::of(
-                Type::Primitive(Primitive::String),
-                Type::Primitive(Primitive::Int),
+            .unify(&TypeExpr::Operation(Operation::Union(Union::of(
+                TypeExpr::Primitive(Primitive::String),
+                TypeExpr::Primitive(Primitive::Int),
             )))),
-            Type::Operation(Operation::Union(Union::of(
-                Type::Primitive(Primitive::String),
-                Type::Primitive(Primitive::Int),
+            TypeExpr::Operation(Operation::Union(Union::of(
+                TypeExpr::Primitive(Primitive::String),
+                TypeExpr::Primitive(Primitive::Int),
             )))
         );
         // (string | int) | (string | float) = (string | int | float)
         assert_eq!(
-            Type::Operation(Operation::Union(Union::of(
-                Type::Operation(Operation::Union(Union::of(
-                    Type::Primitive(Primitive::String),
-                    Type::Primitive(Primitive::Int),
+            TypeExpr::Operation(Operation::Union(Union::of(
+                TypeExpr::Operation(Operation::Union(Union::of(
+                    TypeExpr::Primitive(Primitive::String),
+                    TypeExpr::Primitive(Primitive::Int),
                 ))),
-                Type::Operation(Operation::Union(Union::of(
-                    Type::Primitive(Primitive::String),
-                    Type::Primitive(Primitive::Float),
+                TypeExpr::Operation(Operation::Union(Union::of(
+                    TypeExpr::Primitive(Primitive::String),
+                    TypeExpr::Primitive(Primitive::Float),
                 ))),
             )))
-            .unify(&Type::Operation(Operation::Union(Union::of(
-                Type::Primitive(Primitive::String),
-                Type::Primitive(Primitive::Int),
+            .unify(&TypeExpr::Operation(Operation::Union(Union::of(
+                TypeExpr::Primitive(Primitive::String),
+                TypeExpr::Primitive(Primitive::Int),
             )))),
-            Type::Operation(Operation::Union(Union::of(
-                Union::of(Type::Primitive(Primitive::String), Type::Primitive(Primitive::Int),)
-                    .into(),
-                Type::Primitive(Primitive::Float),
+            TypeExpr::Operation(Operation::Union(Union::of(
+                Union::of(
+                    TypeExpr::Primitive(Primitive::String),
+                    TypeExpr::Primitive(Primitive::Int),
+                )
+                .into(),
+                TypeExpr::Primitive(Primitive::Float),
             )))
         );
     }
