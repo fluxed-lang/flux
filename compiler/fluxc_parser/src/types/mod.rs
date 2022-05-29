@@ -1,22 +1,16 @@
-use fluxc_types::{Operation, Primitive, Type, Typed};
+use fluxc_ast::{Node, TypeExpr};
+use fluxc_errors::CompilerError;
+use pest::iterators::Pair;
 
-use crate::Parse;
+use crate::{Parse, Rule};
 
-/// Root enumeration representing type expressions.
-#[derive(Debug)]
-pub enum TypeExpr {
-    /// A primitive type.
-    Primitive(Primitive),
-    /// A type operation.
-    Operation(Operation),
-    /// A type to be inferred from the type tree.
-    Infer,
-    /// A circular type reference.
-    Circular(Box<Type>),
+mod primitive;
+
+impl Parse for TypeExpr {
+    fn parse<'i>(
+        input: Pair<'i, Rule>,
+        ctx: &mut crate::Context,
+    ) -> Result<Node<Self>, CompilerError> {
+        todo!()
+    }
 }
-
-impl Typed for TypeExpr {
-    fn as_type(&self) -> Type {}
-}
-
-impl Parse for TypeExpr {}

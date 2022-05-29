@@ -3,10 +3,9 @@
 //! This module handles:
 //! - Local function declarations
 //! - External function declarations
-use fluxc_ast::{Block, FuncCall, FuncDecl, Ident, Node, ParenArgument};
+use fluxc_ast::{Block, FuncCall, FuncDecl, Ident, Node, ParenArgument, TypeExpr};
 use fluxc_errors::CompilerError;
 use fluxc_span::Span;
-use fluxc_types::Type;
 use pest::iterators::Pair;
 
 use crate::{unexpected_rule, Context, Parse, Rule};
@@ -31,7 +30,7 @@ impl Parse for ParenArgument {
         let node = ctx.new_empty(input.as_span());
         let mut inner = input.into_inner();
         let ident = Ident::parse(inner.next().unwrap(), ctx)?;
-        let ty = Type::parse(inner.next().unwrap(), ctx)?;
+        let ty = TypeExpr::parse(inner.next().unwrap(), ctx)?;
         Ok(node.fill(ParenArgument { ident, ty }))
     }
 }
@@ -59,16 +58,16 @@ impl Parse for FuncDecl {
         match rule {
             Rule::func_decl => {
                 let ret_ty = if inner.peek().map(|pair| pair.as_rule()).contains(&Rule::type_expr) {
-                    Type::parse(inner.next().unwrap(), ctx)?
+                    TypeExpr::parse(inner.next().unwrap(), ctx)?
                 } else {
-                    ctx.new_node(Span::new(0, 0), Type::Infer(None))
+                    ctx.new_node(Span::new(0, 0), TypeExpr::Infer)
                 };
                 let body = Block::parse(inner.next().unwrap(), ctx)?;
                 Ok(ctx.new_node(span, FuncDecl::Local { ident, params, body, ret_ty }))
             }
             Rule::extern_func_decl => {
                 // parse the return type
-                let ret_ty = Type::parse(inner.next().unwrap(), ctx)?;
+                let ret_ty = TypeExpr::parse(inner.next().unwrap(), ctx)?;
                 Ok(ctx.new_node(span, FuncDecl::External { ident, params, ret_ty }))
             }
             rule => unexpected_rule(rule, Rule::func_decl),

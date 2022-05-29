@@ -146,15 +146,23 @@ impl StructBuilder {
             internal: false,
             fields: Some(
                 self.fields
-                    .into_iter()
+                    .iter()
                     .map(|(name, ty)| {
-                        let field = TypeField { index, name, ty };
+                        let field = TypeField { index, name: name.clone(), ty: *ty };
                         index += 1;
                         field
                     })
                     .collect(),
             ),
-            size: None,
+            size: self
+                .fields
+                .iter()
+                .map(|(_, ty)| table.find(*ty).expect("failed to find type").size)
+                .reduce(|size, out| match (size, out) {
+                    (Some(a), Some(b)) => Some(a + b),
+                    _ => None,
+                })
+                .and_then(|v| v),
         })
     }
 }
@@ -172,7 +180,8 @@ mod tests {
         assert_eq!(my_struct.id, 6);
         assert_eq!(
             my_struct.fields,
-            Some(vec![TypeField { index: 0, name: "inner".to_string(), ty: 0 }])
-        )
+            Some(vec![TypeField { index: 0, name: "inner".to_string(), ty: 0 }]),
+        );
+		assert_eq!(my_struct.size, Some(8));
     }
 }
