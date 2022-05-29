@@ -1,3 +1,5 @@
+//! Integration tests for the simplification operator.
+
 use fluxc_types::{Intersection, Operation, Primitive, Simplify, Type, Union};
 use pretty_assertions::assert_eq;
 

@@ -1,3 +1,5 @@
+//! Integration tests for the intersection operator.
+
 use fluxc_types::{Intersection, Operation, Primitive, Simplify, Type, Union};
 
 #[test]
