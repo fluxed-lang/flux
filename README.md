@@ -23,4 +23,4 @@ loop {
 
 ## License
 
-Flux is licensed under the MIT License.
+Flux is licensed under the LGPLv3 License.
