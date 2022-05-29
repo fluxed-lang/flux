@@ -56,9 +56,9 @@ pub enum Expr {
 }
 
 impl Typed for Expr {
-    fn type_of(&self) -> Type {
+    fn as_type(&self) -> Type {
         match self {
-            Expr::Literal(literal) => literal.type_of(),
+            Expr::Literal(literal) => literal.as_type(),
             Expr::Ident(_) => todo!(),
             Expr::BinaryExpr(_) => todo!(),
             Expr::Block(_) => todo!(),

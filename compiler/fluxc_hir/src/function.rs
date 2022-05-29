@@ -47,7 +47,7 @@ pub struct Argument {
 }
 
 impl Typed for Function {
-    fn type_of(&self) -> Type {
+    fn as_type(&self) -> Type {
         todo!()
     }
 }

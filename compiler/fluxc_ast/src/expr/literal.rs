@@ -21,7 +21,7 @@ pub enum Literal {
 }
 
 impl Typed for Literal {
-    fn type_of(&self) -> Type {
+    fn as_type(&self) -> Type {
         match self {
             Literal::Int(val) => Type::Primitive(Primitive::IntLiteral(*val)),
             Literal::Float(val) => Type::Primitive(Primitive::FloatLiteral(*val)),
@@ -34,7 +34,7 @@ impl Typed for Literal {
             Literal::Array(items) => Type::Operation(Operation::Array(
                 items
                     .iter()
-                    .map(|item| item.type_of())
+                    .map(|item| item.as_type())
                     .reduce(|out, ty| out.unify(&ty))
                     .unwrap()
                     .into(),

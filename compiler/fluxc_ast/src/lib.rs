@@ -62,8 +62,8 @@ impl Node<()> {
 
 /// Generic implemetation of typed for all nodes
 impl<T: Typed> Typed for Node<T> {
-    fn type_of(&self) -> Type {
-        self.value.type_of()
+    fn as_type(&self) -> Type {
+        self.value.as_type()
     }
 }
 

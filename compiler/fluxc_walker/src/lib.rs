@@ -108,7 +108,7 @@ impl Walker {
         self.variables.push(Variable {
             name: decl.ident.value.clone(),
             mutability: decl.mutability,
-            ty: decl.explicit_ty.clone().map(|inner| inner.value).unwrap_or(decl.value.type_of()),
+            ty: decl.explicit_ty.clone().map(|inner| inner.value).unwrap_or(decl.value.as_type()),
         });
     }
 
