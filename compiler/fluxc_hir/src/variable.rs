@@ -1,5 +1,4 @@
-use fluxc_ast::Mutability;
-use fluxc_types::Type;
+use fluxc_ast::{Mutability, TypeExpr};
 
 #[derive(Debug)]
 pub struct Variable {
@@ -8,5 +7,5 @@ pub struct Variable {
     /// The mutability of this variable.
     pub mutability: Mutability,
     /// The type of this variable.
-    pub ty: Type,
+    pub ty: TypeExpr,
 }

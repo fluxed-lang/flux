@@ -1,6 +1,5 @@
 use fluxc_ast::{Block, Declaration, FuncDecl, Node, Stmt};
 use fluxc_hir::{Function, Variable};
-use fluxc_types::Typed;
 
 /// Represents a stack.
 #[derive(Debug)]

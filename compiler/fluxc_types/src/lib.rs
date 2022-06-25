@@ -1,10 +1,17 @@
+//! Defines the type table and builders for sized types.
+
+pub mod builder;
+
+/// Type alias for the IDs of types.
+pub type TypeId = usize;
+
 /// Datatype that contains type information.
 #[derive(Debug)]
 pub struct TypeTable {
     /// Entries within the table.
     entries: Vec<KeyedTableEntry>,
     /// THe next type ID.
-    next_id: usize,
+    next_id: TypeId,
 }
 
 impl TypeTable {
@@ -20,38 +27,32 @@ impl TypeTable {
         table.append(TableEntry {
             name: "int".into(),
             size: Some(8),
-            internal: false,
             fields: Some(vec![]),
         });
         table.append(TableEntry {
             name: "float".into(),
             size: Some(8),
-            internal: false,
             fields: Some(vec![]),
         });
         table.append(TableEntry {
             name: "bool".into(),
             size: Some(1),
-            internal: false,
             fields: Some(vec![]),
         });
         table.append(TableEntry {
             name: "char".into(),
             size: Some(8),
-            internal: false,
             fields: Some(vec![]),
         });
         table.append(TableEntry {
             name: "unit".into(),
             size: Some(0),
-            internal: false,
             fields: Some(vec![]),
         });
         // reference
         table.append(TableEntry {
             name: "ref".into(),
             size: Some(8),
-            internal: false,
             fields: Some(vec![]),
         });
         table
@@ -73,7 +74,6 @@ impl TypeTable {
             id: self.next_id,
             name: entry.name,
             size: entry.size,
-            internal: entry.internal,
             fields: entry.fields,
         });
         self.next_id += 1;
@@ -85,14 +85,12 @@ impl TypeTable {
 #[derive(Debug, PartialEq)]
 pub struct KeyedTableEntry {
     /// The ID of this type.
-    pub id: usize,
+    pub id: TypeId,
     /// The name of this type.
     pub name: String,
     /// The size of this type in bytes. If this typed is unsized,
     /// then this value is `None`.
     pub size: Option<u8>,
-    /// Whether this type is internal or not.
-    pub internal: bool,
     /// Fields on this type.
     pub fields: Option<Vec<TypeField>>,
 }
@@ -104,8 +102,6 @@ pub struct TableEntry {
     /// The size of this type in bytes. If this typed is unsized,
     /// then this value is `None`.
     pub size: Option<u8>,
-    /// Whether this type is internal or not.
-    pub internal: bool,
     /// Fields on this type.
     pub fields: Option<Vec<TypeField>>,
 }
@@ -121,56 +117,9 @@ pub struct TypeField {
     pub ty: usize,
 }
 
-/// Utility type for creating struct types.
-#[derive(Debug)]
-pub struct StructBuilder {
-    name: String,
-    fields: Vec<(String, usize)>,
-}
-
-impl StructBuilder {
-    /// Create a new struct builder.
-    pub fn new<S: ToString>(name: S) -> Self {
-        StructBuilder { name: name.to_string(), fields: vec![] }
-    }
-    /// Add a field to this type.
-    pub fn field<S: ToString>(mut self, name: S, ty: &KeyedTableEntry) -> Self {
-        self.fields.push((name.to_string(), ty.id));
-        self
-    }
-    /// Build the output struct.
-    pub fn build(self, table: &mut TypeTable) -> &KeyedTableEntry {
-        let mut index = 0;
-        table.append(TableEntry {
-            name: self.name,
-            internal: false,
-            fields: Some(
-                self.fields
-                    .iter()
-                    .map(|(name, ty)| {
-                        let field = TypeField { index, name: name.clone(), ty: *ty };
-                        index += 1;
-                        field
-                    })
-                    .collect(),
-            ),
-            size: self
-                .fields
-                .iter()
-                .map(|(_, ty)| table.find(*ty).expect("failed to find type").size)
-                .reduce(|size, out| match (size, out) {
-                    (Some(a), Some(b)) => Some(a + b),
-                    _ => None,
-                })
-                .and_then(|v| v),
-        })
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use super::StructBuilder;
-    use crate::{TypeField, TypeTable};
+    use crate::{TypeField, TypeTable, builder::StructBuilder};
 
     #[test]
     fn test_create_struct() {
