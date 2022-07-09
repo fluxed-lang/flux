@@ -4,7 +4,6 @@ members = [
 	"fluxc_hir",
 	"fluxc_span",
 	"fluxc_tests",
-	"fluxc_walker",
     "fluxc_ast",
     "fluxc_codegen",
     "fluxc_parser",
