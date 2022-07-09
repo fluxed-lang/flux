@@ -9,6 +9,7 @@ use pest::{error::Error, iterators::Pair, Parser};
 mod expr;
 mod stmt;
 mod ty;
+mod span;
 
 /// Internal moduel to prevent leakage of the `Rule` type to external
 /// crates.
