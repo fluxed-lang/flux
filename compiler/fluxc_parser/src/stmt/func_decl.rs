@@ -16,7 +16,7 @@ impl Parse for FuncCall {
     fn parse<'i>(
         input: Pair<'i, crate::Rule>,
         ctx: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    ) -> PResult<Self> {
         todo!()
     }
 }
@@ -26,7 +26,7 @@ impl Parse for ParenArgument {
     fn parse<'i>(
         input: Pair<'i, crate::Rule>,
         ctx: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    ) -> PResult<Self> {
         debug_assert_eq!(input.as_rule(), Rule::func_decl_param);
         let node = ctx.new_empty(input.as_span());
         let mut inner = input.into_inner();
@@ -41,7 +41,7 @@ impl Parse for FuncDecl {
     fn parse<'i>(
         input: Pair<'i, crate::Rule>,
         ctx: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    ) -> PResult<Self> {
         let span = input.as_span();
         let rule = input.as_rule();
         let mut inner = input.into_inner();

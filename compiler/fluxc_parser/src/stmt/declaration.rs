@@ -9,7 +9,7 @@ impl Parse for Declaration {
     fn parse<'i>(
         input: Pair<'i, Rule>,
         context: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    ) -> PResult<Self> {
         let node = context.new_empty(input.as_span());
         // declaration is either a let or a mutable declaration.
         let decl = match input.as_rule() {

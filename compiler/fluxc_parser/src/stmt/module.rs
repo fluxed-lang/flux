@@ -11,7 +11,7 @@ impl Parse for ImportedSymbol {
     fn parse<'i>(
         input: Pair<'i, Rule>,
         context: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    ) -> PResult<Self> {
         todo!()
     }
 }
@@ -21,7 +21,7 @@ impl Parse for Import {
     fn parse<'i>(
         input: Pair<'i, Rule>,
         context: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    ) -> PResult<Self> {
         todo!()
     }
 }
@@ -31,7 +31,7 @@ impl Parse for Export {
     fn parse<'i>(
         input: Pair<'i, Rule>,
         context: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    ) -> PResult<Self> {
         todo!()
     }
 }

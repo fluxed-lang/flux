@@ -16,7 +16,7 @@ impl Parse for Expr {
     fn parse<'i>(
         input: Pair<'i, Rule>,
         context: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    ) -> PResult<Self> {
         debug_assert_eq!(input.as_rule(), Rule::expr);
         // create node and unwrap inner rule
         let node = context.new_empty(input.as_span());

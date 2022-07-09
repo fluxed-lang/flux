@@ -9,7 +9,7 @@ impl Parse for Type {
     fn parse<'i>(
         input: Pair<'i, crate::parser::Rule>,
         ctx: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    ) -> PResult<Self> {
         todo!()
     }
 }

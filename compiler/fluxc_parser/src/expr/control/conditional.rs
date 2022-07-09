@@ -1,12 +1,11 @@
-use fluxc_ast::{Block, Conditional, Expr, IfStmt, Node};
-use fluxc_errors::CompilerError;
+use fluxc_ast::{Block, Conditional, Expr, IfStmt};
 use pest::iterators::Pair;
 
-use crate::{Context, Parse, Rule};
+use crate::{Context, Parse, Rule, PResult};
 
 impl Parse for Conditional {
     #[tracing::instrument]
-    fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> Result<Node<Self>, CompilerError> {
+    fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> PResult<Self> {
         debug_assert_eq!(input.as_rule(), Rule::conditional_stmt);
         let node = ctx.new_empty(input.as_span());
         let mut inner = input.into_inner();
@@ -34,7 +33,7 @@ impl Parse for Conditional {
 
 impl Parse for IfStmt {
     #[tracing::instrument]
-    fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> Result<Node<Self>, CompilerError> {
+    fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> PResult<Self> {
         debug_assert!(input.as_rule() == Rule::if_stmt || input.as_rule() == Rule::else_if_stmt);
         let node = ctx.new_empty(input.as_span());
         // unwrap into inner

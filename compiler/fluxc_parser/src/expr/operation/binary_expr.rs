@@ -61,7 +61,7 @@ lazy_static! {
 
 impl Parse for BinaryExpr {
     #[tracing::instrument]
-    fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> Result<Node<Self>, CompilerError> {
+    fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> PResult<Self> {
         debug_assert_eq!(input.as_rule(), Rule::binary_expr);
         let inner = input.into_inner();
         let ctx = Mutex::new(ctx);

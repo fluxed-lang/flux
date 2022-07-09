@@ -1,12 +1,11 @@
-use fluxc_ast::{Block, Loop, Node};
-use fluxc_errors::CompilerError;
+use fluxc_ast::{Block, Loop};
 use pest::iterators::Pair;
 
-use crate::{Context, Parse, Rule};
+use crate::{Context, Parse, Rule, PResult};
 
 impl Parse for Loop {
     #[tracing::instrument]
-    fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> Result<Node<Self>, CompilerError> {
+    fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> PResult<Self> {
         debug_assert_eq!(input.as_rule(), Rule::loop_stmt);
         let node = ctx.new_empty(input.as_span());
         let inner = input.into_inner();

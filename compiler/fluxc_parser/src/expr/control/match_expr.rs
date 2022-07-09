@@ -1,15 +1,14 @@
-use fluxc_ast::{Expr, Match, MatchBranch, Node};
-use fluxc_errors::CompilerError;
+use fluxc_ast::{Expr, Match, MatchBranch};
 use pest::iterators::Pair;
 
-use crate::{Context, Parse, Rule};
+use crate::{Context, Parse, Rule, PResult};
 
 impl Parse for Match {
     #[tracing::instrument]
     fn parse<'i>(
         input: Pair<'i, Rule>,
         context: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    ) -> PResult<Self> {
         debug_assert_eq!(input.as_rule(), Rule::match_expr);
         let node = context.new_empty(input.as_span());
         let mut inner = input.into_inner();
@@ -25,7 +24,7 @@ impl Parse for MatchBranch {
     fn parse<'i>(
         input: Pair<'i, Rule>,
         context: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    ) -> PResult<Self> {
         debug_assert_eq!(input.as_rule(), Rule::match_branch);
         let node = context.new_empty(input.as_span());
         let mut inner = input.into_inner();

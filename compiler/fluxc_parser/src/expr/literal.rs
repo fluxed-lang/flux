@@ -16,7 +16,7 @@ impl Parse for Literal {
     fn parse<'i>(
         input: Pair<'i, Rule>,
         context: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    ) -> PResult<Self> {
         let node = context.new_empty(input.as_span());
         let inner = input.into_inner().next().unwrap();
         // match inner rule

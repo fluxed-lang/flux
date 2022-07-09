@@ -17,7 +17,7 @@ impl Parse for Stmt {
     fn parse<'i>(
         input: Pair<'i, Rule>,
         context: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    ) -> PResult<Self> {
         debug_assert_eq!(input.as_rule(), Rule::statement);
         let node = context.new_empty(input.as_span());
         // statement rule has only one child

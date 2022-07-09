@@ -9,7 +9,7 @@ impl Parse for Block {
     fn parse<'i>(
         input: Pair<'i, Rule>,
         context: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    ) -> PResult<Self> {
         debug_assert_eq!(input.as_rule(), Rule::block);
         let node = context.new_empty(input.as_span());
         // parse child statements

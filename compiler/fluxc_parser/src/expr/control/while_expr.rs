@@ -1,12 +1,11 @@
-use fluxc_ast::{Block, Expr, Node, While};
-use fluxc_errors::CompilerError;
+use fluxc_ast::{Block, Expr, While};
 use pest::iterators::Pair;
 
-use crate::{Context, Parse, Rule};
+use crate::{Context, Parse, Rule, PResult};
 
 impl Parse for While {
     #[tracing::instrument]
-    fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> Result<Node<Self>, CompilerError> {
+    fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> PResult<Self> {
         debug_assert_eq!(input.as_rule(), Rule::while_stmt);
         let node = ctx.new_empty(input.as_span());
         let mut inner = input.into_inner();

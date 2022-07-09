@@ -1,12 +1,11 @@
-use fluxc_ast::{Expr, Ident, Literal, Node, UnaryExpr, UnaryOp};
-use fluxc_errors::CompilerError;
+use fluxc_ast::{Expr, Ident, Literal, UnaryExpr, UnaryOp};
 use pest::iterators::Pair;
 
-use crate::{unexpected_rule, Context, Parse, Rule};
+use crate::{unexpected_rule, Context, Parse, Rule, PResult};
 
 impl Parse for UnaryExpr {
     #[tracing::instrument]
-    fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> Result<Node<Self>, CompilerError> {
+    fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> PResult<Self> {
         debug_assert_eq!(input.as_rule(), Rule::unary_expr);
         let outer_span = input.as_span();
         let node = ctx.new_empty(input.as_span());
