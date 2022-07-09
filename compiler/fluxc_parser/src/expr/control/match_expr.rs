@@ -45,14 +45,14 @@ mod tests {
         // match x {}
         let expected = Node {
             id: 0,
-            span: root.restrict_range(0, 9),
+            span: root.restrict_range(0, 10),
             value: Match {
                 expr: Box::new(Node {
                     id: 1,
-                    span: root.restrict_range(6, 6),
+                    span: root.restrict_range(6, 7),
                     value: Expr::Ident(Node {
                         id: 2,
-                        span: root.restrict_range(6, 6),
+                        span: root.restrict_range(6, 7),
                         value: "x".to_string(),
                     }),
                 }),
@@ -74,37 +74,37 @@ mod tests {
         // match x { 1 -> 1, 2 -> 2 }
         let expected = Node {
             id: 0,
-            span: root.restrict_range(0, 25),
+            span: root.restrict_range(0, 26),
             value: Match {
                 expr: Box::new(Node {
                     id: 1,
-                    span: root.restrict_range(6, 6),
+                    span: root.restrict_range(6, 7),
                     value: Expr::Ident(Node {
                         id: 2,
-                        span: root.restrict_range(6, 6),
+                        span: root.restrict_range(6, 7),
                         value: "x".to_string(),
                     }),
                 }),
                 cases: vec![
                     Node {
                         id: 3,
-                        span: root.restrict_range(10, 15),
+                        span: root.restrict_range(10, 16),
                         value: MatchBranch {
                             pattern: Node {
                                 id: 4,
-                                span: root.restrict_range(10, 10),
+                                span: root.restrict_range(10, 11),
                                 value: Expr::Literal(Node {
                                     id: 5,
-                                    span: root.restrict_range(10, 10),
+                                    span: root.restrict_range(10, 11),
                                     value: Literal::Int(1),
                                 }),
                             },
                             value: Node {
                                 id: 6,
-                                span: root.restrict_range(15, 15),
+                                span: root.restrict_range(15, 16),
                                 value: Expr::Literal(Node {
                                     id: 7,
-                                    span: root.restrict_range(15, 15),
+                                    span: root.restrict_range(15, 16),
                                     value: Literal::Int(1),
                                 }),
                             },
@@ -112,23 +112,23 @@ mod tests {
                     },
                     Node {
                         id: 8,
-                        span: root.restrict_range(18, 23),
+                        span: root.restrict_range(18, 24),
                         value: MatchBranch {
                             pattern: Node {
                                 id: 9,
-                                span: root.restrict_range(18, 18),
+                                span: root.restrict_range(18, 19),
                                 value: Expr::Literal(Node {
                                     id: 10,
-                                    span: root.restrict_range(18, 18),
+                                    span: root.restrict_range(18, 19),
                                     value: Literal::Int(2),
                                 }),
                             },
                             value: Node {
                                 id: 11,
-                                span: root.restrict_range(23, 23),
+                                span: root.restrict_range(23, 24),
                                 value: Expr::Literal(Node {
                                     id: 12,
-                                    span: root.restrict_range(23, 23),
+                                    span: root.restrict_range(23, 24),
                                     value: Literal::Int(2),
                                 }),
                             },

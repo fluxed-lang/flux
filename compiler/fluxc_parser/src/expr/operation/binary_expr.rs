@@ -163,32 +163,32 @@ mod tests {
         // 1 * 2 + 3
         let expected = Node {
             id: 8,
-            span: root.restrict_range(0, 8),
+            span: root.restrict_range(0, 9),
             value: BinaryExpr {
                 kind: BinaryOp::Plus,
                 lhs: Box::new(Node {
                     id: 4,
-                    span: root.restrict_range(0, 4),
+                    span: root.restrict_range(0, 5),
                     value: Expr::BinaryExpr(Node {
                         id: 5,
-                        span: root.restrict_range(0, 4),
+                        span: root.restrict_range(0, 5),
                         value: BinaryExpr {
                             kind: BinaryOp::Mul,
                             lhs: Box::new(Node {
                                 id: 0,
-                                span: root.restrict_range(0, 0),
+                                span: root.restrict_range(0, 1),
                                 value: Expr::Literal(Node {
                                     id: 1,
-                                    span: root.restrict_range(0, 0),
+                                    span: root.restrict_range(0, 1),
                                     value: Literal::Int(1),
                                 }),
                             }),
                             rhs: Box::new(Node {
                                 id: 2,
-                                span: root.restrict_range(4, 4),
+                                span: root.restrict_range(4, 5),
                                 value: Expr::Literal(Node {
                                     id: 3,
-                                    span: root.restrict_range(4, 4),
+                                    span: root.restrict_range(4, 5),
                                     value: Literal::Int(2),
                                 }),
                             }),
@@ -197,10 +197,10 @@ mod tests {
                 }),
                 rhs: Box::new(Node {
                     id: 6,
-                    span: root.restrict_range(8, 8),
+                    span: root.restrict_range(8, 9),
                     value: Expr::Literal(Node {
                         id: 7,
-                        span: root.restrict_range(8, 8),
+                        span: root.restrict_range(8, 9),
                         value: Literal::Int(3),
                     }),
                 }),

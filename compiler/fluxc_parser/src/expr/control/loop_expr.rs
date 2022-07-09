@@ -29,12 +29,12 @@ mod tests {
         // loop {}
         let expected = Node {
             id: 0,
-            span: root.restrict_range(0, 6),
+            span: root.restrict_range(0, 7),
             value: Loop {
                 name: None,
                 block: Node {
                     id: 1,
-                    span: root.restrict_range(5, 6),
+                    span: root.restrict_range(5, 7),
                     value: Block { stmts: vec![] },
                 },
             },
@@ -44,6 +44,6 @@ mod tests {
             &mut context,
         )
         .unwrap();
-        assert_eq!(actual, expected);
+        assert_eq!(expected, actual);
     }
 }

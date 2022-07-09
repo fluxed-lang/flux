@@ -31,13 +31,13 @@ mod tests {
         let root = context.create_span();
         // {}
         let expected =
-            Node { id: 0, span: root.restrict_range(0, 1), value: Block { stmts: vec![] } };
+            Node { id: 0, span: root.restrict_range(0, 2), value: Block { stmts: vec![] } };
         let result = FluxParser::parse(Rule::block, "{}").unwrap().next().unwrap();
         let result = Block::parse(result, &mut context).unwrap();
         assert_eq!(expected, result);
         // { }
         let expected =
-            Node { id: 1, span: root.restrict_range(0, 2), value: Block { stmts: vec![] } };
+            Node { id: 1, span: root.restrict_range(0, 3), value: Block { stmts: vec![] } };
         let result = FluxParser::parse(Rule::block, "{ }").unwrap().next().unwrap();
         let result = Block::parse(result, &mut context).unwrap();
         assert_eq!(expected, result);
@@ -64,31 +64,31 @@ mod tests {
         // }
         let expected = Node {
             id: 0,
-            span: root.restrict_range(0, 26),
+            span: root.restrict_range(0, 27),
             value: Block {
                 stmts: vec![
                     Node {
                         id: 1,
-                        span: root.restrict_range(6, 13),
+                        span: root.restrict_range(6, 14),
                         value: Stmt::Expr(Node {
                             id: 2,
-                            span: root.restrict_range(6, 12),
+                            span: root.restrict_range(6, 13),
                             value: Expr::Literal(Node {
                                 id: 3,
-                                span: root.restrict_range(6, 12),
+                                span: root.restrict_range(6, 13),
                                 value: Literal::String("hello".to_string()),
                             }),
                         }),
                     },
                     Node {
                         id: 4,
-                        span: root.restrict_range(18, 25),
+                        span: root.restrict_range(18, 26),
                         value: Stmt::Expr(Node {
                             id: 5,
-                            span: root.restrict_range(18, 24),
+                            span: root.restrict_range(18, 25),
                             value: Expr::Literal(Node {
                                 id: 6,
-                                span: root.restrict_range(18, 24),
+                                span: root.restrict_range(18, 25),
                                 value: Literal::String("world".to_string()),
                             }),
                         }),

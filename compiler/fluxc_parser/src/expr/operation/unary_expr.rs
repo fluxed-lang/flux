@@ -96,15 +96,15 @@ mod tests {
         // x--
         let expected = Node {
             id: 0,
-            span: root.restrict_range(0, 2),
+            span: root.restrict_range(0, 3),
             value: UnaryExpr {
                 kind: UnaryOp::Decrement,
                 expr: Box::new(Node {
                     id: 2,
-                    span: root.restrict_range(0, 0),
+                    span: root.restrict_range(0, 1),
                     value: Expr::Ident(Node {
                         id: 1,
-                        span: root.restrict_range(0, 0),
+                        span: root.restrict_range(0, 1),
                         value: "x".to_string(),
                     }),
                 }),

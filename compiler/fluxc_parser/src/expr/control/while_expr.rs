@@ -32,20 +32,20 @@ mod tests {
         // while x {}
         let expected = Node {
             id: 0,
-            span: root.restrict_range(0, 9),
+            span: root.restrict_range(0, 10),
             value: While {
                 condition: Box::new(Node {
                     id: 1,
-                    span: root.restrict_range(6, 6),
+                    span: root.restrict_range(6, 7),
                     value: Expr::Ident(Node {
                         id: 2,
-                        span: root.restrict_range(6, 6),
+                        span: root.restrict_range(6, 7),
                         value: "x".to_string(),
                     }),
                 }),
                 block: Node {
                     id: 3,
-                    span: root.restrict_range(8, 9),
+                    span: root.restrict_range(8, 10),
                     value: Block { stmts: vec![] },
                 },
             },
@@ -65,30 +65,30 @@ mod tests {
         // while x { "hello world!" }
         let expected = Node {
             id: 0,
-            span: root.restrict_range(0, 25),
+            span: root.restrict_range(0, 26),
             value: While {
                 condition: Box::new(Node {
                     id: 1,
-                    span: root.restrict_range(6, 6),
+                    span: root.restrict_range(6, 7),
                     value: Expr::Ident(Node {
                         id: 2,
-                        span: root.restrict_range(6, 6),
+                        span: root.restrict_range(6, 7),
                         value: "x".to_string(),
                     }),
                 }),
                 block: Node {
                     id: 3,
-                    span: root.restrict_range(8, 25),
+                    span: root.restrict_range(8, 26),
                     value: Block {
                         stmts: vec![Node {
                             id: 4,
-                            span: root.restrict_range(10, 24),
+                            span: root.restrict_range(10, 25),
                             value: Stmt::Expr(Node {
                                 id: 5,
-                                span: root.restrict_range(10, 23),
+                                span: root.restrict_range(10, 24),
                                 value: Expr::Literal(Node {
                                     id: 6,
-                                    span: root.restrict_range(10, 23),
+                                    span: root.restrict_range(10, 24),
                                     value: Literal::String("hello world!".to_string()),
                                 }),
                             }),
