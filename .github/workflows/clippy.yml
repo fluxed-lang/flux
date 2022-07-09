@@ -10,28 +10,29 @@ on:
 
 jobs:
   rust-clippy-analyze:
-    name: Run clippy analysis
+    name: Clippy Analysis with Reviewdog
     runs-on: ubuntu-latest
     permissions:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: nightly
           components: clippy
           override: true
-      - run: cargo install clippy-sarif sarif-fmt
-      - name: Run clippy
-        run:
-          cargo clippy
-          --all-features
-          --message-format=json | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
-        continue-on-error: true
-      - name: Upload analysis results to GitHub
-        uses: github/codeql-action/upload-sarif@v1
+      - name: Setup Reviewdog
+        uses: reviewdog/action-setup@v1
         with:
-          sarif_file: rust-clippy-results.sarif
-          wait-for-processing: true
+          reviewdog_version: latest 
+      - name: Install clippy-reviewdog-filter
+        run: cargo install https://github.com/qnighy/clippy-reviewdog-filter.git
+      - name: Run Clippy and pipe to Reviewdog
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cargo clippy --message-format json 2>&1 | clippy-reviewdog-filter | reviewdog -f=checkstyle -diff="git diff master"
