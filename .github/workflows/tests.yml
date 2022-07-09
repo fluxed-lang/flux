@@ -1,8 +1,6 @@
 name: Run compiler tests
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
 
@@ -32,8 +30,10 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
-      - uses: Swatinem/rust-cache@v1
+          toolchain: nightly
+          override: true
+      - name: Setup cache
+        uses: Swatinem/rust-cache@v1
       - name: Run crate tests
         working-directory: compiler/${{ matrix.dir }}
         run: cargo test --verbose

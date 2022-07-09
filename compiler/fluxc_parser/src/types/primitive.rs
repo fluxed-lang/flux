@@ -1,14 +1,13 @@
-use fluxc_ast::{Node, Primitive};
-use fluxc_errors::CompilerError;
+use fluxc_ast::Primitive;
 use pest::iterators::Pair;
 
-use crate::{Context, Parse};
+use crate::{Context, PResult, Parse};
 
 impl Parse for Primitive {
     fn parse<'i>(
         input: Pair<'i, crate::parser::Rule>,
         ctx: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    ) -> PResult<Self> {
         todo!()
     }
 }

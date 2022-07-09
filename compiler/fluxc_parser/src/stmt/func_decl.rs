@@ -3,29 +3,22 @@
 //! This module handles:
 //! - Local function declarations
 //! - External function declarations
-use fluxc_ast::{Block, FuncCall, FuncDecl, Ident, Node, ParenArgument, TypeExpr};
-use fluxc_errors::CompilerError;
+use fluxc_ast::{Block, FuncCall, FuncDecl, Ident, ParenArgument, TypeExpr};
 use fluxc_span::Span;
 use pest::iterators::Pair;
 
-use crate::{unexpected_rule, Context, Parse, Rule};
+use crate::{unexpected_rule, Context, PResult, Parse, Rule};
 
 impl Parse for FuncCall {
     #[tracing::instrument]
-    fn parse<'i>(
-        input: Pair<'i, crate::Rule>,
-        ctx: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    fn parse<'i>(input: Pair<'i, crate::Rule>, ctx: &mut Context) -> PResult<Self> {
         todo!()
     }
 }
 
 impl Parse for ParenArgument {
     #[tracing::instrument]
-    fn parse<'i>(
-        input: Pair<'i, crate::Rule>,
-        ctx: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    fn parse<'i>(input: Pair<'i, crate::Rule>, ctx: &mut Context) -> PResult<Self> {
         debug_assert_eq!(input.as_rule(), Rule::func_decl_param);
         let node = ctx.new_empty(input.as_span());
         let mut inner = input.into_inner();
@@ -37,10 +30,7 @@ impl Parse for ParenArgument {
 
 impl Parse for FuncDecl {
     #[tracing::instrument]
-    fn parse<'i>(
-        input: Pair<'i, crate::Rule>,
-        ctx: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    fn parse<'i>(input: Pair<'i, crate::Rule>, ctx: &mut Context) -> PResult<Self> {
         let span = input.as_span();
         let rule = input.as_rule();
         let mut inner = input.into_inner();
@@ -60,7 +50,7 @@ impl Parse for FuncDecl {
                 let ret_ty = if inner.peek().map(|pair| pair.as_rule()).contains(&Rule::type_expr) {
                     TypeExpr::parse(inner.next().unwrap(), ctx)?
                 } else {
-                    ctx.new_node(Span::new(0, 0), TypeExpr::Infer)
+                    ctx.new_node(Span::from_str(ctx.src.clone()).restrict(0..0), TypeExpr::Infer)
                 };
                 let body = Block::parse(inner.next().unwrap(), ctx)?;
                 Ok(ctx.new_node(span, FuncDecl::Local { ident, params, body, ret_ty }))

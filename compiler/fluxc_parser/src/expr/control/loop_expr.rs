@@ -1,12 +1,11 @@
-use fluxc_ast::{Block, Loop, Node};
-use fluxc_errors::CompilerError;
+use fluxc_ast::{Block, Loop};
 use pest::iterators::Pair;
 
-use crate::{Context, Parse, Rule};
+use crate::{Context, PResult, Parse, Rule};
 
 impl Parse for Loop {
     #[tracing::instrument]
-    fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> Result<Node<Self>, CompilerError> {
+    fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> PResult<Self> {
         debug_assert_eq!(input.as_rule(), Rule::loop_stmt);
         let node = ctx.new_empty(input.as_span());
         let inner = input.into_inner();
@@ -25,14 +24,19 @@ mod tests {
 
     #[test]
     fn parse_loop_expr() {
-        let mut context = Context::default();
+        let mut context = Context::from_str("loop {}");
+        let root = Span::from_str("loop {}");
         // loop {}
         let expected = Node {
             id: 0,
-            span: Span::new(0, 6),
+            span: root.restrict_range(0, 7),
             value: Loop {
                 name: None,
-                block: Node { id: 1, span: Span::new(5, 6), value: Block { stmts: vec![] } },
+                block: Node {
+                    id: 1,
+                    span: root.restrict_range(5, 7),
+                    value: Block { stmts: vec![] },
+                },
             },
         };
         let actual = Loop::parse(
@@ -40,6 +44,6 @@ mod tests {
             &mut context,
         )
         .unwrap();
-        assert_eq!(actual, expected);
+        assert_eq!(expected, actual);
     }
 }

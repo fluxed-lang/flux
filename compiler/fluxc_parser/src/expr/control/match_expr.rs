@@ -1,15 +1,11 @@
-use fluxc_ast::{Expr, Match, MatchBranch, Node};
-use fluxc_errors::CompilerError;
+use fluxc_ast::{Expr, Match, MatchBranch};
 use pest::iterators::Pair;
 
-use crate::{Context, Parse, Rule};
+use crate::{Context, PResult, Parse, Rule};
 
 impl Parse for Match {
     #[tracing::instrument]
-    fn parse<'i>(
-        input: Pair<'i, Rule>,
-        context: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    fn parse<'i>(input: Pair<'i, Rule>, context: &mut Context) -> PResult<Self> {
         debug_assert_eq!(input.as_rule(), Rule::match_expr);
         let node = context.new_empty(input.as_span());
         let mut inner = input.into_inner();
@@ -22,10 +18,7 @@ impl Parse for Match {
 
 impl Parse for MatchBranch {
     #[tracing::instrument]
-    fn parse<'i>(
-        input: Pair<'i, Rule>,
-        context: &mut Context,
-    ) -> Result<Node<Self>, CompilerError> {
+    fn parse<'i>(input: Pair<'i, Rule>, context: &mut Context) -> PResult<Self> {
         debug_assert_eq!(input.as_rule(), Rule::match_branch);
         let node = context.new_empty(input.as_span());
         let mut inner = input.into_inner();
@@ -47,18 +40,19 @@ mod tests {
 
     #[test]
     fn parse_empty_match_expr() {
-        let mut context = Context::default();
+        let mut context = Context::from_str("match x {}");
+        let root = Span::from_str("match x {}");
         // match x {}
         let expected = Node {
             id: 0,
-            span: Span::new(0, 9),
+            span: root.restrict_range(0, 10),
             value: Match {
                 expr: Box::new(Node {
                     id: 1,
-                    span: Span::new(6, 6),
+                    span: root.restrict_range(6, 7),
                     value: Expr::Ident(Node {
                         id: 2,
-                        span: Span::new(6, 6),
+                        span: root.restrict_range(6, 7),
                         value: "x".to_string(),
                     }),
                 }),
@@ -75,41 +69,42 @@ mod tests {
 
     #[test]
     fn parse_match_expr() {
-        let mut context = Context::default();
+        let mut context = Context::from_str("match x { 1 -> 1, 2 -> 2 }");
+        let root = Span::from_str("match x { 1 -> 1, 2 -> 2 }");
         // match x { 1 -> 1, 2 -> 2 }
         let expected = Node {
             id: 0,
-            span: Span::new(0, 25),
+            span: root.restrict_range(0, 26),
             value: Match {
                 expr: Box::new(Node {
                     id: 1,
-                    span: Span::new(6, 6),
+                    span: root.restrict_range(6, 7),
                     value: Expr::Ident(Node {
                         id: 2,
-                        span: Span::new(6, 6),
+                        span: root.restrict_range(6, 7),
                         value: "x".to_string(),
                     }),
                 }),
                 cases: vec![
                     Node {
                         id: 3,
-                        span: Span::new(10, 15),
+                        span: root.restrict_range(10, 16),
                         value: MatchBranch {
                             pattern: Node {
                                 id: 4,
-                                span: Span::new(10, 10),
+                                span: root.restrict_range(10, 11),
                                 value: Expr::Literal(Node {
                                     id: 5,
-                                    span: Span::new(10, 10),
+                                    span: root.restrict_range(10, 11),
                                     value: Literal::Int(1),
                                 }),
                             },
                             value: Node {
                                 id: 6,
-                                span: Span::new(15, 15),
+                                span: root.restrict_range(15, 16),
                                 value: Expr::Literal(Node {
                                     id: 7,
-                                    span: Span::new(15, 15),
+                                    span: root.restrict_range(15, 16),
                                     value: Literal::Int(1),
                                 }),
                             },
@@ -117,23 +112,23 @@ mod tests {
                     },
                     Node {
                         id: 8,
-                        span: Span::new(18, 23),
+                        span: root.restrict_range(18, 24),
                         value: MatchBranch {
                             pattern: Node {
                                 id: 9,
-                                span: Span::new(18, 18),
+                                span: root.restrict_range(18, 19),
                                 value: Expr::Literal(Node {
                                     id: 10,
-                                    span: Span::new(18, 18),
+                                    span: root.restrict_range(18, 19),
                                     value: Literal::Int(2),
                                 }),
                             },
                             value: Node {
                                 id: 11,
-                                span: Span::new(23, 23),
+                                span: root.restrict_range(23, 24),
                                 value: Expr::Literal(Node {
                                     id: 12,
-                                    span: Span::new(23, 23),
+                                    span: root.restrict_range(23, 24),
                                     value: Literal::Int(2),
                                 }),
                             },
