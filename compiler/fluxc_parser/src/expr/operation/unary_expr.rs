@@ -1,12 +1,11 @@
-use fluxc_ast::{Expr, Ident, Literal, Node, UnaryExpr, UnaryOp};
-use fluxc_errors::CompilerError;
+use fluxc_ast::{Expr, Ident, Literal, UnaryExpr, UnaryOp};
 use pest::iterators::Pair;
 
-use crate::{unexpected_rule, Context, Parse, Rule};
+use crate::{unexpected_rule, Context, PResult, Parse, Rule};
 
 impl Parse for UnaryExpr {
     #[tracing::instrument]
-    fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> Result<Node<Self>, CompilerError> {
+    fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> PResult<Self> {
         debug_assert_eq!(input.as_rule(), Rule::unary_expr);
         let outer_span = input.as_span();
         let node = ctx.new_empty(input.as_span());
@@ -85,7 +84,6 @@ impl Parse for UnaryExpr {
 #[cfg(test)]
 mod tests {
     use fluxc_ast::{Expr, Node, UnaryExpr, UnaryOp};
-    use fluxc_span::Span;
     use pest::Parser;
     use pretty_assertions::assert_eq;
 
@@ -93,19 +91,20 @@ mod tests {
 
     #[test]
     fn parse_unary_expr() {
-        let mut ctx = Context::default();
+        let mut ctx = Context::from_str("x--");
+        let root = ctx.create_span();
         // x--
         let expected = Node {
             id: 0,
-            span: Span::new(0, 2),
+            span: root.restrict_range(0, 3),
             value: UnaryExpr {
                 kind: UnaryOp::Decrement,
                 expr: Box::new(Node {
                     id: 2,
-                    span: Span::new(0, 0),
+                    span: root.restrict_range(0, 1),
                     value: Expr::Ident(Node {
                         id: 1,
-                        span: Span::new(0, 0),
+                        span: root.restrict_range(0, 1),
                         value: "x".to_string(),
                     }),
                 }),

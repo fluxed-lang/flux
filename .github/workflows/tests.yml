@@ -32,7 +32,8 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: nightly
+          override: true
       - uses: Swatinem/rust-cache@v1
       - name: Run crate tests
         working-directory: compiler/${{ matrix.dir }}
