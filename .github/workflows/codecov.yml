@@ -16,7 +16,8 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
-      - uses: Swatinem/rust-cache@v1
+      - name: Setup cache
+        uses: Swatinem/rust-cache@v1
       - name: Generate code coverage
         run: cd compiler && cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml --ignore-panics
       - name: Upload code coverage

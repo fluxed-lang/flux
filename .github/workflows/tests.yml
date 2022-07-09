@@ -34,7 +34,8 @@ jobs:
           profile: minimal
           toolchain: nightly
           override: true
-      - uses: Swatinem/rust-cache@v1
+      - name: Setup cache
+        uses: Swatinem/rust-cache@v1
       - name: Run crate tests
         working-directory: compiler/${{ matrix.dir }}
         run: cargo test --verbose
