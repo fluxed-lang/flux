@@ -9,7 +9,7 @@ use pest::{
     prec_climber::{Assoc, Operator, PrecClimber},
 };
 
-use crate::{Context, Parse, Rule};
+use crate::{Context, PResult, Parse, Rule};
 
 lazy_static! {
     /// The precedence climber for parsing binary expressions. Since binary expressions are recursive, and the precedence
@@ -121,9 +121,10 @@ impl Parse for BinaryExpr {
                 // acquire lock and create nodes
                 let (expr_node, bin_expr_node) = {
                     let mut ctx = ctx.lock().unwrap();
+                    let span = ctx.create_span();
                     (
-                        ctx.new_empty(Span::new(lhs.span.start, rhs.span.end)),
-                        ctx.new_empty(Span::new(lhs.span.start, rhs.span.end)),
+                        ctx.new_empty(span.restrict_range(lhs.span.start, rhs.span.end)),
+                        ctx.new_empty(span.restrict_range(lhs.span.start, rhs.span.end)),
                     )
                 };
                 Ok(expr_node.fill(Expr::BinaryExpr(bin_expr_node.fill(BinaryExpr {
@@ -157,36 +158,37 @@ mod tests {
 
     #[test]
     fn parse_literal_binary_expr() {
-        let mut context = Context::default();
+        let mut context = Context::from_str("1 * 2 + 3");
+        let root = Span::from_str("1 * 2 + 3");
         // 1 * 2 + 3
         let expected = Node {
             id: 8,
-            span: Span::new(0, 8),
+            span: root.restrict_range(0, 8),
             value: BinaryExpr {
                 kind: BinaryOp::Plus,
                 lhs: Box::new(Node {
                     id: 4,
-                    span: Span::new(0, 4),
+                    span: root.restrict_range(0, 4),
                     value: Expr::BinaryExpr(Node {
                         id: 5,
-                        span: Span::new(0, 4),
+                        span: root.restrict_range(0, 4),
                         value: BinaryExpr {
                             kind: BinaryOp::Mul,
                             lhs: Box::new(Node {
                                 id: 0,
-                                span: Span::new(0, 0),
+                                span: root.restrict_range(0, 0),
                                 value: Expr::Literal(Node {
                                     id: 1,
-                                    span: Span::new(0, 0),
+                                    span: root.restrict_range(0, 0),
                                     value: Literal::Int(1),
                                 }),
                             }),
                             rhs: Box::new(Node {
                                 id: 2,
-                                span: Span::new(4, 4),
+                                span: root.restrict_range(4, 4),
                                 value: Expr::Literal(Node {
                                     id: 3,
-                                    span: Span::new(4, 4),
+                                    span: root.restrict_range(4, 4),
                                     value: Literal::Int(2),
                                 }),
                             }),
@@ -195,10 +197,10 @@ mod tests {
                 }),
                 rhs: Box::new(Node {
                     id: 6,
-                    span: Span::new(8, 8),
+                    span: root.restrict_range(8, 8),
                     value: Expr::Literal(Node {
                         id: 7,
-                        span: Span::new(8, 8),
+                        span: root.restrict_range(8, 8),
                         value: Literal::Int(3),
                     }),
                 }),

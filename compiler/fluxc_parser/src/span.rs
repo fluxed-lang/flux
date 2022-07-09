@@ -5,7 +5,8 @@ use crate::Rule;
 
 /// Restrict the input span to that of the input pair.
 pub fn restrict_input<'i>(input: Pair<'i, Rule>, span: &Span) -> (Pair<'i, Rule>, Span) {
-    (input, span.restrict(input.as_span().start()..input.as_span().end()))
+    let span = span.restrict(input.as_span().start()..input.as_span().end());
+    (input, span)
 }
 
 /// Restrict the input span to that of the second span.

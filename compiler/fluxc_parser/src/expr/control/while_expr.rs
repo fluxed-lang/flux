@@ -1,7 +1,7 @@
 use fluxc_ast::{Block, Expr, While};
 use pest::iterators::Pair;
 
-use crate::{Context, Parse, Rule, PResult};
+use crate::{Context, PResult, Parse, Rule};
 
 impl Parse for While {
     #[tracing::instrument]
@@ -27,22 +27,27 @@ mod tests {
 
     #[test]
     fn parse_empty_while_stmt() {
-        let mut context = Context::default();
+        let mut context = Context::from_str("while x {}");
+        let root = Span::from_str("while x {}");
         // while x {}
         let expected = Node {
             id: 0,
-            span: Span::new(0, 9),
+            span: root.restrict_range(0, 9),
             value: While {
                 condition: Box::new(Node {
                     id: 1,
-                    span: Span::new(6, 6),
+                    span: root.restrict_range(6, 6),
                     value: Expr::Ident(Node {
                         id: 2,
-                        span: Span::new(6, 6),
+                        span: root.restrict_range(6, 6),
                         value: "x".to_string(),
                     }),
                 }),
-                block: Node { id: 3, span: Span::new(8, 9), value: Block { stmts: vec![] } },
+                block: Node {
+                    id: 3,
+                    span: root.restrict_range(8, 9),
+                    value: Block { stmts: vec![] },
+                },
             },
         };
         let actual = While::parse(
@@ -55,34 +60,35 @@ mod tests {
 
     #[test]
     fn parse_while_stmt() {
-        let mut context = Context::default();
+        let mut context = Context::from_str("while x { \"hello world!\" }");
+        let root = Span::from_str("while x { \"hello world!\" }");
         // while x { "hello world!" }
         let expected = Node {
             id: 0,
-            span: Span::new(0, 25),
+            span: root.restrict_range(0, 25),
             value: While {
                 condition: Box::new(Node {
                     id: 1,
-                    span: Span::new(6, 6),
+                    span: root.restrict_range(6, 6),
                     value: Expr::Ident(Node {
                         id: 2,
-                        span: Span::new(6, 6),
+                        span: root.restrict_range(6, 6),
                         value: "x".to_string(),
                     }),
                 }),
                 block: Node {
                     id: 3,
-                    span: Span::new(8, 25),
+                    span: root.restrict_range(8, 25),
                     value: Block {
                         stmts: vec![Node {
                             id: 4,
-                            span: Span::new(10, 24),
+                            span: root.restrict_range(10, 24),
                             value: Stmt::Expr(Node {
                                 id: 5,
-                                span: Span::new(10, 23),
+                                span: root.restrict_range(10, 23),
                                 value: Expr::Literal(Node {
                                     id: 6,
-                                    span: Span::new(10, 23),
+                                    span: root.restrict_range(10, 23),
                                     value: Literal::String("hello world!".to_string()),
                                 }),
                             }),

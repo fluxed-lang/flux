@@ -5,13 +5,13 @@ use std::rc::Rc;
 
 use fluxc_ast::{Ident, Node, Stmt, AST};
 use fluxc_errors::CompilerError;
-use fluxc_span::AsSpan;
+use fluxc_span::{AsSpan, Span};
 use pest::{error::Error, iterators::Pair, Parser};
 
 mod expr;
+mod span;
 mod stmt;
 mod ty;
-mod span;
 
 /// Internal moduel to prevent leakage of the `Rule` type to external
 /// crates.
@@ -29,20 +29,17 @@ pub(crate) use parser::*;
 /// The parser context.
 #[derive(Debug)]
 struct Context {
-	/// The next ID to use for a new node.
+    /// The next ID to use for a new node.
     next_id: usize,
-	/// The source text being parsed.
-	src: Rc<str>
+    /// The source text being parsed.
+    src: Rc<str>,
 }
 
 impl Context {
-	/// Creates a new parser context.
-	pub fn from_str(src: &str) -> Self {
-		Self {
-			next_id: 0,
-			src: src.into()
-		}
-	}
+    /// Creates a new parser context.
+    pub fn from_str<S: AsRef<str>>(src: S) -> Self {
+        Self { next_id: 0, src: src.as_ref().into() }
+    }
     /// Create a new node from the given pair.
     pub fn new_node<T, S: AsSpan>(&mut self, span: S, value: T) -> Node<T> {
         let node = Node::new(self.next_id, span.as_span(&self.src), value);
@@ -52,6 +49,10 @@ impl Context {
     /// Create an empty node.
     pub fn new_empty<S: AsSpan>(&mut self, span: S) -> Node<()> {
         self.new_node(span, ())
+    }
+    /// Create a new span over the entire source text.
+    pub fn create_span(&self) -> Span {
+        Span::from_str(self.src.clone())
     }
 }
 
@@ -78,7 +79,6 @@ pub fn parse(input: &str) -> Result<AST, CompilerError> {
     Ok(AST { stmts: stmts? })
 }
 
-
 /// The parser result type.
 type PResult<T> = Result<Node<T>, CompilerError>;
 
@@ -90,10 +90,7 @@ trait Parse: Sized {
 
 impl Parse for Ident {
     #[tracing::instrument]
-    fn parse<'i>(
-        input: Pair<'i, Rule>,
-        context: &mut Context,
-    ) -> PResult<Self> {
+    fn parse<'i>(input: Pair<'i, Rule>, context: &mut Context) -> PResult<Self> {
         Ok(context.new_node(input.as_span(), input.as_str().into()))
     }
 }

@@ -1,7 +1,7 @@
 use fluxc_ast::{Block, Loop};
 use pest::iterators::Pair;
 
-use crate::{Context, Parse, Rule, PResult};
+use crate::{Context, PResult, Parse, Rule};
 
 impl Parse for Loop {
     #[tracing::instrument]
@@ -24,14 +24,19 @@ mod tests {
 
     #[test]
     fn parse_loop_expr() {
-        let mut context = Context::default();
+        let mut context = Context::from_str("loop {}");
+        let root = Span::from_str("loop {}");
         // loop {}
         let expected = Node {
             id: 0,
-            span: Span::new(0, 6),
+            span: root.restrict_range(0, 6),
             value: Loop {
                 name: None,
-                block: Node { id: 1, span: Span::new(5, 6), value: Block { stmts: vec![] } },
+                block: Node {
+                    id: 1,
+                    span: root.restrict_range(5, 6),
+                    value: Block { stmts: vec![] },
+                },
             },
         };
         let actual = Loop::parse(

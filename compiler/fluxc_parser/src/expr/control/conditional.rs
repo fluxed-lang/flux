@@ -1,7 +1,7 @@
 use fluxc_ast::{Block, Conditional, Expr, IfStmt};
 use pest::iterators::Pair;
 
-use crate::{Context, Parse, Rule, PResult};
+use crate::{Context, PResult, Parse, Rule};
 
 impl Parse for Conditional {
     #[tracing::instrument]
@@ -58,38 +58,39 @@ mod tests {
 
     #[test]
     fn parse_single_if() {
-        let mut context = Context::default();
+        let mut context = Context::from_str("if true { 1 }");
+        let root = Span::from_str("if true { 1 }");
         // if true { 1 }
         let expected = Node {
             id: 0,
-            span: Span::new(0, 12),
+            span: root.restrict_range(0, 12),
             value: Conditional {
                 if_stmt: Node {
                     id: 1,
-                    span: Span::new(0, 12),
+                    span: root.restrict_range(0, 12),
                     value: IfStmt {
                         condition: Box::new(Node {
                             id: 2,
-                            span: Span::new(3, 6),
+                            span: root.restrict_range(3, 6),
                             value: Expr::Literal(Node {
                                 id: 3,
-                                span: Span::new(3, 6),
+                                span: root.restrict_range(3, 6),
                                 value: Literal::Bool(true),
                             }),
                         }),
                         value: Node {
                             id: 4,
-                            span: Span::new(8, 12),
+                            span: root.restrict_range(8, 12),
                             value: Block {
                                 stmts: vec![Node {
                                     id: 5,
-                                    span: Span::new(10, 11),
+                                    span: root.restrict_range(10, 11),
                                     value: Stmt::Expr(Node {
                                         id: 6,
-                                        span: Span::new(10, 10),
+                                        span: root.restrict_range(10, 10),
                                         value: Expr::Literal(Node {
                                             id: 7,
-                                            span: Span::new(10, 10),
+                                            span: root.restrict_range(10, 10),
                                             value: Literal::Int(1),
                                         }),
                                     }),
@@ -112,38 +113,39 @@ mod tests {
 
     #[test]
     fn parse_if_else() {
-        let mut context = Context::default();
+        let mut context = Context::from_str("if true { 1 } else { 2 }");
+        let root = Span::from_str("if true { 1 } else { 2 }");
         // if true { 1 } else { 2 }
         let expected = Node {
             id: 0,
-            span: Span::new(0, 23),
+            span: root.restrict_range(0, 23),
             value: Conditional {
                 if_stmt: Node {
                     id: 1,
-                    span: Span::new(0, 12),
+                    span: root.restrict_range(0, 12),
                     value: IfStmt {
                         condition: Box::new(Node {
                             id: 2,
-                            span: Span::new(3, 6),
+                            span: root.restrict_range(3, 6),
                             value: Expr::Literal(Node {
                                 id: 3,
-                                span: Span::new(3, 6),
+                                span: root.restrict_range(3, 6),
                                 value: Literal::Bool(true),
                             }),
                         }),
                         value: Node {
                             id: 4,
-                            span: Span::new(8, 12),
+                            span: root.restrict_range(8, 12),
                             value: Block {
                                 stmts: vec![Node {
                                     id: 5,
-                                    span: Span::new(10, 11),
+                                    span: root.restrict_range(10, 11),
                                     value: Stmt::Expr(Node {
                                         id: 6,
-                                        span: Span::new(10, 10),
+                                        span: root.restrict_range(10, 10),
                                         value: Expr::Literal(Node {
                                             id: 7,
-                                            span: Span::new(10, 10),
+                                            span: root.restrict_range(10, 10),
                                             value: Literal::Int(1),
                                         }),
                                     }),
@@ -155,17 +157,17 @@ mod tests {
                 else_ifs: vec![],
                 else_stmt: Some(Node {
                     id: 8,
-                    span: Span::new(19, 23),
+                    span: root.restrict_range(19, 23),
                     value: Block {
                         stmts: vec![Node {
                             id: 9,
-                            span: Span::new(21, 22),
+                            span: root.restrict_range(21, 22),
                             value: Stmt::Expr(Node {
                                 id: 10,
-                                span: Span::new(21, 21),
+                                span: root.restrict_range(21, 21),
                                 value: Expr::Literal(Node {
                                     id: 11,
-                                    span: Span::new(21, 21),
+                                    span: root.restrict_range(21, 21),
                                     value: Literal::Int(2),
                                 }),
                             }),
@@ -187,38 +189,39 @@ mod tests {
 
     #[test]
     fn parse_if_else_if() {
-        let mut context = Context::default();
+        let mut context = Context::from_str("if true { 1 } else if false { 2 }");
+        let root = Span::from_str("if true { 1 } else if false { 2 }");
         // if true { 1 } else if false { 2 }
         let expected = Node {
             id: 0,
-            span: Span::new(0, 32),
+            span: root.restrict_range(0, 32),
             value: Conditional {
                 if_stmt: Node {
                     id: 1,
-                    span: Span::new(0, 12),
+                    span: root.restrict_range(0, 12),
                     value: IfStmt {
                         condition: Box::new(Node {
                             id: 2,
-                            span: Span::new(3, 6),
+                            span: root.restrict_range(3, 6),
                             value: Expr::Literal(Node {
                                 id: 3,
-                                span: Span::new(3, 6),
+                                span: root.restrict_range(3, 6),
                                 value: Literal::Bool(true),
                             }),
                         }),
                         value: Node {
                             id: 4,
-                            span: Span::new(8, 12),
+                            span: root.restrict_range(8, 12),
                             value: Block {
                                 stmts: vec![Node {
                                     id: 5,
-                                    span: Span::new(10, 11),
+                                    span: root.restrict_range(10, 11),
                                     value: Stmt::Expr(Node {
                                         id: 6,
-                                        span: Span::new(10, 10),
+                                        span: root.restrict_range(10, 10),
                                         value: Expr::Literal(Node {
                                             id: 7,
-                                            span: Span::new(10, 10),
+                                            span: root.restrict_range(10, 10),
                                             value: Literal::Int(1),
                                         }),
                                     }),
@@ -229,30 +232,30 @@ mod tests {
                 },
                 else_ifs: vec![Node {
                     id: 8,
-                    span: Span::new(14, 32),
+                    span: root.restrict_range(14, 32),
                     value: IfStmt {
                         condition: Box::new(Node {
                             id: 9,
-                            span: Span::new(22, 26),
+                            span: root.restrict_range(22, 26),
                             value: Expr::Literal(Node {
                                 id: 10,
-                                span: Span::new(22, 26),
+                                span: root.restrict_range(22, 26),
                                 value: Literal::Bool(false),
                             }),
                         }),
                         value: Node {
                             id: 11,
-                            span: Span::new(28, 32),
+                            span: root.restrict_range(28, 32),
                             value: Block {
                                 stmts: vec![Node {
                                     id: 12,
-                                    span: Span::new(30, 31),
+                                    span: root.restrict_range(30, 31),
                                     value: Stmt::Expr(Node {
                                         id: 13,
-                                        span: Span::new(30, 30),
+                                        span: root.restrict_range(30, 30),
                                         value: Expr::Literal(Node {
                                             id: 14,
-                                            span: Span::new(30, 30),
+                                            span: root.restrict_range(30, 30),
                                             value: Literal::Int(2),
                                         }),
                                     }),
@@ -277,38 +280,39 @@ mod tests {
 
     #[test]
     fn parse_if_else_if_else() {
-        let mut context = Context::default();
+        let mut context = Context::from_str("if true { 1 } else if false { 2 } else { 3 }");
+        let root = Span::from_str("if true { 1 } else if false { 2 } else { 3 }");
         // if true { 1 } else if false { 2 } else { 3 }
         let expected = Node {
             id: 0,
-            span: Span::new(0, 43),
+            span: root.restrict_range(0, 43),
             value: Conditional {
                 if_stmt: Node {
                     id: 1,
-                    span: Span::new(0, 12),
+                    span: root.restrict_range(0, 12),
                     value: IfStmt {
                         condition: Box::new(Node {
                             id: 2,
-                            span: Span::new(3, 6),
+                            span: root.restrict_range(3, 6),
                             value: Expr::Literal(Node {
                                 id: 3,
-                                span: Span::new(3, 6),
+                                span: root.restrict_range(3, 6),
                                 value: Literal::Bool(true),
                             }),
                         }),
                         value: Node {
                             id: 4,
-                            span: Span::new(8, 12),
+                            span: root.restrict_range(8, 12),
                             value: Block {
                                 stmts: vec![Node {
                                     id: 5,
-                                    span: Span::new(10, 11),
+                                    span: root.restrict_range(10, 11),
                                     value: Stmt::Expr(Node {
                                         id: 6,
-                                        span: Span::new(10, 10),
+                                        span: root.restrict_range(10, 10),
                                         value: Expr::Literal(Node {
                                             id: 7,
-                                            span: Span::new(10, 10),
+                                            span: root.restrict_range(10, 10),
                                             value: Literal::Int(1),
                                         }),
                                     }),
@@ -319,30 +323,30 @@ mod tests {
                 },
                 else_ifs: vec![Node {
                     id: 8,
-                    span: Span::new(14, 32),
+                    span: root.restrict_range(14, 32),
                     value: IfStmt {
                         condition: Box::new(Node {
                             id: 9,
-                            span: Span::new(22, 26),
+                            span: root.restrict_range(22, 26),
                             value: Expr::Literal(Node {
                                 id: 10,
-                                span: Span::new(22, 26),
+                                span: root.restrict_range(22, 26),
                                 value: Literal::Bool(false),
                             }),
                         }),
                         value: Node {
                             id: 11,
-                            span: Span::new(28, 32),
+                            span: root.restrict_range(28, 32),
                             value: Block {
                                 stmts: vec![Node {
                                     id: 12,
-                                    span: Span::new(30, 31),
+                                    span: root.restrict_range(30, 31),
                                     value: Stmt::Expr(Node {
                                         id: 13,
-                                        span: Span::new(30, 30),
+                                        span: root.restrict_range(30, 30),
                                         value: Expr::Literal(Node {
                                             id: 14,
-                                            span: Span::new(30, 30),
+                                            span: root.restrict_range(30, 30),
                                             value: Literal::Int(2),
                                         }),
                                     }),
@@ -353,17 +357,17 @@ mod tests {
                 }],
                 else_stmt: Some(Node {
                     id: 15,
-                    span: Span::new(39, 43),
+                    span: root.restrict_range(39, 43),
                     value: Block {
                         stmts: vec![Node {
                             id: 16,
-                            span: Span::new(41, 42),
+                            span: root.restrict_range(41, 42),
                             value: Stmt::Expr(Node {
                                 id: 17,
-                                span: Span::new(41, 41),
+                                span: root.restrict_range(41, 41),
                                 value: Expr::Literal(Node {
                                     id: 18,
-                                    span: Span::new(41, 41),
+                                    span: root.restrict_range(41, 41),
                                     value: Literal::Int(3),
                                 }),
                             }),

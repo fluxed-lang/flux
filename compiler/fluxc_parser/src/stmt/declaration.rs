@@ -1,15 +1,11 @@
-use fluxc_ast::{Declaration, Expr, Ident, Mutability, Node};
-use fluxc_errors::CompilerError;
+use fluxc_ast::{Declaration, Expr, Ident, Mutability};
 use pest::iterators::Pair;
 
-use crate::{Context, Parse, Rule};
+use crate::{Context, PResult, Parse, Rule};
 
 impl Parse for Declaration {
     #[tracing::instrument]
-    fn parse<'i>(
-        input: Pair<'i, Rule>,
-        context: &mut Context,
-    ) -> PResult<Self> {
+    fn parse<'i>(input: Pair<'i, Rule>, context: &mut Context) -> PResult<Self> {
         let node = context.new_empty(input.as_span());
         // declaration is either a let or a mutable declaration.
         let decl = match input.as_rule() {
