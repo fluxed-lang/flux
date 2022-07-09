@@ -57,7 +57,7 @@ mod tests {
         let result = Literal::parse(result, &mut ctx).unwrap();
         assert_eq!(expected, result);
         // -321
-		let mut ctx = Context::from_str("-321");
+        let mut ctx = Context::from_str("-321");
         let root = ctx.create_span();
         let expected = Node { id: 0, span: root.restrict_range(0, 4), value: Literal::Int(-321) };
         let result = FluxParser::parse(Rule::literal, "-321").unwrap().next().unwrap();
@@ -76,7 +76,7 @@ mod tests {
         let result = Literal::parse(result, &mut context).unwrap();
         assert_eq!(expected, result);
         // -123.456
-		let mut context = Context::from_str("-123.456");
+        let mut context = Context::from_str("-123.456");
         let root = context.create_span();
         let expected =
             Node { id: 0, span: root.restrict_range(0, 8), value: Literal::Float(-123.456) };
@@ -87,7 +87,7 @@ mod tests {
 
     #[test]
     fn parse_literal_string() {
-		// "123"
+        // "123"
         let mut context = Context::from_str("\"123\"");
         let root = context.create_span();
         let expected = Node {
@@ -99,7 +99,7 @@ mod tests {
         let result = Literal::parse(result, &mut context).unwrap();
         assert_eq!(expected, result);
         // "hello, world!"
-   		let mut context = Context::from_str("\"hello, world!\"");
+        let mut context = Context::from_str("\"hello, world!\"");
         let root = context.create_span();
         let expected = Node {
             id: 0,
@@ -110,7 +110,7 @@ mod tests {
         let result = Literal::parse(result, &mut context).unwrap();
         assert_eq!(expected, result);
         // "🐺💖🐺" - 4 bytes per char, 2 trailing bytes, for a total of 14 bytes
-		let mut context = Context::from_str("\"🐺💖🐺\"");
+        let mut context = Context::from_str("\"🐺💖🐺\"");
         let root = context.create_span();
         let expected = Node {
             id: 0,
@@ -124,7 +124,7 @@ mod tests {
 
     #[test]
     fn parse_literal_bool() {
-		// true
+        // true
         let mut context = Context::from_str("true");
         let root = context.create_span();
         let expected = Node { id: 0, span: root.restrict_range(0, 4), value: Literal::Bool(true) };
@@ -151,7 +151,7 @@ mod tests {
         assert_eq!(expected, result);
         // '🐺'
         let mut context = Context::from_str("'🐺'");
-		let root = context.create_span();
+        let root = context.create_span();
         let expected =
             Node { id: 0, span: root.restrict_range(0, 6), value: Literal::Char('🐺') };
         let result = FluxParser::parse(Rule::literal, "'🐺'").unwrap().next().unwrap();
