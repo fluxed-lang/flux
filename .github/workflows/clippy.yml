@@ -1,8 +1,8 @@
 name: Analyze with Clippy
 
 on:
-  push:
-    branches: [ main ]
+  pull_request:
+    branches: [main]
 
 jobs:
   rust-clippy-analyze:
