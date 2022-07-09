@@ -18,6 +18,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+      - run: git diff main
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
         with:
