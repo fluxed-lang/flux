@@ -8,8 +8,8 @@ mod primitive;
 
 impl Parse for TypeExpr {
     fn parse<'i>(
-        input: Pair<'i, Rule>,
-        ctx: &mut crate::Context,
+        _input: Pair<'i, Rule>,
+        _ctx: &mut crate::Context,
     ) -> Result<Node<Self>, CompilerError> {
         todo!()
     }

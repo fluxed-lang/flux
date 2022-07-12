@@ -13,10 +13,10 @@ pub enum Mode<'i> {
 /// Compile the target input string into memory.
 pub fn compile_to_mem(input: String) -> Result<fn() -> u32, Box<dyn Error>> {
     // 1. Parse input source
-    let mut ast = fluxc_parser::parse(input).expect("Failed to parse input source");
+    let _ast = fluxc_parser::parse(input).expect("Failed to parse input source");
 
     // let mut ast = parser.build(&input)?;
-    // // 2. Run AST validation on the AST	
+    // // 2. Run AST validation on the AST
     // fluxc_ast_passes::perform_ast_passes(&mut ast)?;
     // // 3. Generate IR
     // let (pointer, _) = fluxc_codegen::IrTranslator::default().build(ast)?;

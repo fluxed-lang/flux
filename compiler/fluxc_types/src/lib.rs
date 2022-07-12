@@ -24,37 +24,13 @@ impl TypeTable {
     pub fn with_core_types() -> Self {
         let mut table = Self::empty();
         // primitives
-        table.append(TableEntry {
-            name: "int".into(),
-            size: Some(8),
-            fields: Some(vec![]),
-        });
-        table.append(TableEntry {
-            name: "float".into(),
-            size: Some(8),
-            fields: Some(vec![]),
-        });
-        table.append(TableEntry {
-            name: "bool".into(),
-            size: Some(1),
-            fields: Some(vec![]),
-        });
-        table.append(TableEntry {
-            name: "char".into(),
-            size: Some(8),
-            fields: Some(vec![]),
-        });
-        table.append(TableEntry {
-            name: "unit".into(),
-            size: Some(0),
-            fields: Some(vec![]),
-        });
+        table.append(TableEntry { name: "int".into(), size: Some(8), fields: Some(vec![]) });
+        table.append(TableEntry { name: "float".into(), size: Some(8), fields: Some(vec![]) });
+        table.append(TableEntry { name: "bool".into(), size: Some(1), fields: Some(vec![]) });
+        table.append(TableEntry { name: "char".into(), size: Some(8), fields: Some(vec![]) });
+        table.append(TableEntry { name: "unit".into(), size: Some(0), fields: Some(vec![]) });
         // reference
-        table.append(TableEntry {
-            name: "ref".into(),
-            size: Some(8),
-            fields: Some(vec![]),
-        });
+        table.append(TableEntry { name: "ref".into(), size: Some(8), fields: Some(vec![]) });
         table
     }
     /// Find a type with a particular ID.
@@ -119,7 +95,7 @@ pub struct TypeField {
 
 #[cfg(test)]
 mod tests {
-    use crate::{TypeField, TypeTable, builder::StructBuilder};
+    use crate::{builder::StructBuilder, TypeField, TypeTable};
 
     #[test]
     fn test_create_struct() {
@@ -131,6 +107,6 @@ mod tests {
             my_struct.fields,
             Some(vec![TypeField { index: 0, name: "inner".to_string(), ty: 0 }]),
         );
-		assert_eq!(my_struct.size, Some(8));
+        assert_eq!(my_struct.size, Some(8));
     }
 }

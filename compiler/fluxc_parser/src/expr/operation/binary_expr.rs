@@ -2,7 +2,7 @@ use std::sync::Mutex;
 
 use fluxc_ast::{BinaryExpr, BinaryOp, Expr, Ident, Literal, Node};
 use fluxc_errors::CompilerError;
-use fluxc_span::Span;
+
 use lazy_static::lazy_static;
 use pest::{
     iterators::Pair,

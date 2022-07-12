@@ -1,14 +1,13 @@
 //! Contains the expression AST data structures.
 
-use fluxc_ast::{Expr, Ident, Literal, Node};
-use fluxc_errors::CompilerError;
+use fluxc_ast::{Expr, Ident, Literal};
+
 use pest::iterators::Pair;
 
 pub(crate) mod block_expr;
 pub(crate) mod control;
 pub(crate) mod literal;
 pub(crate) mod operation;
-pub(crate) mod types;
 
 use crate::{Context, PResult, Parse, Rule};
 
@@ -26,5 +25,12 @@ impl Parse for Expr {
             _ => unreachable!(),
         };
         Ok(node.fill(expr))
+    }
+}
+
+impl Parse for Ident {
+    #[tracing::instrument]
+    fn parse<'i>(input: Pair<'i, Rule>, context: &mut Context) -> PResult<Self> {
+        Ok(context.new_node(input.as_span(), input.as_str().into()))
     }
 }

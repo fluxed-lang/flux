@@ -1,16 +1,16 @@
 //! Defines the parser for Flux code.
 #![feature(option_result_contains)]
 
-use std::{rc::Rc, fmt::Debug};
+use std::{fmt::Debug, rc::Rc};
 
-use fluxc_ast::{Ident, Node, Stmt, AST};
+use fluxc_ast::{Node, Stmt, AST};
 use fluxc_errors::CompilerError;
 use fluxc_span::{AsSpan, Span};
 use pest::{error::Error, iterators::Pair, Parser};
 
 mod expr;
 mod stmt;
-mod types;
+mod type_expr;
 
 /// Internal moduel to prevent leakage of the `Rule` type to external
 /// crates.
@@ -68,7 +68,7 @@ fn map_pest_error(error: Error<Rule>) -> CompilerError {
 #[tracing::instrument]
 pub fn parse<S: AsRef<str> + Debug>(input: S) -> Result<AST, CompilerError> {
     // create the parser context
-	let input = input.as_ref();
+    let input = input.as_ref();
     let mut context = Context::from_str(input);
     // call the pest parser
     let root =
@@ -86,13 +86,6 @@ type PResult<T> = Result<Node<T>, CompilerError>;
 trait Parse: Sized {
     /// Parse an input Pair into an instance of this type.
     fn parse<'i>(input: Pair<'i, Rule>, ctx: &mut Context) -> PResult<Self>;
-}
-
-impl Parse for Ident {
-    #[tracing::instrument]
-    fn parse<'i>(input: Pair<'i, Rule>, context: &mut Context) -> PResult<Self> {
-        Ok(context.new_node(input.as_span(), input.as_str().into()))
-    }
 }
 
 /// Small unknown rule function.

@@ -1,4 +1,4 @@
-use crate::{TypeField, KeyedTableEntry, TypeTable, TableEntry};
+use crate::{KeyedTableEntry, TableEntry, TypeField, TypeTable};
 
 /// Utility type for creating struct types.
 #[derive(Debug)]
