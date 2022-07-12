@@ -20,33 +20,42 @@ impl Span {
         Span { src: src.as_ref().into(), start: 0, end: src.as_ref().len() }
     }
 
-    // Restrict this span to the given range. If the span is already inside the
-    // range, it will be returned unchanged. If the span is outside the range,
-    // it will be
+    /// Restrict this span to the given range. If the span is already inside the
+    /// range, it will be returned unchanged. If the span is outside the range,
+    /// the produced span will have 0 length.
     pub fn restrict<S: AsSpan>(&self, other: S) -> Span {
         let span = other.as_span(&self.src);
+		debug_assert_eq!(self.src, span.src);
         self.restrict_range(span.start, span.end)
     }
 
     /// This method restricts the span to the given range.
     pub fn restrict_range(&self, start: usize, end: usize) -> Span {
+		debug_assert!(start <= end);
         Span { src: self.src.clone(), start: start.max(self.start), end: end.min(self.end) }
     }
 
     /// Convert this span into a source code slice.
     pub fn as_slice(&self) -> &str {
+		debug_assert!(self.src.len() >= self.end);
         &self.src[self.start..self.end]
     }
 
     /// Returns true if this span includes another.
-    pub const fn includes(&self, other: &Span) -> bool {
+    pub fn includes(&self, other: &Span) -> bool {
+		debug_assert_eq!(self.src, other.src);
         self.start < other.start && self.end > other.end
     }
 
     /// Returns true if this span overlaps with another.
-    pub const fn overlaps(&self, other: &Span) -> bool {
+    pub fn overlaps(&self, other: &Span) -> bool {
+		debug_assert_eq!(self.src, other.src);
         self.start <= other.end && self.end >= other.start
     }
+	/// This method returns the length of the span.
+	pub const fn len(&self) -> usize {
+		self.end - self.start
+	}
 }
 
 /// Trait implemented by types that can be converted to `fluxc::Span` instances,

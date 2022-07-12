@@ -45,7 +45,7 @@ mod tests {
     use pest::Parser;
     use pretty_assertions::assert_eq;
 
-    use crate::{parser::FluxParser, Context, Parse, Rule};
+    use crate::{sealed::FluxParser, Context, Parse, Rule};
 
     #[test]
     fn parse_literal_int() {

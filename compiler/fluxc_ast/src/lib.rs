@@ -1,4 +1,3 @@
-//! # fluxc_ast
 //! Defines AST data structures and types for representing Flux code at compile
 //! time.
 //!
@@ -15,6 +14,7 @@ use fluxc_span::Span;
 
 mod expr;
 mod stmt;
+// mod walker;
 
 pub use expr::*;
 pub use stmt::*;

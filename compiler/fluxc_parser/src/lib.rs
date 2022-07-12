@@ -1,7 +1,7 @@
 //! Defines the parser for Flux code.
 #![feature(option_result_contains)]
 
-use std::rc::Rc;
+use std::{rc::Rc, fmt::Debug};
 
 use fluxc_ast::{Ident, Node, Stmt, AST};
 use fluxc_errors::CompilerError;
@@ -9,13 +9,12 @@ use fluxc_span::{AsSpan, Span};
 use pest::{error::Error, iterators::Pair, Parser};
 
 mod expr;
-mod span;
 mod stmt;
 mod types;
 
 /// Internal moduel to prevent leakage of the `Rule` type to external
 /// crates.
-mod parser {
+mod sealed {
     use pest_derive::Parser;
 
     /// The Pest parser for Flux code.
@@ -24,7 +23,7 @@ mod parser {
     pub struct FluxParser {}
 }
 
-pub(crate) use parser::*;
+pub(crate) use sealed::*;
 
 /// The parser context.
 #[derive(Debug)]
@@ -67,8 +66,9 @@ fn map_pest_error(error: Error<Rule>) -> CompilerError {
 
 /// Parse an input string into an instance of the Flux `AST`.
 #[tracing::instrument]
-pub fn parse(input: &str) -> Result<AST, CompilerError> {
+pub fn parse<S: AsRef<str> + Debug>(input: S) -> Result<AST, CompilerError> {
     // create the parser context
+	let input = input.as_ref();
     let mut context = Context::from_str(input);
     // call the pest parser
     let root =
