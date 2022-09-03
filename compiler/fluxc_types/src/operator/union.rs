@@ -67,7 +67,7 @@ impl Simplify for Union {
             _ => {}
         };
         // (A | B) | A = T
-        Type::Operation(Operation::Union(Union::of(lhs.into(), rhs.into())))
+        Type::Operation(Operation::Union(Union::of(lhs, rhs)))
     }
 }
 
