@@ -1,6 +1,4 @@
 //! Defines the parser for Flux code.
-#![feature(option_result_contains)]
-
 use std::rc::Rc;
 
 use fluxc_ast::{Ident, Node, Stmt, AST};
@@ -12,6 +10,7 @@ mod expr;
 mod span;
 mod stmt;
 mod ty;
+mod util;
 
 /// Internal moduel to prevent leakage of the `Rule` type to external
 /// crates.
