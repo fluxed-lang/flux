@@ -72,7 +72,7 @@ pub fn parse(input: &str) -> Result<AST, CompilerError> {
     let mut context = Context::from_str(input);
     // call the pest parser
     let root =
-        FluxParser::parse(Rule::flux, &input).map_err(map_pest_error)?.next().unwrap().into_inner();
+        FluxParser::parse(Rule::flux, input).map_err(map_pest_error)?.next().unwrap().into_inner();
     // parse top-level statements
     let stmts: Result<Vec<_>, _> = root.map(|rule| Stmt::parse(rule, &mut context)).collect();
     // create and return stmts
