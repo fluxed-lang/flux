@@ -6,7 +6,7 @@ use std::{fmt::Debug, ops::Range, rc::Rc};
 pub struct Span {
     /// The start byte position of the span.
     pub start: usize,
-    /// The end byte position of the span, inclusive.
+    /// The end byte position of the span, exclusive.
     pub end: usize,
     // The source text being parsed.
     pub src: Rc<str>,
