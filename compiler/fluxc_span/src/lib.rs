@@ -2,7 +2,7 @@ use std::{fmt::Debug, ops::Range, rc::Rc};
 
 /// Small struct for indexing AST nodes to a particular slice within the source
 /// code. The span is byte-indexed, rather than character-indexed.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Span {
     /// The start byte position of the span.
     pub start: usize,
