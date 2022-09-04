@@ -1,7 +1,5 @@
 use std::{fmt::Debug, ops::Range, rc::Rc};
 
-use pest::RuleType;
-
 /// Small struct for indexing AST nodes to a particular slice within the source
 /// code. The span is byte-indexed, rather than character-indexed.
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -59,30 +57,6 @@ pub trait AsSpan {
 impl AsSpan for Range<usize> {
     fn as_span(&self, src: &str) -> Span {
         Span::from_str(src).restrict_range(self.start, self.end)
-    }
-}
-
-impl AsSpan for pest::Span<'_> {
-    fn as_span(&self, src: &str) -> Span {
-        Span::from_str(src).restrict_range(self.start(), self.end())
-    }
-}
-
-impl AsSpan for &pest::Span<'_> {
-    fn as_span(&self, src: &str) -> Span {
-        (*self).as_span(src)
-    }
-}
-
-impl<R: RuleType> AsSpan for pest::iterators::Pair<'_, R> {
-    fn as_span(&self, src: &str) -> Span {
-        pest::iterators::Pair::as_span(self).as_span(src)
-    }
-}
-
-impl<R: RuleType> AsSpan for &pest::iterators::Pair<'_, R> {
-    fn as_span(&self, src: &str) -> Span {
-        pest::iterators::Pair::as_span(*self).as_span(src)
     }
 }
 

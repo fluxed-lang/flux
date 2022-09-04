@@ -1,7 +1,7 @@
 use fluxc_ast::{Block, Conditional, Expr, IfStmt};
 use pest::iterators::Pair;
 
-use crate::{Context, PResult, Parse, Rule};
+use crate::{Context, PResult, Parse, Rule, util::IntoSpan};
 
 impl Parse for Conditional {
     #[tracing::instrument]

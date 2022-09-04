@@ -24,6 +24,7 @@ mod parser {
 }
 
 pub(crate) use parser::*;
+use util::IntoSpan;
 
 /// The parser context.
 #[derive(Debug)]
@@ -40,13 +41,13 @@ impl Context {
         Self { next_id: 0, src: src.as_ref().into() }
     }
     /// Create a new node from the given pair.
-    pub fn new_node<T, S: AsSpan>(&mut self, span: S, value: T) -> Node<T> {
+    pub fn new_node<T, S: IntoSpan>(&mut self, span: S, value: T) -> Node<T> {
         let node = Node::new(self.next_id, span.as_span(&self.src), value);
         self.next_id += 1;
         node
     }
     /// Create an empty node.
-    pub fn new_empty<S: AsSpan>(&mut self, span: S) -> Node<()> {
+    pub fn new_empty<S: IntoSpan>(&mut self, span: S) -> Node<()> {
         self.new_node(span, ())
     }
     /// Create a new span over the entire source text.
