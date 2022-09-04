@@ -18,7 +18,7 @@ pub use unary_expr::*;
 ///
 /// Each operator is then matched to either one of these options, and compiled
 /// as such.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Associativity {
     /// Left-to-right associativity.
     Ltr,

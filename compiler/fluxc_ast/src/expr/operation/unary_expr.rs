@@ -15,7 +15,7 @@ pub struct UnaryExpr {
 ///
 /// Unary operators are operators that act on a single argument, such as `x++`,
 /// or `!x`.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum UnaryOp {
     /// The suffix increment operator, `++`.
     Increment,
@@ -43,7 +43,7 @@ impl FromStr for UnaryOp {
         use UnaryOp::*;
 
         // match index operator
-        if s.starts_with("[") && s.ends_with("]") {
+        if s.starts_with('[') && s.ends_with(']') {
             let mut chars = s.chars();
             chars.next();
             chars.next_back();

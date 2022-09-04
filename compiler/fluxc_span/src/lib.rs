@@ -4,7 +4,7 @@ use pest::RuleType;
 
 /// Small struct for indexing AST nodes to a particular slice within the source
 /// code. The span is byte-indexed, rather than character-indexed.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Span {
     /// The start byte position of the span.
     pub start: usize,
@@ -76,7 +76,7 @@ impl AsSpan for &pest::Span<'_> {
 
 impl<R: RuleType> AsSpan for pest::iterators::Pair<'_, R> {
     fn as_span(&self, src: &str) -> Span {
-        pest::iterators::Pair::as_span(&self).as_span(src)
+        pest::iterators::Pair::as_span(self).as_span(src)
     }
 }
 

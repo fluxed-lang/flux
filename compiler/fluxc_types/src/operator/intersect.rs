@@ -61,7 +61,7 @@ impl Simplify for Intersection {
             return Type::Primitive(Primitive::Never);
         }
         if lhs == rhs {
-            return lhs.into();
+            return lhs;
         }
         // more complex intersection
         match (&lhs, &rhs) {
@@ -71,15 +71,15 @@ impl Simplify for Intersection {
                 Type::Operation(Operation::Union(Union { lhs: c, rhs: d })),
             ) => {
                 return a
-                    .intersect(&c)
-                    .unify(&a.intersect(&d))
-                    .unify(&b.intersect(&c))
-                    .unify(&b.intersect(&d))
+                    .intersect(c)
+                    .unify(&a.intersect(d))
+                    .unify(&b.intersect(c))
+                    .unify(&b.intersect(d))
                     .simplify();
             }
             // T & (A | B) = (T & A) | (T & B)
             (t, Type::Operation(Operation::Union(Union { lhs, rhs }))) => {
-                return lhs.intersect(&t).unify(&rhs.intersect(&t)).simplify();
+                return lhs.intersect(t).unify(&rhs.intersect(t)).simplify();
             }
             // A & B where A and B's are primitives
             (Type::Primitive(a), Type::Primitive(b)) => {
@@ -117,7 +117,7 @@ impl Simplify for Intersection {
             _ => (),
         }
 
-        Type::Operation(Operation::Intersection(Intersection::of(lhs.into(), rhs.into())))
+        Type::Operation(Operation::Intersection(Intersection::of(lhs, rhs)))
     }
 }
 #[cfg(test)]

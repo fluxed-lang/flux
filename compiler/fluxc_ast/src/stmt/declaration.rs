@@ -33,7 +33,7 @@ pub struct Declaration {
 ///
 /// This enum is used in the [`Declaration`](#declaration) struct to determine
 /// its mutability.
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Mutability {
     /// A mutable variable.
     Mutable,

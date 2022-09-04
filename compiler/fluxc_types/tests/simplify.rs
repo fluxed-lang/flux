@@ -6,8 +6,8 @@ fn simplify_union() {
     // string | string = string
     assert_eq!(
         Type::Operation(Operation::Union(Union::of(
-            Type::Primitive(Primitive::String).into(),
-            Type::Primitive(Primitive::String).into()
+            Type::Primitive(Primitive::String),
+            Type::Primitive(Primitive::String)
         )))
         .simplify(),
         Type::Primitive(Primitive::String)
@@ -15,8 +15,8 @@ fn simplify_union() {
     // string | any = any
     assert_eq!(
         Type::Operation(Operation::Union(Union::of(
-            Type::Primitive(Primitive::String).into(),
-            Type::Primitive(Primitive::Any).into()
+            Type::Primitive(Primitive::String),
+            Type::Primitive(Primitive::Any)
         )))
         .simplify(),
         Type::Primitive(Primitive::Any)
@@ -24,8 +24,8 @@ fn simplify_union() {
     // string | never = string
     assert_eq!(
         Type::Operation(Operation::Union(Union::of(
-            Type::Primitive(Primitive::String).into(),
-            Type::Primitive(Primitive::Never).into()
+            Type::Primitive(Primitive::String),
+            Type::Primitive(Primitive::Never)
         )))
         .simplify(),
         Type::Primitive(Primitive::String)
@@ -33,8 +33,8 @@ fn simplify_union() {
     // any | string = any
     assert_eq!(
         Type::Operation(Operation::Union(Union::of(
-            Type::Primitive(Primitive::Any).into(),
-            Type::Primitive(Primitive::String).into()
+            Type::Primitive(Primitive::Any),
+            Type::Primitive(Primitive::String)
         )))
         .simplify(),
         Type::Primitive(Primitive::Any)
@@ -46,8 +46,8 @@ fn simplify_intersection() {
     // string & string = string
     assert_eq!(
         Type::Operation(Operation::Intersection(Intersection::of(
-            Type::Primitive(Primitive::String).into(),
-            Type::Primitive(Primitive::String).into()
+            Type::Primitive(Primitive::String),
+            Type::Primitive(Primitive::String)
         )))
         .simplify(),
         Type::Primitive(Primitive::String)
@@ -55,8 +55,8 @@ fn simplify_intersection() {
     // string & any = string
     assert_eq!(
         Type::Operation(Operation::Intersection(Intersection::of(
-            Type::Primitive(Primitive::String).into(),
-            Type::Primitive(Primitive::Any).into()
+            Type::Primitive(Primitive::String),
+            Type::Primitive(Primitive::Any)
         )))
         .simplify(),
         Type::Primitive(Primitive::String)
@@ -64,8 +64,8 @@ fn simplify_intersection() {
     // string & never = never
     assert_eq!(
         Type::Operation(Operation::Intersection(Intersection::of(
-            Type::Primitive(Primitive::String).into(),
-            Type::Primitive(Primitive::Never).into()
+            Type::Primitive(Primitive::String),
+            Type::Primitive(Primitive::Never)
         )))
         .simplify(),
         Type::Primitive(Primitive::Never)
@@ -73,8 +73,8 @@ fn simplify_intersection() {
     // never & string = never
     assert_eq!(
         Type::Operation(Operation::Intersection(Intersection::of(
-            Type::Primitive(Primitive::Never).into(),
-            Type::Primitive(Primitive::String).into()
+            Type::Primitive(Primitive::Never),
+            Type::Primitive(Primitive::String)
         )))
         .simplify(),
         Type::Primitive(Primitive::Never)
@@ -84,13 +84,12 @@ fn simplify_intersection() {
     assert_eq!(
         Type::Operation(Operation::Intersection(
             Intersection::of(
-                Type::Primitive(Primitive::String).into(),
+                Type::Primitive(Primitive::String),
                 Type::Operation(Operation::Union(Union::of(
-                    Type::Primitive(Primitive::String).into(),
-                    Type::Primitive(Primitive::Int).into()
+                    Type::Primitive(Primitive::String),
+                    Type::Primitive(Primitive::Int)
                 )))
             )
-            .into()
         ))
         .simplify(),
         Type::Primitive(Primitive::String)
