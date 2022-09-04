@@ -9,6 +9,8 @@
 //! The AST is built from the parser, iterated over by reducers in the
 //! `fluxc_ast_passes` crate, before being sent to `fluxc_codegen` and turned
 //! into valid LLVM code.
+use fluxc_span::Span;
+
 mod expr;
 mod node;
 mod stmt;
@@ -18,6 +20,56 @@ pub use expr::*;
 pub use node::*;
 pub use stmt::*;
 pub use type_expr::*;
+
+/// Wrapper around a generic type `T` that provides an AST ID, and a span.
+///
+/// This struct is used to wrap AST nodes with their ID, and position in the
+/// source code.
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Node<T> {
+    /// The ID of this node in the AST.
+    pub id: usize,
+    /// The span of the source code that this node represents.
+    pub span: Span,
+    /// The inner value held by this AST node.
+    pub value: T,
+}
+
+impl<T> Node<T> {
+    /// Create a new node.
+    pub fn new(id: usize, span: Span, value: T) -> Self {
+        Self { id, span, value }
+    }
+    /// Create an empty node with no value.
+    pub fn empty(id: usize, span: Span) -> Node<()> {
+        Node { id, span, value: () }
+    }
+}
+
+impl<T: Clone> Node<T> {
+    /// This method clones the inner value of the node and returns it.
+    pub fn clone_inner(&self) -> T {
+        self.value.clone()
+    }
+}
+
+// generic implemetation of typed for all nodes
+impl Node<()> {
+    /// Hydrate this node with the given value.
+    pub fn fill<T>(self, value: T) -> Node<T> {
+        Node { id: self.id, span: self.span, value }
+    }
+}
+
+/// The identifier type.
+///
+/// This type is a simple wrapper around `String` used to represent identifiers
+/// within the Flux source code. Identifiers are alphanumeric strings, and may
+/// contain underscores. They match the following regex, excluding keywords:
+/// ```regex
+/// [A-z_][0-9A-z_]*
+/// ```
+pub type Ident = String;
 
 /// The root AST instance.
 ///

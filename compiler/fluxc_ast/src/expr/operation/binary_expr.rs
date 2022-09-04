@@ -141,8 +141,6 @@ impl BinaryOp {
 
     /// Get the associativity of this binary operator.
     pub const fn associativity(&self) -> Associativity {
-        match self {
-            _ => Associativity::Ltr,
-        }
+        Associativity::Ltr
     }
 }

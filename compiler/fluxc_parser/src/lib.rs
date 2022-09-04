@@ -1,6 +1,4 @@
 //! Defines the parser for Flux code.
-#![feature(option_result_contains)]
-
 use std::{fmt::Debug, rc::Rc};
 
 use fluxc_ast::{Node, Stmt, AST};
@@ -11,6 +9,7 @@ use pest::{error::Error, iterators::Pair, Parser};
 mod expr;
 mod stmt;
 mod type_expr;
+mod util;
 
 /// Internal moduel to prevent leakage of the `Rule` type to external
 /// crates.

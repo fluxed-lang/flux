@@ -61,7 +61,7 @@ impl Simplify for Intersection {
             return TypeExpr::Primitive(Primitive::Never);
         }
         if lhs == rhs {
-            return lhs.into();
+            return lhs;
         }
         // more complex intersection
         match (&lhs, &rhs) {
@@ -71,10 +71,10 @@ impl Simplify for Intersection {
                 TypeExpr::Operation(Operation::Union(Union { lhs: c, rhs: d })),
             ) => {
                 return a
-                    .intersect(&c)
-                    .unify(&a.intersect(&d))
-                    .unify(&b.intersect(&c))
-                    .unify(&b.intersect(&d))
+                    .intersect(c)
+                    .unify(&a.intersect(d))
+                    .unify(&b.intersect(c))
+                    .unify(&b.intersect(d))
                     .simplify();
             }
             // T & (A | B) = (T & A) | (T & B)
@@ -116,7 +116,6 @@ impl Simplify for Intersection {
             }
             _ => (),
         }
-
         TypeExpr::Operation(Operation::Intersection(Intersection::of(lhs.into(), rhs.into())))
     }
 }
