@@ -1,12 +1,11 @@
-use std::rc::Rc;
-
 use chumsky::{prelude::Simple, primitive::just, Parser};
 use fluxc_ast::{Declaration, Mutability, Node};
 use fluxc_lexer::Token;
 
 use crate::{expr::expr, ident, node};
 
-pub(crate) fn declaration() -> impl Parser<Token, Node<Declaration>, Error = Simple<Token>> {
+pub(crate) fn declaration() -> impl Parser<Token, Node<Declaration>, Error = Simple<Token>> + Clone
+{
     just(Token::KeywordLet)
         // ident
         .ignore_then(ident())

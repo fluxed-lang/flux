@@ -6,7 +6,7 @@ use crate::{Block, Ident, Node};
 /// unconditional loop. This expression takes the return value of the loop body,
 /// although the compiler cannot guarantee that the loop body will ever return a
 /// value.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Loop {
     /// The name of this loop.
     pub name: Option<Ident>,

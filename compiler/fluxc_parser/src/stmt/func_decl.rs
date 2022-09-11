@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use chumsky::{
     prelude::Simple,
     primitive::{choice, just},
@@ -10,7 +8,7 @@ use fluxc_lexer::Token;
 
 use crate::{expr::block_expr::block_expr, ident, node};
 
-pub(crate) fn func_param() -> impl Parser<Token, Node<FuncParam>, Error = Simple<Token>> + Clone  {
+pub(crate) fn func_param() -> impl Parser<Token, Node<FuncParam>, Error = Simple<Token>> + Clone {
     ident()
         .then_ignore(just(Token::TokenColon))
         .then(ident())
@@ -18,7 +16,7 @@ pub(crate) fn func_param() -> impl Parser<Token, Node<FuncParam>, Error = Simple
         .map_with_span(node)
 }
 
-pub(crate) fn func_decl() -> impl Parser<Token, Node<FuncDecl>, Error = Simple<Token>> {
+pub(crate) fn func_decl() -> impl Parser<Token, Node<FuncDecl>, Error = Simple<Token>> + Clone {
     let params = func_param().separated_by(just(Token::TokenComma));
 
     let ret_ty = just(Token::TokenArrow).ignore_then(ident());

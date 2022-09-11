@@ -1,12 +1,10 @@
-use std::rc::Rc;
-
 use chumsky::{prelude::Simple, primitive::just, Parser};
-use fluxc_ast::Block;
+use fluxc_ast::{Block, Stmt};
 use fluxc_lexer::Token;
 
 use crate::{node, stmt::stmt, Node};
 
-pub(crate) fn block_expr() -> impl Parser<Token, Node<Block>, Error = Simple<Token>> {
+pub(crate) fn block_expr() -> impl Parser<Token, Node<Block>, Error = Simple<Token>> + Clone {
     stmt()
         .repeated()
         .delimited_by(just(Token::TokenBraceLeft), just(Token::TokenBraceRight))

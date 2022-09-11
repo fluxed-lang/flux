@@ -11,7 +11,7 @@ pub use module::*;
 use crate::{Expr, Node};
 
 /// Enum of possible statement kinds.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
     /// A declaration.
     Declaration(Node<Declaration>),

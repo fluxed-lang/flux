@@ -6,7 +6,7 @@
 
 use crate::{Block, Expr, Ident, Node};
 /// A function call.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct FuncCall {
     /// The identifier of the function
     pub ident: Node<Ident>,
@@ -15,7 +15,7 @@ pub struct FuncCall {
 }
 
 /// An argument to a function call.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct FuncParam {
     /// The identifier representing the AST node.
     pub ident: Node<Ident>,
@@ -24,7 +24,7 @@ pub struct FuncParam {
 }
 
 /// An enum of function declaration types.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum FuncDecl {
     Local {
         /// The identifier representing the function.

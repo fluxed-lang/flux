@@ -2,7 +2,7 @@ use fluxc_types::{Operation, Primitive, Type, Typed, Unify};
 
 use crate::Expr;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 /// Enum representing the type of a literal.
 pub enum Literal {
     /// An integer literal (e.g. `1234`, `0x1234`, `0o1234`, `0b1001`).
@@ -17,7 +17,7 @@ pub enum Literal {
     /// A boolean literal (e.g. `true`, `false`).
     Bool(bool),
     /// An array literal (e.g. `[1, 2, 3]`).
-    Array(Vec<Box<Expr>>),
+    Array(Vec<Expr>),
 }
 
 impl Typed for Literal {

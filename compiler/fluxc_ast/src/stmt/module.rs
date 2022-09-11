@@ -7,7 +7,7 @@ use crate::{Ident, Node};
 /// This is a data structure that is used to represent the imported symbols in
 /// an `import {}` statement. They take the form of `name`, and optionally `name
 /// as alias`.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ModuleSymbol {
     /// The name of the imported symbol.
     pub name: Node<Ident>,
@@ -16,7 +16,7 @@ pub struct ModuleSymbol {
 }
 
 /// An `import` statement.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Import {
     /// A list of imported symbols.
     pub symbols: Vec<Node<ModuleSymbol>>,
@@ -25,7 +25,7 @@ pub struct Import {
 }
 
 /// An `export` statement.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Export {
     /// A list of exported symbols.
     pub symbols: Vec<Node<ModuleSymbol>>,

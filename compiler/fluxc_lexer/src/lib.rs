@@ -34,11 +34,35 @@ pub enum Token {
     #[token("%")]
     TokenPercent,
 
+    #[token("&")]
+    TokenAnd,
+
+    #[token("|")]
+    TokenOr,
+
+    #[token("!")]
+    TokenNot,
+
+    #[token("&&")]
+    TokenLogicalAnd,
+
+    #[token("||")]
+    TokenLogicalOr,
+
     #[token("+=")]
     TokenPlusEq,
 
     #[token("-=")]
     TokenMinusEq,
+
+    #[token("!=")]
+    TokenNe,
+
+    #[token("++")]
+    TokenIncrement,
+
+    #[token("--")]
+    TokenDecrement,
 
     #[token("{")]
     TokenBraceLeft,
@@ -116,6 +140,9 @@ pub enum Token {
     #[token("extern")]
     KeywordExtern,
 
+    #[token("match")]
+    KeywordMatch,
+
     // literals - these only consume strings as the actual parsing should be handled by the parser
     // crate.
     #[regex("-?[0-9]+", |lex| lex.slice().to_string())]
@@ -148,6 +175,9 @@ impl Display for Token {
                 Token::TokenPercent => "%",
                 Token::TokenPlusEq => "+=",
                 Token::TokenMinusEq => "-=",
+                Token::TokenIncrement => "++",
+                Token::TokenDecrement => "--",
+                Token::TokenNe => "!=",
                 Token::TokenBraceLeft => "{",
                 Token::TokenBraceRight => "}",
                 Token::TokenBracketLeft => "[",
@@ -177,6 +207,12 @@ impl Display for Token {
                 Token::LiteralFloat(_) => "float",
                 Token::LiteralStr(_) => "str",
                 Token::LiteralChar(_) => "char",
+                Token::TokenAnd => "&",
+                Token::TokenOr => "|",
+                Token::TokenNot => "!",
+                Token::TokenLogicalAnd => "&&",
+                Token::TokenLogicalOr => "||",
+                Token::KeywordMatch => "match",
             }
         )
     }

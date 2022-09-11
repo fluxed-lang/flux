@@ -17,13 +17,13 @@ pub(crate) fn node<T>(value: T, span: Range<usize>) -> Node<T> {
 
 #[macro_export]
 macro_rules! node {
-	() => {
-		|value, span| Node::new(value, span)
-	};
+    () => {
+        |value, span| Node::new(value, span)
+    };
 }
 
 /// Parser combinator for [Ident].
-pub(crate) fn ident() -> impl Parser<Token, Node<Ident>, Error = Simple<Token>> {
+pub(crate) fn ident() -> impl Parser<Token, Node<Ident>, Error = Simple<Token>> + Clone {
     select! {
         Token::Ident(ident) => ident
     }
