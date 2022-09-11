@@ -14,5 +14,5 @@ use crate::node;
 pub(crate) fn stmt() -> impl Parser<Token, Node<Stmt>, Error = Simple<Token>> {
     let declaration = declaration().map(|decl| Stmt::Declaration(decl));
     let func_decl = func_decl().map(|decl| Stmt::FuncDecl(decl));
-    choice((declaration, func_decl)).map_with_span(node())
+    choice((declaration, func_decl)).map_with_span(node)
 }

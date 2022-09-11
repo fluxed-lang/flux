@@ -11,5 +11,5 @@ pub(crate) fn block_expr() -> impl Parser<Token, Node<Block>, Error = Simple<Tok
         .repeated()
         .delimited_by(just(Token::TokenBraceLeft), just(Token::TokenBraceRight))
         .map(|stmts| Block { stmts })
-        .map_with_span(node())
+        .map_with_span(node)
 }

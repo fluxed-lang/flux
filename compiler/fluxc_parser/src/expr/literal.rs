@@ -27,8 +27,8 @@ pub(crate) fn literal_float() -> impl Parser<Token, f64, Error = Simple<Token>> 
 
 /// Parser combinator for [Literal].
 pub(crate) fn literal() -> impl Parser<Token, Node<Literal>, Error = Simple<Token>> {
-    let integer = literal_int().map(Literal::Int).map_with_span(node());
-    let float = literal_float().map(Literal::Float).map_with_span(node());
-    let str = literal_str().map(Literal::String).map_with_span(node());
+    let integer = literal_int().map(Literal::Int).map_with_span(node);
+    let float = literal_float().map(Literal::Float).map_with_span(node);
+    let str = literal_str().map(Literal::String).map_with_span(node);
     choice((integer, float, str)).labelled("literal")
 }

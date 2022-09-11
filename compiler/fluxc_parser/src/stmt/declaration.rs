@@ -24,5 +24,5 @@ pub(crate) fn declaration() -> impl Parser<Token, Node<Declaration>, Error = Sim
             mutability,
             value,
         })
-        .map_with_span(node())
+        .map_with_span(node)
 }

@@ -17,7 +17,7 @@ pub(crate) fn expr() -> impl Parser<Token, Node<Expr>, Error = Simple<Token>> {
         let ident = ident().map(Expr::Ident);
         choice((literal, ident))
     })
-    .map_with_span(node())
+    .map_with_span(node)
     .boxed()
     .labelled("expression")
 }

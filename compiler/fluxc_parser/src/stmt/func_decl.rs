@@ -8,14 +8,14 @@ use chumsky::{
 use fluxc_ast::{FuncDecl, FuncParam, Node};
 use fluxc_lexer::Token;
 
-use crate::{expr::block_expr::block_expr, ident, node, Ctx};
+use crate::{expr::block_expr::block_expr, ident, node};
 
-pub(crate) fn func_param() -> impl Parser<Token, Node<FuncParam>, Error = Simple<Token>>  {
+pub(crate) fn func_param() -> impl Parser<Token, Node<FuncParam>, Error = Simple<Token>> + Clone  {
     ident()
         .then_ignore(just(Token::TokenColon))
         .then(ident())
         .map(|(ident, ty)| FuncParam { ident, ty })
-        .map_with_span(node())
+        .map_with_span(node)
 }
 
 pub(crate) fn func_decl() -> impl Parser<Token, Node<FuncDecl>, Error = Simple<Token>> {
@@ -44,5 +44,5 @@ pub(crate) fn func_decl() -> impl Parser<Token, Node<FuncDecl>, Error = Simple<T
         .then(block_expr())
         .map(|(((ident, params), ret_ty), body)| FuncDecl::Export { ident, params, ret_ty, body });
 
-    choice((extern_func, exported_func, local_func)).map_with_span(node())
+    choice((extern_func, exported_func, local_func)).map_with_span(node)
 }

@@ -8,9 +8,9 @@ use crate::{expr::literal::literal_str, ident, node};
 
 pub(crate) fn module_symbol() -> impl Parser<Token, Node<ModuleSymbol>, Error = Simple<Token>> {
     ident()
-        .then(just(Token::KeywordAs).ignore_then(literal_str().map_with_span(node())).or_not())
+        .then(just(Token::KeywordAs).ignore_then(literal_str().map_with_span(node)).or_not())
         .map(|(name, alias)| ModuleSymbol { name, alias })
-        .map_with_span(node())
+        .map_with_span(node)
 }
 
 pub(crate) fn import() -> impl Parser<Token, Node<Import>, Error = Simple<Token>> {
@@ -18,7 +18,7 @@ pub(crate) fn import() -> impl Parser<Token, Node<Import>, Error = Simple<Token>
     idents
         .then(just(Token::KeywordFrom).ignore_then(literal_str()))
         .map(|(symbols, path)| Import { symbols, path })
-        .map_with_span(node())
+        .map_with_span(node)
 }
 
 pub(crate) fn export() -> impl Parser<Token, Node<Export>, Error = Simple<Token>> {
@@ -27,5 +27,5 @@ pub(crate) fn export() -> impl Parser<Token, Node<Export>, Error = Simple<Token>
         .ignore_then(idents)
         .then(just(Token::KeywordFrom).ignore_then(literal_str()))
         .map(|(symbols, path)| Export { symbols })
-        .map_with_span(node())
+        .map_with_span(node)
 }
