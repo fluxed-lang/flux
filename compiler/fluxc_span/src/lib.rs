@@ -1,73 +1,132 @@
-use std::{fmt::Debug, ops::Range, rc::Rc};
+use std::{fmt::Debug, hash::Hash, ops::Range, path::PathBuf, rc::Rc};
+
+/// A type alias for spans.
+pub type SpanInner = Range<usize>;
 
 /// Small struct for indexing AST nodes to a particular slice within the source
 /// code. The span is byte-indexed, rather than character-indexed.
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Span {
-    /// The start byte position of the span.
-    pub start: usize,
-    /// The end byte position of the span, exclusive.
-    pub end: usize,
-    // The source text being parsed.
-    pub src: Rc<str>,
+    /// The inner spanned value.
+    inner: SpanInner,
+    context: Rc<SpanContext>,
+}
+
+/// Associated information shared by all spans of the current source file.
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct SpanContext {
+    /// The source text.
+    pub source: String,
+    /// A path to the source file.
+    pub path: PathBuf,
 }
 
 impl Span {
-    /// Create a new span.
-    pub fn from_str<S: AsRef<str>>(src: S) -> Span {
-        Span { src: src.as_ref().into(), start: 0, end: src.as_ref().len() }
+    pub fn new(inner: Range<usize>, context: Rc<SpanContext>) -> Self {
+        Span { inner, context }
     }
-
-    // Restrict this span to the given range. If the span is already inside the
-    // range, it will be returned unchanged. If the span is outside the range,
-    // it will be
-    pub fn restrict<S: AsSpan>(&self, other: S) -> Span {
-        let span = other.as_span(&self.src);
-        self.restrict_range(span.start, span.end)
+    /// This method returns the start index of the span.
+    pub fn start(&self) -> usize {
+        self.inner.start
     }
-
-    /// This method restricts the span to the given range.
-    pub fn restrict_range(&self, start: usize, end: usize) -> Span {
-        Span { src: self.src.clone(), start: start.max(self.start), end: end.min(self.end) }
+    /// This method returns the end index of the span.
+    pub fn end(&self) -> usize {
+        self.inner.end
     }
-
-    /// Convert this span into a source code slice.
-    pub fn as_slice(&self) -> &str {
-        &self.src[self.start..self.end]
+    /// This method returns the span as a slice.
+    pub fn as_str(&self) -> &str {
+        &self.context.source[self.inner.clone()]
     }
-
-    /// Returns true if this span includes another.
-    pub const fn includes(&self, other: &Span) -> bool {
-        self.start < other.start && self.end > other.end
+    /// This method returns the length of the span.
+    pub fn len(&self) -> usize {
+        self.inner.len()
     }
-
-    /// Returns true if this span overlaps with another.
-    pub const fn overlaps(&self, other: &Span) -> bool {
-        self.start <= other.end && self.end >= other.start
+    /// This method returns true if the span is empty.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+    /// This method creates a span restricted to the given range.
+    pub fn restrict<R: Into<Range<usize>>>(&self, range: R) -> Self {
+        Span { inner: range.into(), context: self.context.clone() }
+    }
+    /// This method mutably restricts the span.
+    pub fn restrict_mut<R: Into<Range<usize>>>(&mut self, range: R) {
+        self.inner = range.into();
+    }
+    /// This method returns the line number of the span.
+    pub fn line(&self) -> usize {
+        let mut acc = 0usize;
+        for (i, char) in self.context.source.char_indices() {
+            if i == self.start() {
+                break;
+            }
+            if char == '\n' {
+                acc += 1;
+            }
+        }
+        acc + 1
+    }
+    /// This method returns the column number of the span.
+    pub fn col(&self) -> usize {
+        let mut last_newline = 0usize;
+        for (i, char) in self.context.source.char_indices() {
+            if i == self.start() {
+                break;
+            }
+            if char == '\n' {
+                last_newline = i;
+            }
+        }
+        self.start() - last_newline
+    }
+    /// This method returns the line position of the span.
+    pub fn position(&self) -> (usize, usize) {
+        (self.line(), self.col())
     }
 }
 
-/// Trait implemented by types that can be converted to `fluxc::Span` instances,
-/// given some input source.
-pub trait AsSpan {
-    /// This method returns a new Span instance for the given input.
-    fn as_span(&self, src: &str) -> Span;
-}
-
-impl AsSpan for Range<usize> {
-    fn as_span(&self, src: &str) -> Span {
-        Span::from_str(src).restrict_range(self.start, self.end)
+/// Utility trait providing `into_span` for all types implementing
+/// `Into<Range<usize>>`.
+pub trait IntoSpan: Into<Range<usize>> {
+    fn into_span(self, context: Rc<SpanContext>) -> Span {
+        Span { inner: self.into(), context }
     }
 }
 
-impl AsSpan for Span {
-    fn as_span(&self, _: &str) -> Span {
-        self.clone()
+impl<T: Into<Range<usize>>> IntoSpan for T {}
+
+impl From<&Span> for Range<usize> {
+    fn from(span: &Span) -> Self {
+        span.inner.clone()
     }
 }
 
-impl AsSpan for &Span {
-    fn as_span(&self, _: &str) -> Span {
-        (*self).clone()
+impl ToString for Span {
+    fn to_string(&self) -> String {
+        self.context.source[self.inner.clone()].to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::rc::Rc;
+
+    use crate::{Span, SpanContext};
+
+    #[test]
+    fn test_span_as_str() {
+        let src = "hello, world!";
+        let span = Span::new(0..5, Rc::new(SpanContext { source: src.into(), path: "/".into() }));
+
+        assert_eq!("hello", span.as_str());
+    }
+
+    #[test]
+    fn test_span_line_col() {
+        let src = "hello\nworld!";
+        let span = Span::new(7..8, Rc::new(SpanContext { source: src.into(), path: "/".into() }));
+
+        assert_eq!(2, span.line());
+        assert_eq!(2, span.col())
     }
 }

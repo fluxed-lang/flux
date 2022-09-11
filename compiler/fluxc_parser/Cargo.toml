@@ -8,3 +8,4 @@ chumsky = "0.8"
 
 fluxc_ast = { path = "../fluxc_ast" }
 fluxc_lexer = { path =  "../fluxc_lexer" }
+fluxc_span = { path =  "../fluxc_span" }

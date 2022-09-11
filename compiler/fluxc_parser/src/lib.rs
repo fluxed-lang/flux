@@ -1,45 +1,29 @@
 //! The Flux parser, written using the `chumsky` library.
+use std::{ops::Range, sync::Mutex};
 
-use std::sync::Mutex;
+use chumsky::{prelude::Simple, select, Parser};
+use fluxc_ast::{Ident, Node};
+use fluxc_lexer::{Token, TokenStream};
+use stmt::stmt;
 
-use chumsky::{prelude::Simple, select, Parser, recursive::recursive};
-use fluxc_ast::{Literal, Node, AST, Expr};
-use fluxc_lexer::{Token, TokenPair};
+pub(crate) mod expr;
+pub(crate) mod stmt;
 
-trait Parse: Sized {
-    fn combinator<P: Parser<TokenPair, Node<Self>, Error = Simple<TokenPair>>>(ctx: Ctx) -> P;
+/// This method wraps `T` in a spanned AST node. For use with
+/// `Parser::map_with_span`.
+pub(crate) fn node<T>() -> impl Fn(T, Range<usize>) -> Node<T> {
+    move |value, span| Node::new(value, span)
 }
 
-struct Ctx {
-    next_id: Mutex<usize>,
-}
-
-impl Ctx {
-    pub fn create_empty(&self) -> Node<()> {
-        let mut id = self.next_id.lock().expect("failed to lock ctx id mutex");
-        let node_id: usize = *id;
-        id = id + 1;
-        Node { id: node_id }
-    }
-}
-
-impl Parse for Literal {
-    fn combinator<P: Parser<TokenPair, Node<Self>, Error = Simple<TokenPair>>>(ctx: Ctx) -> P {
-        todo!()
-    }
-}
-
-fn literal(ctx: Ctx) -> impl Parser<TokenPair, Node<Literal>, Error = Simple<TokenPair>> {
+/// Parser combinator for [Ident].
+pub(crate) fn ident() -> impl Parser<Token, Node<Ident>, Error = Simple<Token>> {
     select! {
-		Token::Str => Literal::String("".into())
-	}.labelled("value")
+        Token::Ident(ident) => ident
+    }
+    .map_with_span(node())
 }
 
-
-fn parser() -> impl Parser<TokenPair, AST, Error = Simple<TokenPair>> {
-	expr
-}
-
-fn expr() -> impl Parser<TokenPair, Node<Expr>, Error = Simple<TokenPair>> {
-	literal().map_with_span(f)
+/// Parse a [TokenStream] into the AST.
+pub fn parse(src: &str, input: TokenStream) {
+    let parser = stmt().repeated();
 }

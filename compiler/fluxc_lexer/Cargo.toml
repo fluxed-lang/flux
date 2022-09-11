@@ -7,7 +7,6 @@ edition = "2021"
 logos = "0.12"
 
 fluxc_errors = { path =  "../fluxc_errors" }
-fluxc_span = { path =  "../fluxc_span" }
 
 [dev-dependencies]
 pretty_assertions = "1"

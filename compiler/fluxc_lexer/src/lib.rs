@@ -1,4 +1,5 @@
-use fluxc_span::Span;
+use std::{fmt::Display, ops::Range};
+
 use logos::Logos;
 
 /// A token lexed by the Flux lexer.
@@ -8,136 +9,192 @@ pub enum Token {
     #[error]
     Error,
 
-	#[regex("[A-Za-z_][A-Za-z_0-9]*")]
-	Ident,
+    #[regex("[A-Za-z_][A-Za-z_0-9]*", |lex| lex.slice().to_string())]
+    Ident(String),
 
-	// tokens
-	#[token("=")]
-	TokenAssign,
+    // tokens
+    #[token("=")]
+    TokenAssign,
 
-	#[token("==")]
-	TokenEq,
+    #[token("==")]
+    TokenEq,
 
-	#[token("+")]
-	TokenPlus,
+    #[token("+")]
+    TokenPlus,
 
-	#[token("-")]
-	TokenMinus,
+    #[token("-")]
+    TokenMinus,
 
-	#[token("/")]
-	TokenSlash,
+    #[token("/")]
+    TokenSlash,
 
-	#[token("*")]
-	TokenStar,
+    #[token("*")]
+    TokenStar,
 
-	#[token("%")]
-	TokenPercent,
+    #[token("%")]
+    TokenPercent,
 
-	#[token("+=")]
-	TokenPlusEq,
+    #[token("+=")]
+    TokenPlusEq,
 
-	#[token("-=")]
-	TokenMinusEq,
+    #[token("-=")]
+    TokenMinusEq,
 
-	#[token("{")]
-	TokenBraceLeft,
+    #[token("{")]
+    TokenBraceLeft,
 
-	#[token("}")]
-	TokenBraceRight,
+    #[token("}")]
+    TokenBraceRight,
 
-	#[token("[")]
-	TokenBracketLeft,
+    #[token("[")]
+    TokenBracketLeft,
 
-	#[token("]")]
-	TokenBracketRight,
+    #[token("]")]
+    TokenBracketRight,
 
-	#[token("(")]
-	TokenParenthesisLeft,
+    #[token("(")]
+    TokenParenthesisLeft,
 
-	#[token(")")]
-	TokenParenthesisRight,
+    #[token(")")]
+    TokenParenthesisRight,
 
-	#[token(",")]
-	TokenComma,
+    #[token(",")]
+    TokenComma,
 
-	// keywords
-	#[token("let")]
-	KeywordLet,
+    #[token(":")]
+    TokenColon,
 
-	#[token("mut")]
-	KeywordMut,
+    #[token("->")]
+    TokenArrow,
 
-	#[token("const")]
-	KeywordConst,
+    // keywords
+    #[token("let")]
+    KeywordLet,
 
-	#[token("if")]
-	KeywordIf,
+    #[token("mut")]
+    KeywordMut,
 
-	#[token("else")]
-	KeywordElse,
+    #[token("const")]
+    KeywordConst,
 
-	#[token("return")]
-	KeywordReturn,
+    #[token("if")]
+    KeywordIf,
 
-	#[token("loop")]
-	KeywordLoop,
+    #[token("else")]
+    KeywordElse,
 
-	#[token("do")]
-	KeywordDo,
+    #[token("return")]
+    KeywordReturn,
 
-	#[token("while")]
-	KeywordWhile,
+    #[token("loop")]
+    KeywordLoop,
 
-	#[token("for")]
-	KeywordFor,
+    #[token("do")]
+    KeywordDo,
 
-	#[token("break")]
-	KeywordBreak,
+    #[token("while")]
+    KeywordWhile,
 
-	#[token("import")]
-	KeywordImport,
+    #[token("for")]
+    KeywordFor,
 
-	#[token("from")]
-	KeywordFrom,
+    #[token("break")]
+    KeywordBreak,
 
-	#[token("as")]
-	KeywordAs,
+    #[token("import")]
+    KeywordImport,
 
-	#[token("export")]
-	KeywordExport,
+    #[token("from")]
+    KeywordFrom,
 
-	// literals
-    #[regex("-?[0-9]+")]
-    Integer,
+    #[token("as")]
+    KeywordAs,
 
-    #[regex("[0-9]*\\.[0-9]+([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+")]
-    Float,
+    #[token("export")]
+    KeywordExport,
 
-	#[regex(r#""([^"\\]|\\t|\\u|\\n|\\")*""#)]
-    Str,
+    #[token("extern")]
+    KeywordExtern,
 
-    #[regex(r#""([^"\\]|\\t|\\u|\\n|\\")""#)]
-	Char
+    // literals - these only consume strings as the actual parsing should be handled by the parser
+    // crate.
+    #[regex("-?[0-9]+", |lex| lex.slice().to_string())]
+    LiteralInt(String),
+
+    #[regex("[0-9]*\\.[0-9]+([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+", |lex| lex.slice().to_string())]
+    LiteralFloat(String),
+
+    #[regex(r#""([^"\\]|\\t|\\u|\\n|\\")*""#, |lex| lex.slice().to_string())]
+    LiteralStr(String),
+
+    #[regex(r#""([^"\\]|\\t|\\u|\\n|\\")""#, |lex| lex.slice().to_string())]
+    LiteralChar(String),
 }
 
-/// Type representing a token paired with its associated span.
-pub type TokenPair = (Token, Span);
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Token::Error => "unexpected token",
+                Token::Ident(_) => "identifier",
+                Token::TokenAssign => "=",
+                Token::TokenEq => "==",
+                Token::TokenPlus => "+",
+                Token::TokenMinus => "-",
+                Token::TokenSlash => "/",
+                Token::TokenStar => "*",
+                Token::TokenPercent => "%",
+                Token::TokenPlusEq => "+=",
+                Token::TokenMinusEq => "-=",
+                Token::TokenBraceLeft => "{",
+                Token::TokenBraceRight => "}",
+                Token::TokenBracketLeft => "[",
+                Token::TokenBracketRight => "]",
+                Token::TokenParenthesisLeft => "(",
+                Token::TokenParenthesisRight => ")",
+                Token::TokenComma => ",",
+                Token::TokenColon => ":",
+                Token::TokenArrow => "->",
+                Token::KeywordLet => "let",
+                Token::KeywordMut => "mut",
+                Token::KeywordConst => "const",
+                Token::KeywordIf => "if",
+                Token::KeywordElse => "else",
+                Token::KeywordReturn => "return",
+                Token::KeywordLoop => "loop",
+                Token::KeywordDo => "do",
+                Token::KeywordWhile => "while",
+                Token::KeywordFor => "for",
+                Token::KeywordBreak => "break",
+                Token::KeywordImport => "import",
+                Token::KeywordFrom => "from",
+                Token::KeywordAs => "as",
+                Token::KeywordExport => "export",
+                Token::KeywordExtern => "extern",
+                Token::LiteralInt(_) => "integer",
+                Token::LiteralFloat(_) => "float",
+                Token::LiteralStr(_) => "str",
+                Token::LiteralChar(_) => "char",
+            }
+        )
+    }
+}
 
 /// Type representing the token stream for parsed source.
-pub type TokenStream = Vec<TokenPair>;
+pub type TokenStream = Vec<SpannedToken>;
+
+pub type SpannedToken = (Token, Range<usize>);
 
 /// Lex the target source.
 pub fn lex<S: AsRef<str>>(s: S) -> Result<TokenStream, TokenStream> {
     let lex = Token::lexer(s.as_ref());
-    let src_span = Span::from_str(s.as_ref());
     // map tokens
-    let tokens = lex
-        .spanned()
-        .map(|(token, span)| (token, src_span.restrict_range(span.start, span.end)))
-        .collect::<Vec<_>>();
+    let tokens = lex.spanned().collect::<Vec<_>>();
     // check for errors
-    for (token, _) in &tokens {
-        if matches!(token, Token::Error) {
+    for pair in &tokens {
+        if matches!(pair.0, Token::Error) {
             return Err(tokens);
         }
     }
