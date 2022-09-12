@@ -4,17 +4,15 @@ pub(crate) mod declaration;
 pub(crate) mod func_decl;
 pub(crate) mod module;
 
-use chumsky::{prelude::Simple, primitive::choice, recursive::recursive, Parser};
-use fluxc_ast::{Node, Stmt};
-use fluxc_lexer::Token;
+use chumsky::{primitive::choice, Parser};
+use fluxc_ast::Stmt;
 
 use self::{declaration::declaration, func_decl::func_decl};
-use crate::node;
+use crate::{node, Parsers};
 
-pub(crate) fn stmt() -> impl Parser<Token, Node<Stmt>, Error = Simple<Token>> + Clone {
-    recursive(|raw_stmt| {
-        let declaration = declaration().map(|decl| Stmt::Declaration(decl));
-        let func_decl = func_decl().map(|decl| Stmt::FuncDecl(decl));
-        choice((declaration, func_decl)).map_with_span(node)
-    })
+pub(crate) fn stmt<'a>(parsers: &'a Parsers<'a>) {
+    let declaration = declaration(&parsers).map(Stmt::Declaration);
+    let func_decl = func_decl(&parsers).map(Stmt::FuncDecl);
+    let stmt = choice((declaration, func_decl, &parsers.expr)).map_with_span(node);
+    parsers.stmt.define(stmt)
 }

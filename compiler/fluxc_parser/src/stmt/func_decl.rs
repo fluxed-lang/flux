@@ -6,7 +6,7 @@ use chumsky::{
 use fluxc_ast::{FuncDecl, FuncParam, Node};
 use fluxc_lexer::Token;
 
-use crate::{expr::block_expr::block_expr, ident, node};
+use crate::{expr::block_expr::block_expr, ident, node, Parsers};
 
 pub(crate) fn func_param() -> impl Parser<Token, Node<FuncParam>, Error = Simple<Token>> + Clone {
     ident()
@@ -16,7 +16,9 @@ pub(crate) fn func_param() -> impl Parser<Token, Node<FuncParam>, Error = Simple
         .map_with_span(node)
 }
 
-pub(crate) fn func_decl() -> impl Parser<Token, Node<FuncDecl>, Error = Simple<Token>> + Clone {
+pub(crate) fn func_decl<'a>(
+    parsers: &'a Parsers<'a>,
+) -> impl Parser<Token, Node<FuncDecl>, Error = Simple<Token>> + Clone + 'a {
     let params = func_param().separated_by(just(Token::TokenComma));
 
     let ret_ty = just(Token::TokenArrow).ignore_then(ident());
@@ -34,12 +36,12 @@ pub(crate) fn func_decl() -> impl Parser<Token, Node<FuncDecl>, Error = Simple<T
 
     let local_func = inner_func
         .clone()
-        .then(block_expr())
+        .then(block_expr(&parsers))
         .map(|(((ident, params), ret_ty), body)| FuncDecl::Local { ident, params, ret_ty, body });
 
     let exported_func = just(Token::KeywordExport)
         .ignore_then(inner_func.clone())
-        .then(block_expr())
+        .then(block_expr(&parsers))
         .map(|(((ident, params), ret_ty), body)| FuncDecl::Export { ident, params, ret_ty, body });
 
     choice((extern_func, exported_func, local_func)).map_with_span(node)

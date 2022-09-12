@@ -2,10 +2,11 @@ use chumsky::{prelude::Simple, primitive::just, Parser};
 use fluxc_ast::{Declaration, Mutability, Node};
 use fluxc_lexer::Token;
 
-use crate::{expr::expr, ident, node};
+use crate::{ident, node, Parsers};
 
-pub(crate) fn declaration() -> impl Parser<Token, Node<Declaration>, Error = Simple<Token>> + Clone
-{
+pub(crate) fn declaration<'a>(
+    parsers: &'a Parsers<'a>,
+) -> impl Parser<Token, Node<Declaration>, Error = Simple<Token>> + Clone + 'a {
     just(Token::KeywordLet)
         // ident
         .ignore_then(ident())
@@ -16,7 +17,7 @@ pub(crate) fn declaration() -> impl Parser<Token, Node<Declaration>, Error = Sim
         }))
         .then_ignore(just(Token::TokenEq))
         // value
-        .then(expr())
+        .then(&parsers.expr)
         .map(|((ident, mutability), value)| Declaration {
             explicit_ty: None,
             ident,

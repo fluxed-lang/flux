@@ -1,13 +1,26 @@
 //! The Flux parser, written using the `chumsky` library.
 use std::ops::Range;
 
-use chumsky::{prelude::Simple, select, Parser, Stream};
-use fluxc_ast::{Ident, Node, AST};
+use chumsky::{prelude::*, select, Stream};
+use expr::expr;
+use fluxc_ast::{Expr, Ident, Node, Stmt, AST};
 use fluxc_lexer::{Token, TokenStream};
 use stmt::stmt;
 
 pub(crate) mod expr;
 pub(crate) mod stmt;
+
+#[derive(Clone)]
+pub(crate) struct Parsers<'a> {
+    expr: Recursive<'a, Token, Node<Expr>, Simple<Token>>,
+    stmt: Recursive<'a, Token, Node<Stmt>, Simple<Token>>,
+}
+
+impl Parsers<'_> {
+    fn new() -> Self {
+        Parsers { expr: Recursive::declare(), stmt: Recursive::declare() }
+    }
+}
 
 /// This method wraps `T` in a spanned AST node. For use with
 /// `Parser::map_with_span`.
@@ -25,6 +38,11 @@ pub(crate) fn ident() -> impl Parser<Token, Node<Ident>, Error = Simple<Token>> 
 
 /// Parse a [TokenStream] into the AST.
 pub fn parse(src: &str, input: TokenStream) -> Result<AST, Vec<Simple<Token>>> {
-    let parser = stmt().repeated().map(|stmts| AST { stmts });
+    let definitions = Parsers::new();
+    stmt(&definitions);
+    expr(&definitions);
+
+    let parser = definitions.stmt.repeated().map(|stmts| AST { stmts });
+
     parser.parse(Stream::from_iter(src.len()..src.len() + 1, input.into_iter()))
 }
