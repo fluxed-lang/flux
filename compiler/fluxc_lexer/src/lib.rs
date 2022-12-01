@@ -3,7 +3,7 @@ use std::{fmt::Display, ops::Range};
 use logos::Logos;
 
 /// A token lexed by the Flux lexer.
-#[derive(Logos, Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Logos, Debug, PartialEq, Clone)]
 pub enum Token {
     #[regex(r"[ \t\n\f]+", logos::skip)]
     #[error]
@@ -145,17 +145,20 @@ pub enum Token {
 
     // literals - these only consume strings as the actual parsing should be handled by the parser
     // crate.
-    #[regex("-?[0-9]+", |lex| lex.slice().to_string())]
-    LiteralInt(String),
+    #[regex("-?[0-9]+", |lex| lex.slice().parse())]
+    LiteralInt(i64),
 
-    #[regex("[0-9]*\\.[0-9]+([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+", |lex| lex.slice().to_string())]
-    LiteralFloat(String),
+    #[regex("[0-9]*\\.[0-9]+([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+", |lex| lex.slice().parse())]
+    LiteralFloat(f64),
 
     #[regex(r#""([^"\\]|\\t|\\u|\\n|\\")*""#, |lex| lex.slice().to_string())]
     LiteralStr(String),
 
-    #[regex(r#""([^"\\]|\\t|\\u|\\n|\\")""#, |lex| lex.slice().to_string())]
-    LiteralChar(String),
+    #[regex(r#"'([^'\\]|\\t|\\u|\\n|\\')'"#, |lex| lex.slice().parse())]
+    LiteralChar(char),
+
+    #[regex("(true)|(false)", |lex| lex.slice().parse(), priority = 2)]
+    LiteralBool(bool),
 }
 
 impl Display for Token {
@@ -203,16 +206,17 @@ impl Display for Token {
                 Token::KeywordAs => "as",
                 Token::KeywordExport => "export",
                 Token::KeywordExtern => "extern",
+                Token::KeywordMatch => "match",
                 Token::LiteralInt(_) => "integer",
                 Token::LiteralFloat(_) => "float",
                 Token::LiteralStr(_) => "str",
                 Token::LiteralChar(_) => "char",
+                Token::LiteralBool(_) => "bool",
                 Token::TokenAnd => "&",
                 Token::TokenOr => "|",
                 Token::TokenNot => "!",
                 Token::TokenLogicalAnd => "&&",
                 Token::TokenLogicalOr => "||",
-                Token::KeywordMatch => "match",
             }
         )
     }

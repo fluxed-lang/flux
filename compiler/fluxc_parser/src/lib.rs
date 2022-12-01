@@ -1,48 +1,22 @@
 //! The Flux parser, written using the `chumsky` library.
-use std::ops::Range;
 
-use chumsky::{prelude::*, select, Stream};
-use expr::expr;
-use fluxc_ast::{Expr, Ident, Node, Stmt, AST};
-use fluxc_lexer::{Token, TokenStream};
-use stmt::stmt;
+use chumsky::{prelude::Simple, recursive::recursive, select, Parser};
+use fluxc_ast::{Expr, Literal, Node, Stmt};
+use fluxc_lexer::{SpannedToken, Token};
 
-pub(crate) mod expr;
-pub(crate) mod stmt;
-
-#[derive(Clone)]
-pub(crate) struct Parsers<'a> {
-    expr: Recursive<'a, Token, Node<Expr>, Simple<Token>>,
-    stmt: Recursive<'a, Token, Node<Stmt>, Simple<Token>>,
-}
-
-impl Parsers<'_> {
-    fn new() -> Self {
-        Parsers { expr: Recursive::declare(), stmt: Recursive::declare() }
+fn parse() -> impl Parser<SpannedToken, Node<Stmt>, Error = Simple<Token>> {
+    let literal = select! {
+       (Token::LiteralInt(int), _) => Literal::Int(int),
+       (Token::LiteralFloat(float), _) => Literal::Float(float),
+       (Token::LiteralStr(str), _) => Literal::String(str),
+       (Token::LiteralChar(c), _) => Literal::Char(c),
+       (Token::LiteralBool(bool), _) => Literal::Bool(bool),
     }
-}
+    .map_with_span(|literal, span| Node::new(literal, span));
 
-/// This method wraps `T` in a spanned AST node. For use with
-/// `Parser::map_with_span`.
-pub(crate) fn node<T>(value: T, span: Range<usize>) -> Node<T> {
-    Node::new(value, span)
-}
+    let expr = recursive(|expr| {
+        literal.map(Expr::Literal).map_with_span(|expr, span| Node::new(expr, span))
+    });
 
-/// Parser combinator for [Ident].
-pub(crate) fn ident() -> impl Parser<Token, Node<Ident>, Error = Simple<Token>> + Clone {
-    select! {
-        Token::Ident(ident) => ident
-    }
-    .map_with_span(node)
-}
-
-/// Parse a [TokenStream] into the AST.
-pub fn parse(src: &str, input: TokenStream) -> Result<AST, Vec<Simple<Token>>> {
-    let definitions = Parsers::new();
-    stmt(&definitions);
-    expr(&definitions);
-
-    let parser = definitions.stmt.repeated().map(|stmts| AST { stmts });
-
-    parser.parse(Stream::from_iter(src.len()..src.len() + 1, input.into_iter()))
+    expr.map(Stmt::Expr).map_with_span(|stmt, span| Node::new(stmt, span))
 }
