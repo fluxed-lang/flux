@@ -25,9 +25,9 @@ impl Intersect<TypeExpr> for TypeExpr {
 }
 
 impl From<Intersection> for TypeExpr {
-	fn from(i: Intersection) -> Self {
-		i.simplify()	
-	}
+    fn from(i: Intersection) -> Self {
+        i.simplify()
+    }
 }
 
 /// Implement Simplify trait for Intersection. Simplification of intersections

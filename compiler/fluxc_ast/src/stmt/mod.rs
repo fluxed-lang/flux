@@ -15,6 +15,8 @@ use crate::{Expr, Node};
 pub enum Stmt {
     /// A declaration.
     Declaration(Node<Declaration>),
+    /// A type declaration.
+    TypeDeclaration(Node<TypeDeclaration>),
     /// A function declaration.
     FuncDecl(Node<FuncDecl>),
     /// A function return statement.

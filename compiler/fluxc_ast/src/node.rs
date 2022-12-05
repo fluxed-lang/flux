@@ -45,15 +45,15 @@ impl Node<()> {
 
 #[derive(Debug, Error)]
 enum AstCastError {
-	/// The node is not of the expected type.
-	#[error("Node is not of the expected type")]
-	WrongType,
-	/// The node is not of the expected variant.
-	#[error("Node is not of the expected variant")]
-	WrongVariant,
+    /// The node is not of the expected type.
+    #[error("Node is not of the expected type")]
+    WrongType,
+    /// The node is not of the expected variant.
+    #[error("Node is not of the expected variant")]
+    WrongVariant,
 }
 
 trait TryIntoAstType {
-	/// Try to cast this node into an expression.
-	fn try_into_expr(self) -> Result<Node<Expr>, AstCastError>;
+    /// Try to cast this node into an expression.
+    fn try_into_expr(self) -> Result<Node<Expr>, AstCastError>;
 }

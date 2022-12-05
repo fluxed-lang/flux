@@ -107,6 +107,9 @@ pub enum Token {
     #[token("const")]
     KeywordConst,
 
+    #[token("type")]
+    KeywordType,
+
     #[token("if")]
     KeywordIf,
 
@@ -230,6 +233,7 @@ impl Display for Token {
                 Token::TokenLogicalOr => "||",
                 Token::TokenMulEq => "*=",
                 Token::TokenDivEq => "/=",
+                Token::KeywordType => "type",
             }
         )
     }

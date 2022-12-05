@@ -42,3 +42,10 @@ pub enum Mutability {
     /// known.
     Constant,
 }
+
+/// A declaration of a type.
+#[derive(Debug, PartialEq, Clone)]
+pub struct TypeDeclaration {
+    pub ident: Node<Ident>,
+    pub value: Node<TypeExpr>,
+}

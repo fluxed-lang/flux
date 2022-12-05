@@ -1,4 +1,4 @@
-use crate::{Expr};
+use crate::Expr;
 
 #[derive(Debug, Clone, PartialEq)]
 /// Enum representing the type of a literal.

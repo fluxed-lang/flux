@@ -42,6 +42,5 @@ impl PartialEq for TypeExpr {
             (TypeExpr::Operation(a), TypeExpr::Operation(b)) => a == b,
             _ => false,
         }
-    }	
+    }
 }
-

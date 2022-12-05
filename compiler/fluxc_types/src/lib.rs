@@ -58,7 +58,7 @@ impl TypeTable {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct KeyedTableEntry {
     /// The ID of this type.
     pub id: TypeId,
@@ -71,7 +71,7 @@ pub struct KeyedTableEntry {
     pub fields: Option<Vec<TypeField>>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct TableEntry {
     /// The name of this type.
     pub name: String,
@@ -83,7 +83,7 @@ pub struct TableEntry {
 }
 
 /// A field on a type.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct TypeField {
     /// The position of this field in the parent type.
     pub index: usize,
