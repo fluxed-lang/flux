@@ -15,7 +15,7 @@ pub struct FuncCall {
 }
 
 /// An argument to a function call.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct FuncParam {
     /// The identifier representing the AST node.
     pub ident: Node<Ident>,

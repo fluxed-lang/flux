@@ -83,10 +83,6 @@ impl Span {
     pub fn position(&self) -> (usize, usize) {
         (self.line(), self.col())
     }
-    /// This method returns the length of the span.
-    pub const fn len(&self) -> usize {
-        self.end - self.start
-    }
 }
 
 /// Utility trait providing `into_span` for all types implementing

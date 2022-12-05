@@ -24,10 +24,10 @@ impl Intersect<TypeExpr> for TypeExpr {
     }
 }
 
-impl Into<TypeExpr> for Intersection {
-    fn into(self) -> TypeExpr {
-        self.simplify()
-    }
+impl From<Intersection> for TypeExpr {
+	fn from(i: Intersection) -> Self {
+		i.simplify()	
+	}
 }
 
 /// Implement Simplify trait for Intersection. Simplification of intersections
@@ -79,7 +79,7 @@ impl Simplify for Intersection {
             }
             // T & (A | B) = (T & A) | (T & B)
             (t, TypeExpr::Operation(Operation::Union(Union { lhs, rhs }))) => {
-                return lhs.intersect(&t).unify(&rhs.intersect(&t)).simplify();
+                return lhs.intersect(t).unify(&rhs.intersect(t).simplify());
             }
             // A & B where A and B's are primitives
             (TypeExpr::Primitive(a), TypeExpr::Primitive(b)) => {
@@ -116,7 +116,7 @@ impl Simplify for Intersection {
             }
             _ => (),
         }
-        TypeExpr::Operation(Operation::Intersection(Intersection::of(lhs.into(), rhs.into())))
+        TypeExpr::Operation(Operation::Intersection(Intersection::of(lhs, rhs)))
     }
 }
 #[cfg(test)]

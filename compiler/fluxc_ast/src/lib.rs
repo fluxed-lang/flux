@@ -9,12 +9,9 @@
 //! The AST is built from the parser, iterated over by reducers in the
 //! `fluxc_ast_passes` crate, before being sent to `fluxc_codegen` and turned
 //! into valid LLVM code.
-use fluxc_span::Span;
-
 use std::ops::Range;
 
 use chumsky::Span;
-use fluxc_types::{Type, Typed};
 
 mod expr;
 mod node;
@@ -112,5 +109,11 @@ impl AST {
     /// Create a new AST instance.
     pub fn new() -> AST {
         AST { stmts: vec![] }
+    }
+}
+
+impl Default for AST {
+    fn default() -> Self {
+        Self::new()
     }
 }

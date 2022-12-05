@@ -7,7 +7,7 @@ use crate::Expr;
 ///
 /// This struct is used to wrap AST nodes with their ID, and position in the
 /// source code.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Node<T> {
     /// The ID of this node in the AST.
     pub id: usize,
