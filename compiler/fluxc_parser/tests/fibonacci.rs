@@ -6,6 +6,8 @@ fn test_parse_fibonacci() {
     let src = include_str!("./fibonacci.flx");
     // lex
     let tokens = lex(src).expect("Lexing failed!");
+    println!("{:?}", tokens);
     // parse
-    let ast = parse(src, tokens).unwrap();
+    let ast = parse(tokens);
+    println!("{:?}", ast);
 }

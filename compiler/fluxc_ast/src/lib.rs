@@ -13,6 +13,7 @@
 
 use std::ops::Range;
 
+use chumsky::Span;
 use fluxc_types::{Type, Typed};
 
 mod expr;
@@ -56,6 +57,27 @@ impl Node<()> {
     /// Hydrate this node with the given value.
     pub fn fill<T>(self, value: T) -> Node<T> {
         Node { span: self.span, value }
+    }
+}
+
+impl<T: Clone> Span for Node<T> {
+    type Context = T;
+    type Offset = usize;
+
+    fn new(context: Self::Context, range: Range<Self::Offset>) -> Self {
+        Node { value: context, span: range }
+    }
+
+    fn context(&self) -> Self::Context {
+        self.value.clone()
+    }
+
+    fn start(&self) -> Self::Offset {
+        self.span.start
+    }
+
+    fn end(&self) -> Self::Offset {
+        self.span.end
     }
 }
 

@@ -3,7 +3,7 @@ use std::{fmt::Display, ops::Range};
 use logos::Logos;
 
 /// A token lexed by the Flux lexer.
-#[derive(Logos, Debug, PartialEq, Clone)]
+#[derive(Logos, Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Token {
     #[regex(r"[ \t\n\f]+", logos::skip)]
     #[error]
@@ -54,6 +54,12 @@ pub enum Token {
 
     #[token("-=")]
     TokenMinusEq,
+
+    #[token("*=")]
+    TokenMulEq,
+
+    #[token("/=")]
+    TokenDivEq,
 
     #[token("!=")]
     TokenNe,
@@ -148,8 +154,13 @@ pub enum Token {
     #[regex("-?[0-9]+", |lex| lex.slice().parse())]
     LiteralInt(i64),
 
-    #[regex("[0-9]*\\.[0-9]+([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+", |lex| lex.slice().parse())]
-    LiteralFloat(f64),
+    // use raw float bytes since floats are not hashable
+    // chumsky needs Hash on its input type
+    #[regex(
+		"[0-9]*\\.[0-9]+([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+", 
+		|lex| lex.slice().parse::<f64>().map(f64::to_be_bytes)
+	)]
+    LiteralFloat([u8; 8]),
 
     #[regex(r#""([^"\\]|\\t|\\u|\\n|\\")*""#, |lex| lex.slice().to_string())]
     LiteralStr(String),
@@ -217,6 +228,8 @@ impl Display for Token {
                 Token::TokenNot => "!",
                 Token::TokenLogicalAnd => "&&",
                 Token::TokenLogicalOr => "||",
+                Token::TokenMulEq => "*=",
+                Token::TokenDivEq => "/=",
             }
         )
     }
