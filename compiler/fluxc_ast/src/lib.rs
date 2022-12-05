@@ -11,7 +11,9 @@
 //! `fluxc_ast_passes` crate, before being sent to `fluxc_codegen` and turned
 //! into valid LLVM code.
 
-use fluxc_span::Span;
+use std::ops::Range;
+
+use chumsky::Span;
 use fluxc_types::{Type, Typed};
 
 mod expr;
@@ -26,22 +28,20 @@ pub use stmt::*;
 /// source code.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Node<T> {
-    /// The ID of this node in the AST.
-    pub id: usize,
-    /// The span of the source code that this node represents.
-    pub span: Span,
     /// The inner value held by this AST node.
     pub value: T,
+    /// The span of the source code that this node represents.
+    pub span: Range<usize>,
 }
 
 impl<T> Node<T> {
     /// Create a new node.
-    pub fn new(id: usize, span: Span, value: T) -> Self {
-        Self { id, span, value }
+    pub fn new(value: T, span: Range<usize>) -> Self {
+        Self { value, span }
     }
     /// Create an empty node with no value.
-    pub fn empty(id: usize, span: Span) -> Node<()> {
-        Node { id, span, value: () }
+    pub fn empty(span: Range<usize>) -> Node<()> {
+        Node { value: (), span }
     }
 }
 
@@ -56,7 +56,28 @@ impl<T: Clone> Node<T> {
 impl Node<()> {
     /// Hydrate this node with the given value.
     pub fn fill<T>(self, value: T) -> Node<T> {
-        Node { id: self.id, span: self.span, value }
+        Node { span: self.span, value }
+    }
+}
+
+impl<T: Clone> Span for Node<T> {
+    type Context = T;
+    type Offset = usize;
+
+    fn new(context: Self::Context, range: Range<Self::Offset>) -> Self {
+        Node { value: context, span: range }
+    }
+
+    fn context(&self) -> Self::Context {
+        self.value.clone()
+    }
+
+    fn start(&self) -> Self::Offset {
+        self.span.start
+    }
+
+    fn end(&self) -> Self::Offset {
+        self.span.end
     }
 }
 

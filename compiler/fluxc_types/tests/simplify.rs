@@ -82,15 +82,13 @@ fn simplify_intersection() {
 
     // string & (string | number) = string
     assert_eq!(
-        Type::Operation(Operation::Intersection(
-            Intersection::of(
+        Type::Operation(Operation::Intersection(Intersection::of(
+            Type::Primitive(Primitive::String),
+            Type::Operation(Operation::Union(Union::of(
                 Type::Primitive(Primitive::String),
-                Type::Operation(Operation::Union(Union::of(
-                    Type::Primitive(Primitive::String),
-                    Type::Primitive(Primitive::Int)
-                )))
-            )
-        ))
+                Type::Primitive(Primitive::Int)
+            )))
+        )))
         .simplify(),
         Type::Primitive(Primitive::String)
     );

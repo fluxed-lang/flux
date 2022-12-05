@@ -4,11 +4,9 @@
 //! - Local function declarations
 //! - External function declarations
 
-use fluxc_types::Type;
-
 use crate::{Block, Expr, Ident, Node};
 /// A function call.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct FuncCall {
     /// The identifier of the function
     pub ident: Node<Ident>,
@@ -17,43 +15,43 @@ pub struct FuncCall {
 }
 
 /// An argument to a function call.
-#[derive(Debug, PartialEq, Clone)]
-pub struct ParenArgument {
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct FuncParam {
     /// The identifier representing the AST node.
     pub ident: Node<Ident>,
     /// The identifier representing the type of this argument.
-    pub ty: Node<Type>,
+    pub ty: Node<Ident>,
 }
 
 /// An enum of function declaration types.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum FuncDecl {
     Local {
         /// The identifier representing the function.
         ident: Node<Ident>,
         /// The arguments this function requires.
-        params: Vec<Node<ParenArgument>>,
+        params: Vec<Node<FuncParam>>,
         /// The body of the function.
         body: Node<Block>,
         /// The identifier representing the return type of the function.
-        ret_ty: Node<Type>,
+        ret_ty: Option<Node<Ident>>,
     },
     Export {
         /// The identifier representing the function.
         ident: Node<Ident>,
         /// The arguments this function requires.
-        args: Vec<Node<ParenArgument>>,
+        params: Vec<Node<FuncParam>>,
         /// The body of the function.
         body: Node<Block>,
         /// The identifier representing the return type of the function.
-        ret_ty: Node<Type>,
+        ret_ty: Option<Node<Ident>>,
     },
     External {
         /// The identifier representing the function.
         ident: Node<Ident>,
         /// The arguments this function requires.
-        params: Vec<Node<ParenArgument>>,
+        params: Vec<Node<FuncParam>>,
         /// The identifier representing the return type of the function.
-        ret_ty: Node<Type>,
+        ret_ty: Option<Node<Ident>>,
     },
 }

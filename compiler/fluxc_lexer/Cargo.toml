@@ -1,0 +1,12 @@
+[package]
+name = "fluxc_lexer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+logos = "0.12"
+
+fluxc_errors = { path =  "../fluxc_errors" }
+
+[dev-dependencies]
+pretty_assertions = "1"

@@ -1,19 +1,11 @@
 [package]
 name = "fluxc_parser"
-version = "0.0.0"
-authors = ["SkyezerFox <actuallyori@gmail.com>"]
+version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-lazy_static = "1"
-pest = { version = "2" } 
-pest_derive = "2"
-tracing = "0.1"
+chumsky = "0.8"
 
-fluxc_ast = { path =  "../fluxc_ast" }
-fluxc_types = { path = "../fluxc_types" }
+fluxc_ast = { path = "../fluxc_ast" }
+fluxc_lexer = { path =  "../fluxc_lexer" }
 fluxc_span = { path =  "../fluxc_span" }
-fluxc_errors = { path = "../fluxc_errors" }
-
-[dev-dependencies]
-pretty_assertions = "1"

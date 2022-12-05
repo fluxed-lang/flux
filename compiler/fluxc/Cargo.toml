@@ -9,4 +9,4 @@ clap = { version = "3", features = ["derive"] }
 env_logger = "0.9"
 log = "0.4"
 
-fluxc_main = { path =  "../fluxc_main"}
+fluxc_main = { path =  "../fluxc_main" }

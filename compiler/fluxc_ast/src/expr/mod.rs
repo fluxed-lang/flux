@@ -20,7 +20,7 @@ use crate::{FuncCall, Ident, Node};
 /// source code. Every expression wraps a `Node` which holds the actual data
 /// that represents the expression, as well as the span of the source code that
 /// the expression represents.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     /// A literal expression.
     Literal(

@@ -8,6 +8,6 @@ edition = "2021"
 [dependencies]
 log = "0.4"
 
-fluxc_ast = { path =  "../fluxc_ast" }
-fluxc_codegen = { path =  "../fluxc_codegen" }
+fluxc_lexer = { path =  "../fluxc_lexer" }
 fluxc_parser = { path =  "../fluxc_parser" }
+fluxc_codegen = { path =  "../fluxc_codegen" }
