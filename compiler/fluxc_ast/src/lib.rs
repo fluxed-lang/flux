@@ -1,4 +1,3 @@
-//! # fluxc_ast
 //! Defines AST data structures and types for representing Flux code at compile
 //! time.
 //!
@@ -10,6 +9,7 @@
 //! The AST is built from the parser, iterated over by reducers in the
 //! `fluxc_ast_passes` crate, before being sent to `fluxc_codegen` and turned
 //! into valid LLVM code.
+use fluxc_span::Span;
 
 use std::ops::Range;
 
@@ -17,10 +17,14 @@ use chumsky::Span;
 use fluxc_types::{Type, Typed};
 
 mod expr;
+mod node;
 mod stmt;
+mod type_expr;
 
 pub use expr::*;
+pub use node::*;
 pub use stmt::*;
+pub use type_expr::*;
 
 /// Wrapper around a generic type `T` that provides an AST ID, and a span.
 ///
@@ -78,13 +82,6 @@ impl<T: Clone> Span for Node<T> {
 
     fn end(&self) -> Self::Offset {
         self.span.end
-    }
-}
-
-/// Generic implemetation of typed for all nodes
-impl<T: Typed> Typed for Node<T> {
-    fn type_of(&self) -> Type {
-        self.value.type_of()
     }
 }
 

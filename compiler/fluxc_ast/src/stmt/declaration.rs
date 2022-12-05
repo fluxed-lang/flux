@@ -1,6 +1,4 @@
-use fluxc_types::Type;
-
-use crate::{Expr, Ident, Node};
+use crate::{Expr, Ident, Node, TypeExpr};
 
 /// A declaration of a variable.
 ///
@@ -20,7 +18,7 @@ use crate::{Expr, Ident, Node};
 #[derive(Debug, Clone, PartialEq)]
 pub struct Declaration {
     /// The explicit type of this declaration if it exists.
-    pub explicit_ty: Option<Node<Type>>,
+    pub explicit_ty: Option<Node<TypeExpr>>,
     /// The identifier being declared.
     pub ident: Node<Ident>,
     /// The mutability of the declared identifier.

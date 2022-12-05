@@ -1,5 +1,4 @@
-use fluxc_ast::{FuncDecl, ParenArgument};
-use fluxc_types::{Type, Typed};
+use fluxc_ast::{FuncDecl, ParenArgument, TypeExpr};
 
 /// HIR datatype representing a Flux function.
 ///
@@ -14,7 +13,7 @@ pub struct Function {
     /// The arguments of this function.
     pub args: Vec<Argument>,
     /// The return value of this function.
-    pub return_type: Type,
+    pub return_type: TypeExpr,
 }
 
 /// Enumeration of function kinds for use in compile-time reflection.
@@ -43,13 +42,7 @@ pub enum FunctionKind {
 #[derive(Debug, PartialEq)]
 pub struct Argument {
     pub name: String,
-    pub ty: Type,
-}
-
-impl Typed for Function {
-    fn type_of(&self) -> Type {
-        todo!()
-    }
+    pub ty: TypeExpr,
 }
 
 /// Trait providing the `as_function` method.

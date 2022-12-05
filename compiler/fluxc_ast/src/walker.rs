@@ -1,6 +1,5 @@
-use fluxc_ast::{Block, Declaration, FuncDecl, Node, Stmt};
+use crate::{Block, Declaration, FuncDecl, Node, Stmt};
 use fluxc_hir::{Function, Variable};
-use fluxc_types::Typed;
 
 /// Represents a stack.
 #[derive(Debug)]
@@ -108,7 +107,7 @@ impl Walker {
         self.variables.push(Variable {
             name: decl.ident.value.clone(),
             mutability: decl.mutability,
-            ty: decl.explicit_ty.clone().map(|inner| inner.value).unwrap_or(decl.value.type_of()),
+            ty: decl.explicit_ty.clone().map(|inner| inner.value).unwrap_or(decl.value.as_type()),
         });
     }
 

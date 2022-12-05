@@ -1,7 +1,5 @@
 //! Contains the expression AST data structures.
 
-use fluxc_types::{Type, Typed};
-
 pub(crate) mod block_expr;
 pub(crate) mod control;
 pub(crate) mod literal;
@@ -12,7 +10,7 @@ pub use control::*;
 pub use literal::*;
 pub use operation::*;
 
-use crate::{FuncCall, Ident, Node};
+use crate::{FuncCall, Node};
 
 /// The enumeration of possible expression types.
 ///
@@ -55,19 +53,12 @@ pub enum Expr {
     Match(Node<Match>),
 }
 
-impl Typed for Expr {
-    fn type_of(&self) -> Type {
-        match self {
-            Expr::Literal(literal) => literal.type_of(),
-            Expr::Ident(_) => todo!(),
-            Expr::BinaryExpr(_) => todo!(),
-            Expr::Block(_) => todo!(),
-            Expr::FuncCall(_) => todo!(),
-            Expr::Conditional(_) => todo!(),
-            Expr::Loop(_) => todo!(),
-            Expr::While(_) => todo!(),
-            Expr::UnaryExpr(_) => todo!(),
-            Expr::Match(_) => todo!(),
-        }
-    }
-}
+/// The identifier type.
+///
+/// This type is a simple wrapper around `String` used to represent identifiers
+/// within the Flux source code. Identifiers are alphanumeric strings, and may
+/// contain underscores. They match the following regex, excluding keywords:
+/// ```regex
+/// [A-z_][0-9A-z_]*
+/// ```
+pub type Ident = String;

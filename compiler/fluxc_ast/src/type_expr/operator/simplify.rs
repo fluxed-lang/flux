@@ -1,39 +1,39 @@
-use crate::{Operation, Primitive, Type};
+use crate::{Operation, Primitive, TypeExpr};
 
 // Trait for simplifying a type tree.
 pub trait Simplify {
     /// Simplify the type tree using basic logical axioms.
-    fn simplify(&self) -> Type;
+    fn simplify(&self) -> TypeExpr;
 }
 
 impl Simplify for Operation {
-    fn simplify(&self) -> Type {
+    fn simplify(&self) -> TypeExpr {
         match self {
             Operation::Intersection(intersection) => intersection.simplify(),
             Operation::Union(union) => union.simplify(),
-            _ => Type::Operation(self.clone()),
+            _ => TypeExpr::Operation(self.clone()),
         }
     }
 }
 
 impl Simplify for Primitive {
-    fn simplify(&self) -> Type {
+    fn simplify(&self) -> TypeExpr {
         match self {
             Primitive::Tuple(tuple) => {
                 let inner_types: Vec<_> = tuple.iter().map(|ty| ty.simplify()).collect();
-                Type::Primitive(Primitive::Tuple(inner_types))
+                TypeExpr::Primitive(Primitive::Tuple(inner_types))
             }
-            _ => Type::Primitive(self.clone()),
+            _ => TypeExpr::Primitive(self.clone()),
         }
     }
 }
 
-impl Simplify for Type {
-    fn simplify(&self) -> Type {
+impl Simplify for TypeExpr {
+    fn simplify(&self) -> TypeExpr {
         match self {
-            Type::Operation(op) => op.simplify(),
-            Type::Primitive(primitive) => primitive.simplify(),
-            Type::Circular(inner) => Type::Circular(inner.simplify().into()),
+            TypeExpr::Operation(op) => op.simplify(),
+            TypeExpr::Primitive(primitive) => primitive.simplify(),
+            TypeExpr::Circular(inner) => TypeExpr::Circular(inner.simplify().into()),
             t => t.clone(),
         }
     }

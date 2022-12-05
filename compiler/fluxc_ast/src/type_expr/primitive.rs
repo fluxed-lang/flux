@@ -1,6 +1,6 @@
 //! Contains the primitive type definitions.
 
-use crate::Type;
+use super::TypeExpr;
 
 /// An enumeration of primitive types. This enum represents all primitive types,
 /// including the `never` type.
@@ -26,7 +26,7 @@ pub enum Primitive {
     /// The primitive char literal type.
     CharLiteral(char),
     /// A literal tuple type.
-    Tuple(Vec<Type>),
+    Tuple(Vec<TypeExpr>),
     /// The primitive boolean type.
     Bool,
     /// The primitive boolean literal type, `true`.
@@ -65,14 +65,14 @@ impl From<bool> for Primitive {
     }
 }
 
-impl Into<Type> for Primitive {
-    fn into(self) -> Type {
-        Type::Primitive(self)
+impl Into<TypeExpr> for Primitive {
+    fn into(self) -> TypeExpr {
+        TypeExpr::Primitive(self)
     }
 }
 
-impl Into<Type> for &Primitive {
-    fn into(self) -> Type {
-        Type::Primitive(self.clone())
+impl Into<TypeExpr> for &Primitive {
+    fn into(self) -> TypeExpr {
+        TypeExpr::Primitive(self.clone())
     }
 }
