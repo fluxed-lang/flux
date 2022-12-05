@@ -22,6 +22,7 @@ fn parser() -> impl Parser<Token, AST, Error = Simple<Token>> {
        Token::LiteralStr(str) => Literal::String(str),
        Token::LiteralChar(c) => Literal::Char(c),
        Token::LiteralBool(bool) => Literal::Bool(bool),
+       Token::LiteralUnit => Literal::Unit
     }
     .map_with_span(Node::new);
 
@@ -35,7 +36,8 @@ fn parser() -> impl Parser<Token, AST, Error = Simple<Token>> {
                 true => Primitive::True,
                 false => Primitive::False
             },
-            Token::Ident(ident) => Primitive::Ref(ident)
+            Token::Ident(ident) => Primitive::Ref(ident),
+            Token::LiteralUnit => Primitive::Unit
         }
         .map(TypeExpr::Primitive);
 
@@ -65,7 +67,7 @@ fn parser() -> impl Parser<Token, AST, Error = Simple<Token>> {
         let op = union;
 
         type_literal.or(op)
-    });
+    }).labelled("type expression");
 
     // recursive stmt declaration
     let stmt = recursive::<_, Node<Stmt>, _, _, _>(|stmt| {
@@ -201,11 +203,10 @@ fn parser() -> impl Parser<Token, AST, Error = Simple<Token>> {
         let func_decl_param = ident
             .then_ignore(just(Token::TokenColon))
             .then(type_expr.clone().map_with_span(Node::new))
-            .map(|(ident, ty)| FuncParam { ident, ty });
+            .map(|(ident, ty)| FuncParam { ident, ty }).labelled("parameter");
 
         let func_decl_params = (func_decl_param.clone().map_with_span(Node::new))
-            .repeated()
-            .chain(func_decl_param.clone().map_with_span(Node::new));
+            .separated_by(just(Token::TokenComma));
 
         let extern_func_decl = just(Token::KeywordExtern)
             .ignore_then(ident)

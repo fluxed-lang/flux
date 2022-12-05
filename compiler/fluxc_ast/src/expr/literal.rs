@@ -16,4 +16,6 @@ pub enum Literal {
     Bool(bool),
     /// An array literal (e.g. `[1, 2, 3]`).
     Array(Vec<Expr>),
+    /// A literal unit type.
+    Unit,
 }

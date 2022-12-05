@@ -173,6 +173,9 @@ pub enum Token {
 
     #[regex("(true)|(false)", |lex| lex.slice().parse(), priority = 2)]
     LiteralBool(bool),
+
+    #[regex("\\(\\)")]
+    LiteralUnit,
 }
 
 impl Display for Token {
@@ -234,6 +237,7 @@ impl Display for Token {
                 Token::TokenMulEq => "*=",
                 Token::TokenDivEq => "/=",
                 Token::KeywordType => "type",
+                Token::LiteralUnit => "()",
             }
         )
     }
