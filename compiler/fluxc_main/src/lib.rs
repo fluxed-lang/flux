@@ -13,9 +13,8 @@ pub enum Mode<'i> {
 /// Compile the target input string into memory.
 pub fn compile_to_mem(input: String) -> Result<fn() -> u32, Box<dyn Error>> {
     // 1. Parse input source
-    let _ast = fluxc_parser::parse(input).expect("Failed to parse input source");
-
-    // let mut ast = parser.build(&input)?;
+    let tokens = fluxc_lexer::lex(input).unwrap();
+    let ast = fluxc_parser::parse(tokens).unwrap();
     // // 2. Run AST validation on the AST
     // fluxc_ast_passes::perform_ast_passes(&mut ast)?;
     // // 3. Generate IR
@@ -24,6 +23,7 @@ pub fn compile_to_mem(input: String) -> Result<fn() -> u32, Box<dyn Error>> {
     // unsafe {
     //     code_fn = mem::transmute::<_, fn() -> u32>(pointer);
     // }
+    println!("{:#?}", ast);
     todo!()
 }
 

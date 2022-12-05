@@ -6,7 +6,7 @@ use crate::{Associativity, Expr, Node};
 ///
 /// This struct represents a binary operation that takes two operands and
 /// returns a result.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct BinaryExpr {
     /// The left hand side of the binary expression.
     pub lhs: Box<Node<Expr>>,

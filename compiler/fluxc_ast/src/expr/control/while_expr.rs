@@ -1,7 +1,7 @@
 use crate::{Block, Expr, Node};
 
 /// A `while` loop.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct While {
     /// The loop condition.
     pub condition: Box<Node<Expr>>,

@@ -1,15 +1,15 @@
 use crate::{Expr, Node};
 
 /// A match expression.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Match {
     /// The expression being matched.
     pub expr: Box<Node<Expr>>,
     /// The list of cases being tested.
-    pub cases: Vec<Node<MatchBranch>>,
+    pub branches: Vec<Node<MatchBranch>>,
 }
 /// A match branch case.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct MatchBranch {
     /// The pattern being matched.
     pub pattern: Node<Expr>,

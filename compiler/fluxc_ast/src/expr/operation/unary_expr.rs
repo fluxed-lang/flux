@@ -3,7 +3,7 @@ use std::{error::Error, str::FromStr};
 use crate::{Associativity, Expr, Node};
 
 /// A unary expression.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct UnaryExpr {
     /// The kind of unary expression.
     pub kind: UnaryOp,

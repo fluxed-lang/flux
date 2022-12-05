@@ -5,6 +5,7 @@ authors = ["SkyezerFox <actuallyori@gmail.com>"]
 edition = "2021"
 
 [dependencies]
+chumsky = "0.8"
 log = "0.4"
 thiserror = "1"
 

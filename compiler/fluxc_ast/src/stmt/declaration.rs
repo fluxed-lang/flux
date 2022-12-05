@@ -15,7 +15,7 @@ use crate::{Expr, Ident, Node, TypeExpr};
 /// let mut x = 1
 /// x = 2 // ok
 /// ```
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Declaration {
     /// The explicit type of this declaration if it exists.
     pub explicit_ty: Option<Node<TypeExpr>>,

@@ -1,7 +1,7 @@
 use crate::{Block, Expr, Node};
 
 /// A generic conditional expression.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Conditional {
     /// The opening `if` statement of this conditional.
     pub if_stmt: Node<IfStmt>,
@@ -14,10 +14,10 @@ pub struct Conditional {
 }
 
 /// A conditional `if` statement.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct IfStmt {
     /// The condition to test.
     pub condition: Box<Node<Expr>>,
     /// The value to return if the condition is true.
-    pub value: Node<Block>,
+    pub block: Node<Block>,
 }
