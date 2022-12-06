@@ -5,6 +5,14 @@
 //! - External function declarations
 
 use crate::{Block, Expr, Ident, Node, TypeExpr};
+
+/// An enumeration of function linkage types.
+pub enum Linkage {
+    Local,
+    Export,
+    External,
+}
+
 /// A function call.
 #[derive(Debug, Clone, PartialEq)]
 pub struct FuncCall {
@@ -54,4 +62,15 @@ pub enum FuncDecl {
         /// The identifier representing the return type of the function.
         ret_ty: Option<Node<TypeExpr>>,
     },
+}
+
+impl FuncDecl {
+    /// Return the linkage of this function.
+    pub fn linkage(&self) -> Linkage {
+        match self {
+            FuncDecl::Local { ident: _, params: _, body: _, ret_ty: _ } => Linkage::Local,
+            FuncDecl::Export { ident: _, params: _, body: _, ret_ty: _ } => Linkage::Export,
+            FuncDecl::External { ident: _, params: _, ret_ty: _ } => Linkage::External,
+        }
+    }
 }

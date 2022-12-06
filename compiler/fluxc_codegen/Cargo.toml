@@ -6,13 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cranelift = "0.83"
-cranelift-module = "0.83"
-cranelift-jit = "0.83"
-cranelift-native = "0.83"
+cranelift = "0.90"
+cranelift-module = "0.90"
+cranelift-jit = "0.90"
+cranelift-native = "0.90"
 tracing = "0.1"
 
 fluxc_ast = { path = "../fluxc_ast" }
 fluxc_errors = { path =  "../fluxc_errors" }
 fluxc_types = { path =  "../fluxc_types" }
-# fluxc_walker = { path =  "../fluxc_walker" }

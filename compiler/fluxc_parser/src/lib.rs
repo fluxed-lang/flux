@@ -67,7 +67,8 @@ fn parser() -> impl Parser<Token, AST, Error = Simple<Token>> {
         let op = union;
 
         type_literal.or(op)
-    }).labelled("type expression");
+    })
+    .labelled("type expression");
 
     // recursive stmt declaration
     let stmt = recursive::<_, Node<Stmt>, _, _, _>(|stmt| {
@@ -203,7 +204,8 @@ fn parser() -> impl Parser<Token, AST, Error = Simple<Token>> {
         let func_decl_param = ident
             .then_ignore(just(Token::TokenColon))
             .then(type_expr.clone().map_with_span(Node::new))
-            .map(|(ident, ty)| FuncParam { ident, ty }).labelled("parameter");
+            .map(|(ident, ty)| FuncParam { ident, ty })
+            .labelled("parameter");
 
         let func_decl_params = (func_decl_param.clone().map_with_span(Node::new))
             .separated_by(just(Token::TokenComma));
