@@ -237,6 +237,7 @@ fn parser() -> impl Parser<Token, AST, Error = Simple<Token>> {
     stmt.repeated().then_ignore(end()).map(|stmts| AST { stmts })
 }
 
+#[tracing::instrument]
 pub fn parse(input: TokenStream) -> Result<AST, Vec<Simple<Token>>> {
     // empty tokens
     if input.is_empty() {

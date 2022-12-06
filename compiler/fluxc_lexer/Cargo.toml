@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 logos = "0.12"
+tracing = "0.1"
 
 fluxc_errors = { path =  "../fluxc_errors" }
 

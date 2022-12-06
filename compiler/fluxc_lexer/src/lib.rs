@@ -1,4 +1,7 @@
-use std::{fmt::Display, ops::Range};
+use std::{
+    fmt::{Debug, Display},
+    ops::Range,
+};
 
 use logos::Logos;
 
@@ -249,7 +252,8 @@ pub type TokenStream = Vec<SpannedToken>;
 pub type SpannedToken = (Token, Range<usize>);
 
 /// Lex the target source.
-pub fn lex<S: AsRef<str>>(s: S) -> Result<TokenStream, TokenStream> {
+#[tracing::instrument]
+pub fn lex<S: AsRef<str> + Debug>(s: S) -> Result<TokenStream, TokenStream> {
     let lex = Token::lexer(s.as_ref());
     // map tokens
     let tokens = lex.spanned().collect::<Vec<_>>();
