@@ -24,7 +24,8 @@ fn parser() -> impl Parser<Token, AST, Error = Simple<Token>> {
        Token::LiteralBool(bool) => Literal::Bool(bool),
        Token::LiteralUnit => Literal::Unit
     }
-    .map_with_span(Node::new);
+    .map_with_span(Node::new)
+    .labelled("literal");
 
     let type_expr = recursive::<_, TypeExpr, _, _, Simple<Token>>(|ty_expr| {
         let type_literal = select! {
@@ -39,7 +40,8 @@ fn parser() -> impl Parser<Token, AST, Error = Simple<Token>> {
             Token::Ident(ident) => Primitive::Ref(ident),
             Token::LiteralUnit => Primitive::Unit
         }
-        .map(TypeExpr::Primitive);
+        .map(TypeExpr::Primitive)
+        .labelled("primitive type");
 
         let atom = type_literal.or(ty_expr
             .delimited_by(just(Token::TokenParenthesisLeft), just(Token::TokenParenthesisRight)));
@@ -93,10 +95,11 @@ fn parser() -> impl Parser<Token, AST, Error = Simple<Token>> {
                 .ignore_then(expr.clone())
                 .then(block.clone())
                 .map(|(condition, block)| IfStmt { block, condition: Box::new(condition) })
-                .map_with_span(Node::new);
+                .map_with_span(Node::new)
+                .labelled("if statement");
 
-            let else_if_stmt = just(Token::KeywordElse).ignore_then(if_stmt.clone());
-            let else_stmt = just(Token::KeywordElse).ignore_then(block.clone());
+            let else_if_stmt = just(Token::KeywordElse).ignore_then(if_stmt.clone()).labelled("else-if statement");
+            let else_stmt = just(Token::KeywordElse).ignore_then(block.clone()).labelled("else statement");
 
             let conditional = if_stmt
                 .then(else_if_stmt.repeated())
@@ -167,7 +170,7 @@ fn parser() -> impl Parser<Token, AST, Error = Simple<Token>> {
             let func_call = ident
                 .then(atom.separated_by(just(Token::TokenComma)))
                 .map(|(ident, args)| FuncCall { ident, args })
-                .map_with_span(Node::new);
+                .map_with_span(Node::new).labelled("function call");
 
             choice((
                 func_call.map(Expr::FuncCall),

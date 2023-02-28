@@ -81,8 +81,8 @@ let y = x[1]
 # slices
 let a = x[0..1] # [1,2]
 let b = x[1..] # [2,3,4]
-let c = [..1] # [1, 2]
-let d = [2..3] # [2, 3]
+let c = x[..1] # [1, 2]
+let d = x[2..3] # [2, 3]
 
 # negative indexes
 let d = [..-2] # [3, 4]
@@ -96,7 +96,7 @@ concat a: T[] b: T[] -> {
 
 # Strings
 type char = u8
-type str = char[] = u8[]
+type str = char[]
 
 # Structs
 struct Point {
@@ -179,7 +179,8 @@ export io from "./io"
 export someFunc x: int -> x + 1
 export someOtherFunc x: int -> x - 1
 
-# main.stx
+# main.stx					"begin": "\b(if)\b",
+					"end": "\b(endif)\b",
 import someFunc from "./module"
 import {
     someFunc

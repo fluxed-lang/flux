@@ -1,0 +1,531 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Flux",
+	"patterns": [
+		{
+			"include": "#statement"
+		},
+		{
+			"include": "#comment"
+		}
+	],
+	"repository": {
+		"statement": {
+			"patterns": [
+				{
+					"include": "#declaration"
+				},
+				{
+					"include": "#expression"
+				},
+				{
+					"include": "#export"
+				},
+				{
+					"include": "#import"
+				}
+			]
+		},
+		"expression": {
+			"patterns": [
+				{
+					"include": "#literal"
+				},
+				{
+					"include": "#identifier"
+				},
+				{
+					"include": "#binary-expression"
+				},
+				{
+					"include": "#unary-expression"
+				},
+				{
+					"#include": "conditional"
+				},
+				{
+					"#include": "block"
+				},
+				{
+					"include": "#parenthesized-expression"
+				}
+			]
+		},
+		"parenthesized-expression": {
+			"patterns": [
+				{
+					"begin": "(\\()",
+					"end": "(\\))",
+					"patterns": [
+						{
+							"include": "#expression"
+						}
+					]
+				}
+			]
+		},
+		"literal": {
+			"patterns": [
+				{
+					"include": "#string-literal"
+				},
+				{
+					"include": "#numeric-literal"
+				},
+				{
+					"include": "#boolean-literal"
+				},
+				{
+					"include": "#array-literal"
+				},
+				{
+					"include": "#range-literal"
+				}
+			]
+		},
+		"string-literal": {
+			"patterns": [
+				{
+					"name": "string.quoted.double.flux",
+					"begin": "\"",
+					"end": "\"",
+					"patterns": [
+						{
+							"name": "constant.character.escape.flux",
+							"match": "\\."
+						}
+					]
+				}
+			]
+		},
+		"numeric-literal": {
+			"patterns": [
+				{
+					"name": "constant.numeric.dec.flux",
+					"match": "\\b(-?[0-9]+)\\b"
+				},
+				{
+					"name": "constant.numeric.hex.flux",
+					"match": "\\b(-?0x[0-9a-fA-F]+)\\b"
+				},
+				{
+					"name": "constant.numeric.bin.flux",
+					"match": "\\b(-?0b[01]+)\\b"
+				},
+				{
+					"name": "constant.numeric.oct.flux",
+					"match": "\\b(-?0o[0-7]+)\\b"
+				},
+				{
+					"name": "constant.numeric.float.flux",
+					"match": "\\b(-?[0-9]+\\.[0-9]+)\\b"
+				},
+				{
+					"name": "constant.numeric.float.exp.flux",
+					"match": "\\b(-?[0-9]+\\.[0-9]+[eE][+-]?[0-9]+)\\b"
+				},
+				{
+					"name": "constant.numeric.float.prefix.flux",
+					"match": "\\b(-?[0-9]+\\.)\\b"
+				},
+				{
+					"name": "constant.numeric.float.suffix.flux",
+					"match": "\\b(-?[0-9]+\\.)\\b"
+				},
+				{
+					"name": "constant.numeric.float.exp.shorthand.flux",
+					"match": "\\b(-?[0-9]+[eE][+-]?[0-9]+)\\b"
+				}
+			]
+		},
+		"boolean-literal": {
+			"patterns": [
+				{
+					"name": "constant.language.flux",
+					"match": "\\b(true|false)\\b"
+				}
+			]
+		},
+
+		"array-literal": {
+			"patterns": [
+				{
+					"name": "meta.array.flux",
+					"begin": "\b(\\[)\b",
+					"end": "\b(\\])\b",
+					"patterns": [
+						{
+							"include": "#expression"
+						}
+					]
+				}
+			]
+		},
+
+		"range-literal": {
+			"patterns": [
+				{
+					"name": "meta.range.flux",
+					"patterns": [
+						{
+							"include": "#parenthesized-expression"
+						},
+						{
+							"include": "#numeric-literal"
+						},
+						{
+							"name": "keyword.operator.flux",
+							"match": "\b(\\.\\.)\b"
+						}
+					]
+				}
+			]
+		},
+
+		"identifier": {
+			"patterns": [
+				{
+					"name": "variable.flux",
+					"match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b"
+				}
+			]
+		},
+		"binary-expression": {
+			"patterns": [
+				{
+					"name": "meta.binary-expression.flux",
+					"patterns": [
+						{
+							"include": "#parenthesized-binary-expression"
+						},
+						{
+							"include": "#bare-binary-expression"
+						}
+					]
+				}
+			]
+		},
+		"bare-binary-expression": {
+			"patterns": [
+				{
+					"name": "meta.binary-expression.flux",
+					"patterns": [
+						{
+							"include": "#literal"
+						},
+						{
+							"include": "#binary-operator"
+						}
+					]
+				}
+			]
+		},
+		"parenthesized-binary-expression": {
+			"patterns": [
+				{
+					"name": "meta.binary-expression.flux",
+					"begin": "(\\()",
+					"end": "(\\))",
+					"patterns": [
+						{
+							"include": "#expression"
+						},
+						{
+							"include": "#binary-operator"
+						}
+					]
+				}
+			]
+		},
+		"binary-operator": {
+			"patterns": [
+				{
+					"name": "keyword.operator.flux",
+					"match": "\\b(\\+|\\-|\\*|\\/|\\%|\\^|\\&\\&|\\|\\||\\!\\=|\\=\\=|\\<\\=|\\>\\=|\\<\\<|\\>\\>|\\<|\\>|\\&|\\|)\\b"
+				}
+			]
+		},
+		"unary-expression": {
+			"patterns": [
+				{
+					"name": "meta.unary-expression.flux",
+					"patterns": [
+						{
+							"include": "#array-slice"
+						}
+					]
+				}
+			]
+		},
+		"array-slice": {
+			"patterns": [
+				{
+					"name": "meta.array-slice.flux",
+					"begin": "\b(\\[)\b",
+					"end": "\b(\\])\b",
+					"patterns": [
+						{
+							"include": "#range-literal"
+						}
+					]
+				}
+			]
+		},
+
+		"conditional": {
+			"patterns": [
+				{
+					"name": "meta.conditional.flux",
+					"patterns": [
+						{ "include": "#if-statement" },
+						{ "include": "#else-if-statement" },
+						{ "include": "#else-statement" }
+					]
+				}
+			]
+		},
+
+		"if-statement": {
+			"patterns": [
+				{
+					"name": "meta.if-statement.flux",
+					"begin": "\b(if)\b.*{",
+					"end": "\b(})\b",
+					"patterns": [
+						{
+							"include": "#literal"
+						},
+						{
+							"include": "#parenthesized-expression"
+						},
+						{
+							"include": "#block"
+						}
+					]
+				}
+			]
+		},
+
+		"else-if-statement": {
+			"patterns": [
+				{
+					"name": "meta.else-if-statement.flux",
+					"begin": "\b(else)\b.*\b(if)\b.*{",
+					"end": "\b(})\b",
+					"patterns": [
+						{
+							"include": "#literal"
+						},
+						{
+							"include": "#parenthesized-expression"
+						},
+						{
+							"include": "#block"
+						}
+					]
+				}
+			]
+		},
+
+		"else-statement": {
+			"patterns": [
+				{
+					"name": "meta.else-statement.flux",
+					"begin": "\\b(else)\b.*{",
+					"end": "\b(})\b",
+					"patterns": [
+						{
+							"include": "#block"
+						}
+					]
+				}
+			]
+		},
+
+		"block": {
+			"patterns": [
+				{
+					"name": "meta.block.flux",
+					"begin": "\\b({)\\b",
+					"end": "\\b(})\\b",
+					"patterns": [
+						{
+							"include": "#statement"
+						}
+					]
+				}
+			]
+		},
+
+		"comment": {
+			"patterns": [
+				{
+					"name": "comment.line.number-sign",
+					"match": "#.*$"
+				},
+				{
+					"name": "comment.block.flux",
+					"begin": "/\\*",
+					"end": "\\*/"
+				}
+			]
+		},
+		"declaration": {
+			"patterns": [
+				{
+					"include": "#variable-declaration"
+				},
+				{
+					"include": "#function-declaration"
+				},
+				{
+					"include": "#type-declaration"
+				}
+			]
+		},
+
+		"variable-declaration": {
+			"patterns": [
+				{
+					"name": "meta.declaration.variable.flux",
+					"patterns": [
+						{
+							"name": "keyword.control.flux",
+							"match": "\\b(let|const)\\b"
+						},
+						{
+							"include": "#identifier"
+						},
+						{
+							"name": "keyword.operator.flux",
+							"match": "\\b(=)\\b"
+						},
+						{
+							"include": "#expression"
+						}
+					]
+				}
+			]
+		},
+
+		"function-declaration": {
+			"patterns": [
+				{
+					"name": "meta.declaration.function.flux",
+					"begin": "(builtin|test)\\s+",
+					"end": "(?=[;\\n])",
+					"patterns": [
+						{
+							"include": "#identifier"
+						},
+						{
+							"include": "#type"
+						}
+					]
+				}
+			]
+		},
+
+		"type-declaration": {
+			"patterns": [
+				{
+					"name": "meta.declaration.type.flux",
+					"patterns": [
+						{
+							"name": "keyword.control.flux",
+							"match": "\\b(type)\\b"
+						},
+						{
+							"include": "#identifier"
+						},
+						{
+							"name": "keyword.operator.flux",
+							"match": "\\b(=)\\b"
+						},
+						{
+							"include": "#type"
+						}
+					]
+				}
+			]
+		},
+
+		"type": {
+			"patterns": [
+				{
+					"include": "#type-primitive"
+				},
+				{
+					"include": "#type-tuple"
+				},
+				{
+					"include": "#type-array"
+				}
+			]
+		},
+		"type-primitive": {
+			"patterns": [
+				{
+					"name": "support.type.primitive.flux",
+					"match": "\\b(bool|string|float|u(8|16|32|64)|i(8|16|32|64))\\b"
+				}
+			]
+		},
+		"type-tuple": {
+			"patterns": [
+				{
+					"name": "support.type.tuple.flux",
+					"begin": "\\(",
+					"end": "\\)",
+					"patterns": [
+						{
+							"include": "#type"
+						}
+					]
+				}
+			]
+		},
+		"type-array": {
+			"patterns": [
+				{
+					"include": "#type-primitive"
+				},
+				{
+					"name": "support.type.array.flux",
+					"match": "\\b(\\[\\])\\b"
+				}
+			]
+		},
+
+		"import": {
+			"patterns": [
+				{
+					"name": "meta.import.flux",
+					"begin": "\\b(import)\\b",
+					"end": "(?=[;\\n])",
+					"patterns": [
+						{
+							"include": "#string"
+						}
+					]
+				}
+			]
+		},
+
+		"export": {
+			"patterns": [
+				{
+					"name": "meta.export.flux",
+					"begin": "\\b(export)\\b",
+					"end": "(?=[;\\n])",
+					"patterns": [
+						{
+							"include": "#identifier"
+						}
+					]
+				}
+			]
+		}
+	},
+	"scopeName": "source.flux"
+}

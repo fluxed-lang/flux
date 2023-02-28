@@ -1,0 +1,25 @@
+{
+  "name": "flx",
+  "displayName": "flux",
+  "description": "Syntax highliting and language support for Flux",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "flux",
+      "aliases": ["Flux", "flux"],
+      "extensions": [".flx",".flux"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "flux",
+      "scopeName": "source.flux",
+      "path": "./syntaxes/flux.tmLanguage.json"
+    }]
+  }
+}
