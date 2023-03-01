@@ -11,3 +11,4 @@ log = "0.4"
 fluxc_lexer = { path =  "../fluxc_lexer" }
 fluxc_parser = { path =  "../fluxc_parser" }
 fluxc_codegen = { path =  "../fluxc_codegen" }
+fluxc_graph = { path =  "../fluxc_graph" }
