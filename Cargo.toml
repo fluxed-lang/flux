@@ -1,2 +1,5 @@
 [workspace]
-members = ["./crates/compiler/fluxc"]
+members = [
+	"./crates/flux-analyzer",
+	"./crates/compiler/fluxc"
+]
